@@ -1,0 +1,33 @@
+{
+  "name": "todo",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "scp": "scp -r dist/* root@132.232.47.47:/home/work/websites/todo.qingtime.cn/",
+    "deploy": "npm run build && npm run scp"
+  },
+  "dependencies": {
+    "@types/node": "^17.0.32",
+    "axios": "^0.27.2",
+    "element-plus": "^2.2.0",
+    "pinia": "^2.0.14",
+    "qiniu-js": "^3.4.0",
+    "qrcode.vue": "^3.3.3",
+    "sass": "^1.51.0",
+    "sass-loader": "^12.6.0",
+    "socket.io-client": "^4.5.0",
+    "unplugin-auto-import": "^0.7.1",
+    "vue": "^3.2.25",
+    "vue-clipboard3": "^2.0.0",
+    "vue-router": "^4.0.15"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^2.3.3",
+    "typescript": "^4.5.4",
+    "vite": "^2.9.9",
+    "vue-tsc": "^0.34.7"
+  }
+}

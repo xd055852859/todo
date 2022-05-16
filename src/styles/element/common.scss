@@ -1,0 +1,50 @@
+.el-input__inner {
+  height: 40px !important;
+}
+.el-textarea__inner {
+  box-shadow: none !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  resize: none !important;
+  &:focus {
+    outline: none !important;
+  }
+}
+.el-drawer__header {
+  margin-bottom: 0px !important;
+}
+.el-drawer,
+.el-collapse-item__header,
+.el-dialog {
+  background-color: var(--talk-bg-color) !important;
+}
+
+.el-divider--horizontal {
+  margin: 12px 0px !important;
+}
+.el-avatar {
+  margin-right: 10px;
+  img {
+    width: 100%;
+  }
+}
+.radius-drawer {
+  border-radius: 36px 36px 0px 0px;
+  box-shadow: 0px -4px 12px 0px rgba(0, 0, 0, 0.14);
+}
+.modal-transparent {
+  background-color: transparent;
+}
+.radius-drawer .el-drawer__body,
+.p0-drawer .el-drawer__body {
+  padding: 0px !important;
+}
+.el-collapse-item__content {
+  padding-bottom: 0px !important;
+}
+.el-popper.is-dark {
+  color: #333;
+}
+.el-switch__core .el-switch__action {
+  color: #fff !important;
+}
