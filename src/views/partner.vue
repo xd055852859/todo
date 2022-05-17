@@ -8,6 +8,7 @@ import { ResultProps } from "@/interface/Common";
 import { storeToRefs } from "pinia";
 
 import appStore from "@/store";
+import Avatar from "@/components/avatar.vue";
 const router = useRouter();
 
 const { mateList } = storeToRefs(appStore.authStore);
@@ -40,8 +41,10 @@ const choosePartner = () => {
 };
 const showMore = useDebounceFn(async () => {
   if (searchInput.value) {
-    let searchRes = (await api.request.get("receiver/search", {
+    let searchRes = (await api.request.get("user/search", {
       keyWord: searchInput.value,
+      inPlatform: 1,
+      filterFriend: true,
     })) as ResultProps;
     if (searchRes.msg === "OK") {
       // ElMessage.success("Update Config Success");
@@ -51,21 +54,7 @@ const showMore = useDebounceFn(async () => {
     searchMoreList.value = [];
   }
 }, 1000);
-const saveMate = async (userKey: string, index: number) => {
-  const saveRes = (await api.request.post("receiver", {
-    receiverType: "user",
-    toUserKey: userKey,
-  })) as ResultProps;
-  if (saveRes.msg === "OK") {
-    ElMessage({
-      message: "Add Mate Successful",
-      type: "success",
-      duration: 1000,
-    });
-    searchList.value.push({ ...saveRes.data });
-    searchMoreList.value.splice(index, 1);
-  }
-};
+
 watchEffect(() => {
   searchPartner();
 });
@@ -113,9 +102,16 @@ watchEffect(() => {
           class="dp-center-center partner-item"
           @click="$router.push('/home/mate/' + item._key)"
         >
-          <div class="partner-item-img">
+          <!-- <div class="partner-item-img">
             <img :src="item.userAvatar" alt="" />
-          </div>
+          </div> -->
+          <avatar
+            :name="item.userName"
+            :avatar="item.userAvatar"
+            type="person"
+            :index="index"
+            :size="90"
+          />
           <div class="name single-to-long">
             {{ item.userName }}
           </div>
@@ -144,10 +140,18 @@ watchEffect(() => {
           @click="choosePartner()"
           style="cursor: pointer"
         >
-          <div class="dp-center-center partner-item">
-            <div class="partner-item-img">
-              <img :src="item.userAvatar" alt="" />
-            </div>
+          <div
+            class="dp-center-center partner-item"
+            @click="$router.push('/home/mate/' + item._key)"
+          >
+            <avatar
+              :name="item.userName"
+              :avatar="item.userAvatar"
+              type="person"
+              :index="index"
+              :size="90"
+              :avatarStyle="{ fontSize: '28px' }"
+            />
             <div class="name single-to-long">
               {{ item.userName }}
             </div>
@@ -180,18 +184,7 @@ watchEffect(() => {
     width: 130px;
     height: 130px;
     flex-wrap: wrap;
-    .partner-item-img {
-      width: 100px;
-      height: 100px;
-      overflow: hidden;
-      border-radius: 35px;
-      box-shadow: 0px 0px 12px 10px rgba(0, 0, 0, 0.05);
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
+    margin-bottom: 10px;
     .el-avatar {
       margin-right: 0px;
     }

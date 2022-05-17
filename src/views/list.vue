@@ -9,8 +9,8 @@ import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
 
 const { user, mateList } = storeToRefs(appStore.authStore);
-const { taskList, inboxList } = storeToRefs(appStore.taskStore);
-const { getTaskList, delTaskList, clearInboxList, delInboxList } =
+const { taskList, inboxList, targetKey } = storeToRefs(appStore.taskStore);
+const { getTaskList, delTaskList, clearInboxList, delInboxList, setTargetKey } =
   appStore.taskStore;
 
 const listMateList = computed(() => [user.value, ...mateList.value]);
@@ -20,7 +20,6 @@ const overKey = ref<string>("");
 const completeNum = ref<number>(0);
 const completeList = ref<Task[]>([]);
 const listIndex = ref<number>(0);
-const targetKey = ref<string>("");
 const targetType = ref<string>("self");
 const taskNum = reactive({
   today: 0,
@@ -32,9 +31,9 @@ onMounted(() => {
   getTaskList("today");
   getTaskNum();
 });
-const getTaskNum = async (friendKey?: string) => {
+const getTaskNum = async () => {
   let obj: any = {};
-  friendKey ? (obj.friendKey = friendKey) : null;
+  targetKey.value ? (obj.friendKey = targetKey.value) : null;
   const numRes = (await api.request.get("card/user/collect", {
     ...obj,
   })) as ResultProps;
@@ -48,13 +47,11 @@ const getTaskNum = async (friendKey?: string) => {
 };
 const getTargetTask = async (item, index) => {
   listIndex.value = index;
-  targetKey.value = item._key;
   targetType.value = user.value?._key === item._key ? "self" : "other";
   if (targetType.value === "self") {
-    getTaskList("today");
+    setTargetKey("");
   } else {
-    getTaskList("today", 0, item._key);
-    getTaskNum(item._key);
+    setTargetKey(item._key);
   }
 };
 const changeNum = (
@@ -82,7 +79,7 @@ const changeNum = (
   }
 };
 const clearInbox = async () => {
-  const clearRes = (await api.request.get("message/read")) as ResultProps;
+  const clearRes = (await api.request.patch("message/read")) as ResultProps;
   if (clearRes.msg === "OK") {
     ElMessage({
       message: "Clear Inbox Successful",
@@ -93,6 +90,10 @@ const clearInbox = async () => {
     getTaskList("today");
   }
 };
+watch(targetKey, (newVal) => {
+  getTaskList("today");
+  getTaskNum();
+});
 </script>
 <template>
   <theader isMenu>
@@ -143,9 +144,7 @@ const clearInbox = async () => {
         :class="{ 'board-choose': navKey === 'today' }"
         @click="
           navKey = 'today';
-          targetType === 'self'
-            ? getTaskList('today')
-            : getTaskList('today', 0, targetKey);
+          getTaskList('today');
         "
       >
         <div>{{ taskNum.today }}</div>
@@ -164,9 +163,7 @@ const clearInbox = async () => {
         :class="{ 'board-choose': navKey === 'next' }"
         @click="
           navKey = 'next';
-          targetType === 'self'
-            ? getTaskList('next')
-            : getTaskList('next', 0, targetKey);
+          getTaskList('next');
         "
       >
         <div>{{ taskNum.next }}</div>
@@ -185,9 +182,7 @@ const clearInbox = async () => {
         :class="{ 'board-choose': navKey === 'future' }"
         @click="
           navKey = 'future';
-          targetType === 'self'
-            ? getTaskList('future')
-            : getTaskList('future', 0, targetKey);
+          getTaskList('future');
         "
       >
         <div>{{ taskNum.future }}</div>
@@ -209,8 +204,8 @@ const clearInbox = async () => {
       <div class="inbox" v-if="navKey === 'today' && inboxList.length > 0">
         <div class="inbox-title dp-space-center">
           Inbox
-          <tbutton style="height: 40px; padding: 0px 30px" @click="clearInbox">
-            Sent Read({{ taskNum.unRead }})
+          <tbutton style="height: 40px; padding: 0px 30px" @click="clearInbox" round>
+            Sent Read ( {{ taskNum.unRead }} ) 
           </tbutton>
         </div>
         <div
@@ -284,7 +279,7 @@ const clearInbox = async () => {
       </div>
     </div>
   </div>
-  <div class="board-footer p-5 dp--center">
+  <div class="footer p-5 dp--center">
     Completed ({{ completeNum }})
     <div></div>
   </div>
@@ -315,11 +310,18 @@ const clearInbox = async () => {
     }
   }
   .inbox {
-    padding-top: 15px;
+    padding-top: 10px;
     box-sizing: border-box;
     background-color: #fff;
     border-radius: 12px;
     margin-bottom: 15px;
+    .inbox-title {
+      padding: 0px 10px;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+      font-size: 18px;
+      font-weight: 600;
+    }
   }
   .board-box,
   .board-empty,
@@ -360,10 +362,6 @@ const clearInbox = async () => {
     background-image: url("@/assets/img/fullBean.png");
   }
 }
-.board-footer {
-  width: 100%;
-  height: 40px;
-  background: #ebebeb;
-}
+
 </style>
 <style></style>

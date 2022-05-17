@@ -35,6 +35,10 @@ export const authStore = defineStore("authStore", () => {
   const addMateList = async (mateItem: User) => {
     mateList.value = [...mateList.value, mateItem];
   };
+  const delMateList = async (mateKey: string) => {
+    mateList.value = mateList.value.filter((item) => item._key !== mateKey);
+  };
+
   const getMemberList = async () => {
     const memberRes: any = (await api.request.get(
       "board/member"
@@ -49,13 +53,15 @@ export const authStore = defineStore("authStore", () => {
   return {
     token,
     user,
-    mateList,
     setToken,
     setUserInfo,
     getUserInfo,
+    mateList,
     getMateList,
     addMateList,
+    delMateList,
+    memberList,
     getMemberList,
-    addMemberList
+    addMemberList,
   };
 });

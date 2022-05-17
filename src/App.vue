@@ -8,8 +8,9 @@ import appStore from "@/store";
 import setTheme from "@/hooks/theme";
 import setDark from "@/hooks/dark";
 
+const socket: any = inject("socket");
 const router = useRouter();
-const { token } = storeToRefs(appStore.authStore);
+const { token, user } = storeToRefs(appStore.authStore);
 const { setToken, getUserInfo, getMateList } = appStore.authStore;
 
 onBeforeMount(() => {
@@ -63,21 +64,13 @@ watch(
   },
   { immediate: true }
 );
-// watch(user, (newVal, oldVal) => {
-//   if (newVal && !oldVal) {
-//     if (localStorage.getItem("inviteKey")) {
-//       addMate();
-//     } else {
-//       store.dispatch("auth/getGroupList");
-//     }
-//     store.dispatch("auth/getUptoken");
-//     // store.dispatch("message/getMessageList", 1);
-//     socket.on("connect", () => {
-//       socket.emit("login", token.value);
-
-//     });
-//   }
-// });
+watch(user, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    socket.on("connect", () => {
+      socket.emit("login", token.value);
+    });
+  }
+});
 
 // watchEffect(() => {
 //   if (user.value && messageList.value.length > 0) {

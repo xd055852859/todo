@@ -25,7 +25,7 @@ const multipleCheck = ref<boolean>(false);
 const taskObj = ref<any>(null);
 
 onMounted(() => {
-  getBoardList("accessTime", "asc");
+  getBoardList("accessTime", "desc");
 });
 const getBoardTask = async (boardKey: string) => {
   const taskRes: any = (await api.request.get("card/board", {
@@ -148,6 +148,7 @@ watch(
         <template
           v-for="(item, index) in value.cards"
           :key="'taskItem' + index"
+          @mouseenter="overKey = item._key"
         >
           <task-item :item="item" :overKey="overKey" type="board" />
         </template>

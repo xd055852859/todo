@@ -40,11 +40,17 @@ const setVisible = ref<boolean>(false);
         <icon-font name="boards" :size="22" style="margin-right: 18px" />
         <span> Boards </span>
       </div>
-      <div class="userCenter-item dp--center">
+      <div
+        class="userCenter-item dp--center"
+        @click="$router.push('/home/history')"
+      >
         <icon-font name="history" :size="24" style="margin-right: 15px" />
         <span> History </span>
       </div>
-      <div class="userCenter-item dp--center">
+      <div
+        class="userCenter-item dp--center"
+        @click="$router.push('/home/send')"
+      >
         <icon-font name="send" style="margin-right: 20px" />
         <span> I send </span>
       </div>
@@ -55,7 +61,10 @@ const setVisible = ref<boolean>(false);
         <icon-font name="mates" :size="24" style="margin-right: 15px" />
         <span> Mates </span>
       </div>
-      <div class="userCenter-item dp--center">
+      <div
+        class="userCenter-item dp--center"
+        @click="$router.push('/home/rank')"
+      >
         <icon-font name="beans" :size="24" style="margin-right: 15px" />
         <span> Beans Ranking </span>
       </div>

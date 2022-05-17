@@ -30,9 +30,9 @@ app
   .use(ElementPlus, {
     locale: zhCn,
   })
-  // .use(SocketIO, {
-  //   connection: "https://ttalkdata.qingtime.cn",
-  // })
+  .use(SocketIO, {
+    connection: "https://tddata.qingtime.cn",
+  })
   .use(createPinia());
 
 registerStore();

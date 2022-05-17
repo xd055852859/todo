@@ -7,16 +7,13 @@ import { Task } from "@/interface/Task";
 export const taskStore = defineStore("taskStore", () => {
   const taskList = ref<any>([]);
   const inboxList = ref<any>([]);
-  const getTaskList = async (
-    mark: string,
-    hasFinished?: number,
-    friendKey?: string
-  ) => {
+  const targetKey = ref<string>("");
+  const getTaskList = async (mark: string, hasFinished?: number) => {
     let obj: any = { mark };
     hasFinished ? (obj.hasFinished = hasFinished) : null;
-    friendKey ? (obj.friendKey = friendKey) : null;
+    targetKey.value ? (obj.friendKey = targetKey.value) : null;
     if (mark === "today") {
-      friendKey ? getInboxList(friendKey) : getInboxList();
+      getInboxList();
     }
     const taskRes: any = (await api.request.get("card/user", {
       ...obj,
@@ -25,13 +22,12 @@ export const taskStore = defineStore("taskStore", () => {
       taskList.value = taskRes.data;
     }
   };
-  const setTaskList = () => {};
   const delTaskList = (index: number, taskIndex: number) => {
     taskList.value[index].cards.splice(taskIndex, 1);
   };
-  const getInboxList = async (friendKey?: string) => {
+  const getInboxList = async () => {
     let obj: any = {};
-    friendKey ? (obj.friendKey = friendKey) : null;
+    targetKey.value ? (obj.friendKey = targetKey.value) : null;
     const inboxRes: any = (await api.request.get("card/inbox", {
       ...obj,
     })) as ResultProps;
@@ -46,14 +42,19 @@ export const taskStore = defineStore("taskStore", () => {
   const clearInboxList = () => {
     inboxList.value = [];
   };
+
+  const setTargetKey = (key) => {
+    targetKey.value = key;
+  };
   return {
     taskList,
     inboxList,
     getTaskList,
-    setTaskList,
     delTaskList,
     getInboxList,
     delInboxList,
     clearInboxList,
+    targetKey,
+    setTargetKey,
   };
 });

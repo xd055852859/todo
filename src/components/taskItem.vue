@@ -3,6 +3,10 @@ import { ResultProps } from "@/interface/Common";
 import { Task } from "@/interface/Task";
 import api from "@/services/api";
 import { ElMessage } from "element-plus";
+
+import addBeanSvg from "@/assets/svg/addBean.svg";
+import finishBeanSvg from "@/assets/svg/finishBean.svg";
+
 const props = defineProps<{
   item: Task;
   type?: string;
@@ -34,6 +38,7 @@ const changeMark = async (type: string) => {
     emits("changeNum", type, props.fatherIndex, props.index, props.type);
   }
 };
+console.log(props.item);
 </script>
 <template>
   <div class="task">
@@ -48,8 +53,13 @@ const changeMark = async (type: string) => {
       </div>
       <div class="task-right">{{ item.title }}</div>
     </div>
-    <div class="task-bottom dp-space-center" v-if="type !== 'other'">
-      <div></div>
+    <div
+      class="task-bottom dp-space-center"
+      v-if="type !== 'other' && type !== 'report'"
+    >
+      <div>
+        <span v-if="type === 'send'"># {{ item.boardInfo?.title }}</span>
+      </div>
       <div class="dp--center">
         <template
           v-if="(type === 'task' || type === 'inbox') && overKey === item._key"
@@ -75,14 +85,42 @@ const changeMark = async (type: string) => {
             >Future</span
           >
         </template>
-        <template v-else-if="type === 'board'">
-          {{ item.hasRead ? "Read" : "Unread" }}
+        <template
+          v-else-if="
+            (type === 'board' || type === 'send') && overKey === item._key
+          "
+        >
+          {{ item.hasRead ? item.mark : "Unread" }}
           <icon-font
             class="icon-point del-button"
             name="image"
             :size="20"
             style="margin-left: 10px"
         /></template>
+      </div>
+    </div>
+    <div class="task-bottom dp-space-center" v-if="type === 'report'">
+      <div>
+        <span
+          >{{ item.creatorInfo?.userName }} >
+          {{ item.executorInfo.userName }}</span
+        >
+      </div>
+      <div class="dp--center">
+        <!-- scoreIcon: 1 创建任务 2 完成任务 3 创建和完成-->
+        <img
+          :src="addBeanSvg"
+          alt=""
+          v-if="item.scoreIcon === 1 || item.scoreIcon === 3"
+          :style="item.scoreIcon === 3 ? { marginRight: '6px' } : {}"
+          class="task-bean"
+        />
+        <img
+          :src="finishBeanSvg"
+          alt=""
+          v-if="item.scoreIcon === 2 || item.scoreIcon === 3"
+          class="task-bean"
+        />
       </div>
     </div>
   </div>
@@ -123,6 +161,12 @@ const changeMark = async (type: string) => {
     height: 25px;
     color: var(--talk-font-color-1);
     font-size: 12px;
+    padding: 0px 10px;
+    box-sizing: border-box;
+  }
+  .task-bean {
+    width: 30px;
+    height: 30px;
   }
 }
 </style>
