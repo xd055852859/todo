@@ -6,6 +6,7 @@ export interface User extends Person {
   _key: string;
   email?: string;
   mobile?: string;
+  beans?: number;
 }
 export interface Member extends Person {
   _key: string;

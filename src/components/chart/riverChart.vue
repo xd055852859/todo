@@ -13,8 +13,12 @@ const props = defineProps<{
   zoom?: number;
   onClick?: Function;
 }>();
-
+const chart = ref<any>(null);
+const seriesChart = ref<any>(null);
 onMounted(() => {
+  createChart(props.data);
+});
+const createChart = (data: HistoryChartProps[]) => {
   let root = am5.Root.new(props.riverId);
 
   // Set themes
@@ -47,8 +51,6 @@ onMounted(() => {
   legend.valueLabels.template.set("forceHidden", true);
 
   // Data
-  let data = props.data;
-  console.log(data);
   // let data = [
   //   { data: "5.12", score: 0 },
   //   { data: "1900", score: 0 },
@@ -80,11 +82,17 @@ onMounted(() => {
       renderer: am5xy.AxisRendererY.new(root, {}),
     })
   );
+  // yAxis.events.on("click", function (ev) {
+  //   console.log("Clicked on a column", ev.target);
+  // });
+  //   yAxis.template.events.on("click", function(ev) {
+  //   console.log("Clicked on a column", ev.target);
+  // });
 
   // Add series
   // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
   function createSeries(field, name) {
-    let series: any = chart.series.push(
+    seriesChart.value = chart.series.push(
       am5xy.SmoothedXLineSeries.new(root, {
         name: name,
         xAxis: xAxis,
@@ -102,29 +110,32 @@ onMounted(() => {
     );
 
     // Do not show tooltip for zero values
-    series.get("tooltip").adapters.add("visible", function (visible, target) {
-      if (target.dataItem && target.dataItem.get("value") > 0) {
-        return true;
-      }
-      return false;
-    });
-
-    series.strokes.template.setAll({
+    seriesChart.value
+      .get("tooltip")
+      .adapters.add("visible", function (visible, target) {
+        if (target.dataItem && target.dataItem.get("value") > 0) {
+          return true;
+        }
+        return false;
+      });
+    // seriesChart.value.columns.template.events.on("click", function (e) {
+    //   console.log(">???");
+    // });
+    seriesChart.value.strokes.template.setAll({
       forceHidden: true,
     });
 
-    series.fills.template.setAll({
+    seriesChart.value.fills.template.setAll({
       visible: true,
       fillOpacity: 1,
     });
 
     // Make stuff animate on load
     // https://www.amcharts.com/docs/v5/concepts/animations/
-    series.appear();
+    seriesChart.value.appear();
 
-    legend.data.push(series);
+    legend.data.push(seriesChart.value);
   }
-
   createSeries("score", "score");
 
   // Prepare data for the river-stacked series
@@ -167,7 +178,15 @@ onMounted(() => {
   // Make stuff animate on load
   // https://www.amcharts.com/docs/v5/concepts/animations/
   chart.appear(1000, 100);
-});
+};
+watch(
+  () => props.data,
+  (newData) => {
+    if (newData) {
+      seriesChart.value.data.setAll(newData);
+    }
+  }
+);
 </script>
 <template>
   <div :id="riverId" :style="{ width: width, height: height }"></div>

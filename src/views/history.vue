@@ -1,16 +1,24 @@
 <script setup lang="ts">
 import TaskItem from "@/components/taskItem.vue";
+import TimelineItem from "@/components/timelineItem.vue";
 import riverChart from "@/components/chart/riverChart.vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
 import { Task } from "@/interface/Task";
+import { storeToRefs } from "pinia";
+import appStore from "@/store";
 export interface HistoryChartProps {
   date: string;
   score: number;
 }
 const dayjs: any = inject("dayjs");
+const { user } = storeToRefs(appStore.authStore);
+
+const props = defineProps<{ targetKey: string }>();
+
 const historyChartList = ref<HistoryChartProps[]>([]);
 const historyList = ref<any>([]);
+const timelineList = ref<any>([]);
 const historyType = ref<string>("report");
 const historyDate = ref<string>(dayjs().format("YYYY-MM-DD"));
 const overKey = ref<string>("");
@@ -25,7 +33,7 @@ const getHistoryChartInfo = async () => {
 };
 const getHistoryInfo = async () => {
   let obj: any = { date: historyDate.value };
-  // targetKey.value ? (obj.friendKey = targetKey.value) : null;
+  props.targetKey !== "self" ? (obj.friendKey = props.targetKey) : null;
   const historyRes = (await api.request.get("card/user/history", {
     ...obj,
   })) as ResultProps;
@@ -33,11 +41,28 @@ const getHistoryInfo = async () => {
     historyList.value = historyRes.data;
   }
 };
+const getTimelineInfo = async () => {
+  let obj: any = { date: historyDate.value };
+  props.targetKey !== "self" ? (obj.friendKey = props.targetKey) : null;
+  const timelineRes = (await api.request.get("card/user/timeline", {
+    ...obj,
+  })) as ResultProps;
+  if (timelineRes.msg === "OK") {
+    timelineList.value = timelineRes.data;
+    console.log(timelineList.value);
+  }
+};
 watchEffect(() => {
+  console.log("???");
   getHistoryChartInfo();
 });
 watchEffect(() => {
-  getHistoryInfo();
+  console.log("???");
+  if (historyType.value === "report") {
+    getHistoryInfo();
+  } else {
+    getTimelineInfo();
+  }
 });
 </script>
 <template>
@@ -78,20 +103,31 @@ watchEffect(() => {
         </div>
       </div>
       <div class="history-container">
-        <div
-          v-for="(item, index) in historyList"
-          :key="'task' + index"
-          class="task"
-        >
-          <div class="task-title"># {{ item.boardInfo.title }}</div>
-          <template
-            v-for="(taskItem, taskIndex) in item.cards"
+        <template v-if="historyType === 'report'">
+          <div
+            v-for="(item, index) in historyList"
+            :key="'task' + index"
+            class="task"
+          >
+            <div class="task-title"># {{ item.boardInfo.title }}</div>
+            <template
+              v-for="(taskItem, taskIndex) in item.cards"
+              :key="'taskItem' + taskIndex"
+              @mouseenter="overKey = taskItem._key"
+            >
+              <task-item :item="taskItem" :overKey="overKey" type="report" />
+            </template>
+          </div>
+        </template>
+        <template v-else>
+          <div
+            v-for="(taskItem, taskIndex) in timelineList"
             :key="'taskItem' + taskIndex"
             @mouseenter="overKey = taskItem._key"
           >
-            <task-item :item="taskItem" :overKey="overKey" type="report" />
-          </template>
-        </div>
+            <timeline-item :item="taskItem" :overKey="overKey" />
+          </div>
+        </template>
       </div>
     </div>
   </div>

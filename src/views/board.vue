@@ -8,12 +8,13 @@ import toTopSvg from "../assets/svg/toTop.svg";
 import appStore from "@/store";
 import { ElMessage } from "element-plus";
 import Contact from "./contact.vue";
+import Avatar from "@/components/avatar.vue";
 const router = useRouter();
 const { taskList } = storeToRefs(appStore.taskStore);
 const { boardList, boardIndex, boardKey, boardRole } = storeToRefs(
   appStore.boardStore
 );
-
+const { setFriendInfo } = appStore.authStore;
 const { getBoardList, setBoardRole } = appStore.boardStore;
 
 const boardRef = ref(null);
@@ -67,9 +68,7 @@ const addCard = async () => {
           cards: [],
         };
       }
-      console.log(item.creatorInfo._key);
-      console.log(taskObj.value[item.creatorInfo._key]);
-      taskObj.value[item.creatorInfo._key].cards.unshift(...taskRes.data);
+      taskObj.value[item.creatorInfo._key].cards.unshift(item);
     });
   }
 };
@@ -83,6 +82,11 @@ const toTop = () => {
       clearInterval(timer); // 关闭定时器
     }
   }, 30);
+};
+const toTargetList = () => {
+  //@ts-ignore
+  setFriendInfo(boardList.value[boardIndex.value].executorInfo);
+  router.push("/home/list");
 };
 // const moveAvatar = (e) => {
 //   //@ts-ignore
@@ -115,7 +119,41 @@ watch(
       <icon-font name="set" @click="$router.push(`/manage/` + boardKey)" />
     </template>
   </theader>
-  <div class="board p-5 dp-center-center" ref="boardRef">
+
+  <div class="board p-5" ref="boardRef">
+    <div class="board-header p-5 dp-space-center" v-if="boardList">
+      <div class="dp--center">
+        <avatar
+          :name="boardList[boardIndex].executorInfo.userName"
+          :avatar="boardList[boardIndex].executorInfo.userAvatar"
+          type="person"
+          :index="0"
+          :size="30"
+          :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+        />
+        {{ boardList[boardIndex].executorInfo.userName }}
+      </div>
+      <div class="dp--center">
+        <icon-font
+          name="list"
+          style="margin-right: 8px"
+          :size="22"
+          class="icon-point"
+          @click="toTargetList"
+        />
+        <icon-font
+          name="history"
+          :size="22"
+          class="icon-point"
+          @click="
+            $router.push(
+              //@ts-ignore
+              '/home/history/' + boardList[boardIndex].executorInfo._key
+            )
+          "
+        />
+      </div>
+    </div>
     <div class="board-container">
       <div class="board-edit">
         <div class="editor">
@@ -181,9 +219,13 @@ watch(
   background: var(--talk-bg-color);
   position: relative;
   z-index: 1;
+  .board-header {
+    width: 100%;
+    height: 40px;
+  }
   .board-container {
     width: 100%;
-    height: calc(100vh - 55px);
+    height: calc(100vh - 95px);
     max-width: 960px;
     .board-edit {
       width: 100%;

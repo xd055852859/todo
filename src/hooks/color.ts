@@ -19,6 +19,7 @@ export const lightColors = [
   { name: "--talk-button-hover-color", value: "#16ab78ba" },
   { name: "--talk-font-color-1", value: "#666" },
   { name: "--talk-font-color-2", value: "#9c9c9c" },
+  { name: "--talk-font-color-3", value: "#999" },
   { name: "--talk-hover-shadow", value: "rgba(178, 178, 178, 0.5)" },
 ];
 
@@ -42,6 +43,7 @@ export const darkColors = [
   { name: "--talk-button-hover-color", value: "#16ab78ba" },
   { name: "--talk-font-color-1", value: "#fff" },
   { name: "--talk-font-color-2", value: "#fff" },
+  { name: "--talk-font-color-3", value: "#fff" },
   { name: "--talk-hover-shadow", value: "rgba(178, 178, 178, 0.5)" },
   // { name: "--notes-color-border", value: "#171923" },
 ];

@@ -24,7 +24,7 @@ const url = computed(
       <div class="title">
         你的好友
         <span class="common-color">{{ user?.userName }}</span>
-        邀请您加入TeamTalk
+        邀请您加入Todo
       </div>
       <div class="title">
         {{ url }}

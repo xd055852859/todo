@@ -12,16 +12,18 @@ const props = defineProps<{
   zoom?: number;
   onClick?: Function;
 }>();
-
+const seriesChart = ref<any>(null);
 onMounted(() => {
+  createChart(props.data);
+});
+const createChart = (data: Rank[]) => {
   let root = am5.Root.new(props.XYId);
 
   // Set themes
   // https://www.amcharts.com/docs/v5/concepts/themes/
   root.setThemes([am5themes_Animated.new(root)]);
 
-  let data = [...props.data];
-
+  console.log("xxxxxxxx", data);
   // Create chart
   // https://www.amcharts.com/docs/v5/charts/xy-chart/
   let chart = root.container.children.push(
@@ -61,7 +63,7 @@ onMounted(() => {
 
   // Add series
   // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
-  let series: any = chart.series.push(
+  seriesChart.value = chart.series.push(
     am5xy.ColumnSeries.new(root, {
       name: "Income",
       xAxis: xAxis,
@@ -79,7 +81,7 @@ onMounted(() => {
     })
   );
 
-  series.columns.template.setAll({
+  seriesChart.value.columns.template.setAll({
     strokeOpacity: 0,
     cornerRadiusBR: 10,
     cornerRadiusTR: 10,
@@ -91,11 +93,11 @@ onMounted(() => {
 
   let currentlyHovered;
 
-  series.columns.template.events.on("pointerover", function (e) {
+  seriesChart.value.columns.template.events.on("pointerover", function (e) {
     handleHover(e.target.dataItem);
   });
 
-  series.columns.template.events.on("pointerout", function (e) {
+  seriesChart.value.columns.template.events.on("pointerout", function (e) {
     handleOut();
   });
 
@@ -127,7 +129,7 @@ onMounted(() => {
 
   let circleTemplate: any = am5.Template.new({});
 
-  series.bullets.push(function (root, series, dataItem) {
+  seriesChart.value.bullets.push(function (root, series, dataItem) {
     let bulletContainer = am5.Container.new(root, {});
     let circle = bulletContainer.children.push(
       am5.Circle.new(
@@ -168,12 +170,12 @@ onMounted(() => {
   });
 
   // heatrule
-  series.set("heatRules", [
+  seriesChart.value.set("heatRules", [
     {
       dataField: "valueX",
       min: am5.color(0xe5dc36),
       max: am5.color(0x5faa46),
-      target: series.columns.template,
+      target: seriesChart.value.columns.template,
       key: "fill",
     },
     {
@@ -185,7 +187,7 @@ onMounted(() => {
     },
   ]);
 
-  series.data.setAll(data);
+  seriesChart.value.data.setAll(data);
   yAxis.data.setAll(data);
 
   let cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
@@ -193,7 +195,7 @@ onMounted(() => {
   cursor.lineY.set("visible", false);
 
   cursor.events.on("cursormoved", function () {
-    let dataItem = series.get("tooltip").dataItem;
+    let dataItem = seriesChart.value.get("tooltip").dataItem;
     if (dataItem) {
       handleHover(dataItem);
     } else {
@@ -201,9 +203,17 @@ onMounted(() => {
     }
   });
 
-  series.appear();
+  seriesChart.value.appear();
   chart.appear(1000, 100);
-});
+};
+watch(
+  () => props.data,
+  (newData) => {
+    if (newData) {
+      seriesChart.value.data.setAll(newData);
+    }
+  }
+);
 </script>
 <template>
   <div :id="XYId" :style="{ width: width, height: height }"></div>

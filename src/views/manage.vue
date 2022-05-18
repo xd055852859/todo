@@ -11,7 +11,7 @@ import chooseSvg from "@/assets/svg/choose.svg";
 import unchooseSvg from "@/assets/svg/unchoose.svg";
 import addPersonSvg from "@/assets/svg/addPerson.svg";
 
-const { user, mateList } = storeToRefs(appStore.authStore);
+const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { boardRole } = storeToRefs(appStore.boardStore);
 
 const { addMateList } = appStore.authStore;
@@ -32,13 +32,15 @@ const addMemberKeyArr = computed(() =>
     return item._key;
   })
 );
-const addMemberArr = computed(() =>
+//添加成员key
+const memberArr = computed(() =>
   mateList.value.filter((item) => {
     return memberKeyList.value.indexOf(item._key) === -1;
   })
 );
 const boardName = ref<string>("");
 const memberList = ref<Member[]>([]);
+const addMemberArr = ref<Member[] | User[]>([]);
 const memberVisible = ref<boolean>(false);
 const roleVisible = ref<boolean>(false);
 const roleArray = ["Owner", "Admin", "Editer", "Author", "Follower"];
@@ -51,6 +53,9 @@ onMounted(() => {
   boardKey.value = route.params.id as string;
   if (boardKey.value !== "create") {
     getInfo();
+  } else {
+    excutorList.value = mateList.value;
+    executorInfo.value = friend.value;
   }
 });
 const getInfo = async () => {
@@ -157,7 +162,7 @@ const chooseMember = (item: User) => {
     memberList.value.splice(index, 1);
   }
 };
-const upDateMember = (item: User) => {
+const upDateMember = (item) => {
   let index = addMemberKeyArr.value.indexOf(item._key as string);
   if (index === -1) {
     addMemberArr.value.push(item);
@@ -288,7 +293,7 @@ watch(
     direction="rtl"
     :size="350"
     custom-class="p0-drawer"
-    title="Role"
+    title="Execativor"
   >
     <div class="add-member">
       <div
@@ -311,15 +316,17 @@ watch(
     custom-class="p0-drawer"
     title="Choose Member"
     :before-close="
-      (done) => {
-        updateBoard('member', done);
-      }
+      boardKey !== 'create'
+        ? (done) => {
+            updateBoard('member', done);
+          }
+        : null
     "
   >
     <div class="add-member">
       <div
         class="container dp-space-center"
-        v-for="(item, index) in addMemberArr"
+        v-for="(item, index) in memberArr"
         :key="'add-member' + index"
         @click="boardKey === 'create' ? chooseMember(item) : upDateMember(item)"
       >
@@ -454,6 +461,7 @@ watch(
     margin-bottom: 15px;
   }
   .manage-item {
+    margin-bottom: 10px;
     .manage-item-img {
       width: 50px;
       height: 50px;

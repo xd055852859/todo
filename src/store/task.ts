@@ -8,6 +8,7 @@ export const taskStore = defineStore("taskStore", () => {
   const taskList = ref<any>([]);
   const inboxList = ref<any>([]);
   const targetKey = ref<string>("");
+  const taskKey = ref<string>("");
   const getTaskList = async (mark: string, hasFinished?: number) => {
     let obj: any = { mark };
     hasFinished ? (obj.hasFinished = hasFinished) : null;
@@ -46,6 +47,10 @@ export const taskStore = defineStore("taskStore", () => {
   const setTargetKey = (key) => {
     targetKey.value = key;
   };
+  const setTaskKey = (key) => {
+    taskKey.value = key;
+  };
+  taskKey
   return {
     taskList,
     inboxList,
@@ -56,5 +61,7 @@ export const taskStore = defineStore("taskStore", () => {
     clearInboxList,
     targetKey,
     setTargetKey,
+    taskKey,
+    setTaskKey
   };
 });

@@ -5,7 +5,7 @@ import api from "@/services/api";
 import { storeToRefs } from "pinia";
 
 import appStore from "@/store";
-
+import logoSvg from "../assets/svg/logo.svg";
 const router = useRouter();
 const { user } = storeToRefs(appStore.authStore);
 
@@ -22,8 +22,17 @@ const setVisible = ref<boolean>(false);
     <div style="width: 100%">
       <div class="userCenter-user dp-space-center">
         <el-avatar fit="cover" :src="user?.userAvatar" :size="50" />
-        <div class="right">
-          <div class="center">{{ user?.userName }}</div>
+        <div class="right dp-space-center">
+          <div class="center">
+            {{ user?.userName }}
+          </div>
+          <div class="dp--center common-color">
+            <img
+              :src="logoSvg"
+              alt=""
+              style="width: 20px; height: 20px; margin-right: 5px"
+            />{{ user?.beans }}
+          </div>
         </div>
       </div>
       <div
@@ -42,7 +51,7 @@ const setVisible = ref<boolean>(false);
       </div>
       <div
         class="userCenter-item dp--center"
-        @click="$router.push('/home/history')"
+        @click="$router.push('/home/history/self')"
       >
         <icon-font name="history" :size="24" style="margin-right: 15px" />
         <span> History </span>

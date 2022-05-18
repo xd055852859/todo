@@ -3,6 +3,8 @@ import { User } from "@/interface/User";
 export interface Task {
   _key: string;
   title: string;
+  detail?: string;
+  imageList?: string[];
   mark: string;
   executorInfo: User;
   creatorInfo?: User;
@@ -14,5 +16,7 @@ export interface Task {
   };
   finishTime?: null | number;
   hasFinished?: number;
-  scoreIcon?:number
+  scoreIcon?: number;
+  sortTime?: number;
+  role: number;
 }

@@ -7,7 +7,9 @@ import { ResultProps } from "@/interface/Common";
 // 使用setup模式定义
 export const authStore = defineStore("authStore", () => {
   const token = ref<string>(localStorage.getItem("token") ?? "");
+  const uploadToken = ref<string>("");
   const user = ref<User | null>(null);
+  const friend = ref<User | null>(null);
   const mateList = ref<User[]>([]);
   const memberList = ref<User[]>([]);
   const setToken = (newToken: string) => {
@@ -16,6 +18,9 @@ export const authStore = defineStore("authStore", () => {
   const setUserInfo = (newUserInfo: User) => {
     user.value = newUserInfo;
   };
+  const setFriendInfo = (newFriendInfo: User) => {
+    friend.value = newFriendInfo;
+  };
   const getUserInfo = async () => {
     const userInfoRes = (await api.request.get("user")) as ResultProps;
     if (userInfoRes.msg === "OK") {
@@ -23,6 +28,7 @@ export const authStore = defineStore("authStore", () => {
         _key: userInfoRes.data._key,
         userAvatar: userInfoRes.data.userAvatar,
         userName: userInfoRes.data.userName,
+        beans: userInfoRes.data.beans,
       };
     }
   };
@@ -50,12 +56,28 @@ export const authStore = defineStore("authStore", () => {
   const addMemberList = async (memberItem: User) => {
     memberList.value = [...memberList.value, memberItem];
   };
+  const getUploadToken = async () => {
+    const tokenRes: any = (await api.request.get(
+      "upTokenQiniu/getQiNiuUpToken",
+      {
+        token: token.value,
+        type: 2,
+        bucketType: 6,
+      },
+      true
+    )) as ResultProps;
+    if (tokenRes.msg === "OK") {
+      uploadToken.value = tokenRes.result;
+    }
+  };
   return {
     token,
     user,
     setToken,
     setUserInfo,
     getUserInfo,
+    friend,
+    setFriendInfo,
     mateList,
     getMateList,
     addMateList,
@@ -63,5 +85,7 @@ export const authStore = defineStore("authStore", () => {
     memberList,
     getMemberList,
     addMemberList,
+    uploadToken,
+    getUploadToken
   };
 });

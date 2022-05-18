@@ -8,10 +8,11 @@ import TaskItem from "@/components/taskItem.vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
 
-const { user, mateList } = storeToRefs(appStore.authStore);
+const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { taskList, inboxList, targetKey } = storeToRefs(appStore.taskStore);
 const { getTaskList, delTaskList, clearInboxList, delInboxList, setTargetKey } =
   appStore.taskStore;
+const { setFriendInfo } = appStore.authStore;
 
 const listMateList = computed(() => [user.value, ...mateList.value]);
 
@@ -94,6 +95,19 @@ watch(targetKey, (newVal) => {
   getTaskList("today");
   getTaskNum();
 });
+watch(user, (newVal, oldVal) => {
+  if (!oldVal && newVal) {
+    setFriendInfo(newVal);
+  }
+});
+watchEffect(() => {
+  if (friend.value && user.value && friend.value._key !== user.value._key) {
+    let index = listMateList.value.findIndex(
+      (item) => item?._key === friend.value?._key
+    );
+    getTargetTask(friend.value, index);
+  }
+});
 </script>
 <template>
   <theader isMenu>
@@ -115,7 +129,11 @@ watch(targetKey, (newVal) => {
             <el-dropdown-item
               v-for="(item, index) in listMateList"
               :key="'listItem' + index"
-              @click="getTargetTask(item, index)"
+              @click="
+                //@ts-ignore
+                setFriendInfo(item)
+                // getTargetTask(item, index);
+              "
             >
               <div class="dp--center icon-point">
                 <el-avatar fit="cover" :size="30" :src="item?.userAvatar" />{{
@@ -204,8 +222,12 @@ watch(targetKey, (newVal) => {
       <div class="inbox" v-if="navKey === 'today' && inboxList.length > 0">
         <div class="inbox-title dp-space-center">
           Inbox
-          <tbutton style="height: 40px; padding: 0px 30px" @click="clearInbox" round>
-            Sent Read ( {{ taskNum.unRead }} ) 
+          <tbutton
+            style="height: 40px; padding: 0px 30px"
+            @click="clearInbox"
+            round
+          >
+            Sent Read ( {{ taskNum.unRead }} )
           </tbutton>
         </div>
         <div
@@ -362,6 +384,5 @@ watch(targetKey, (newVal) => {
     background-image: url("@/assets/img/fullBean.png");
   }
 }
-
 </style>
 <style></style>

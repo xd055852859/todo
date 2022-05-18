@@ -48,3 +48,8 @@
 .el-switch__core .el-switch__action {
   color: #fff !important;
 }
+.el-checkbox__inner::after{
+  border:1px solid #fff !important;
+  border-left: 0 !important;
+  border-top: 0 !important;
+}
