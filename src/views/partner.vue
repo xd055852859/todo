@@ -10,10 +10,14 @@ import { storeToRefs } from "pinia";
 import appStore from "@/store";
 import Avatar from "@/components/avatar.vue";
 const router = useRouter();
-
+const socket: any = inject("socket");
 const { mateList } = storeToRefs(appStore.authStore);
-// const { setToken, getUserInfo, getMateList } = appStore.authStore;
-
+const { updateMateList } = appStore.authStore;
+onMounted(() => {
+  socket.on("onlineStatus", (data) => {
+    updateMateList(data);
+  });
+});
 const searchVisible = ref<boolean>(false);
 const searchInput = ref<string>("");
 const searchList = ref<User[]>([]);
@@ -90,11 +94,11 @@ watchEffect(() => {
       <el-col
         v-for="(item, index) in searchList"
         :key="'contact' + index"
-        :xs="8"
-        :sm="6"
-        :md="4"
-        :lg="3"
-        :xl="1"
+        :xs="6"
+        :sm="4"
+        :md="3"
+        :lg="2"
+        :xl="2"
         @click="choosePartner()"
         style="cursor: pointer"
       >
@@ -111,6 +115,8 @@ watchEffect(() => {
             type="person"
             :index="index"
             :size="90"
+            showOnline
+            :online-state="item.online"
           />
           <div class="name single-to-long">
             {{ item.userName }}

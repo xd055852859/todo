@@ -41,6 +41,15 @@ export const authStore = defineStore("authStore", () => {
   const addMateList = async (mateItem: User) => {
     mateList.value = [...mateList.value, mateItem];
   };
+  const updateMateList = async (mateItem: User) => {
+    mateList.value = mateList.value.map((item: User) => {
+      if (item._key === mateItem._key) {
+        item = { ...item, ...mateItem };
+      }
+      return item;
+    });
+  };
+
   const delMateList = async (mateKey: string) => {
     mateList.value = mateList.value.filter((item) => item._key !== mateKey);
   };
@@ -82,10 +91,11 @@ export const authStore = defineStore("authStore", () => {
     getMateList,
     addMateList,
     delMateList,
+    updateMateList,
     memberList,
     getMemberList,
     addMemberList,
     uploadToken,
-    getUploadToken
+    getUploadToken,
   };
 });

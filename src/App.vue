@@ -66,7 +66,8 @@ watch(
 );
 watch(user, (newVal, oldVal) => {
   if (newVal && !oldVal) {
-    socket.on("connect", () => {
+    socket.on("connect", (socketId) => {
+      console.log(socket.id)
       socket.emit("login", token.value);
     });
   }

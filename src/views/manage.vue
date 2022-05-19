@@ -268,11 +268,11 @@ watch(
       <el-col
         v-for="(item, index) in memberList"
         :key="'contact' + index"
-        :xs="3"
+        :xs="6"
         :sm="4"
-        :md="6"
-        :lg="8"
-        :xl="12"
+        :md="3"
+        :lg="2"
+        :xl="2"
         style="cursor: pointer"
       >
         <div class="manage-item">
@@ -463,8 +463,8 @@ watch(
   .manage-item {
     margin-bottom: 10px;
     .manage-item-img {
-      width: 50px;
-      height: 50px;
+      width: 80px;
+      height: 80px;
       overflow: hidden;
       border-radius: 20px;
       box-shadow: 0px 0px 12px 10px rgba(0, 0, 0, 0.05);
@@ -475,8 +475,8 @@ watch(
       }
     }
     & > img {
-      width: 50px;
-      height: 50px;
+      width: 80px;
+      height: 80px;
     }
   }
 }

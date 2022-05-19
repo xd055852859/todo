@@ -10,9 +10,18 @@ import { ResultProps } from "@/interface/Common";
 
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { taskList, inboxList, targetKey } = storeToRefs(appStore.taskStore);
-const { getTaskList, delTaskList, clearInboxList, delInboxList, setTargetKey } =
-  appStore.taskStore;
+const {
+  getTaskList,
+  delTaskList,
+  addInboxList,
+  insertInboxList,
+  clearInboxList,
+  delInboxList,
+  setTargetKey,
+} = appStore.taskStore;
 const { setFriendInfo } = appStore.authStore;
+
+const socket: any = inject("socket");
 
 const listMateList = computed(() => [user.value, ...mateList.value]);
 
@@ -31,6 +40,33 @@ const taskNum = reactive({
 onMounted(() => {
   getTaskList("today");
   getTaskNum();
+
+  socket.on("create", (data) => {
+    console.log("create", data);
+    //新建 创建者不是自己则在inbox inboxList
+    let index = inboxList.value.findIndex(
+      (item) =>
+        data.creatorInfo._key === item.creatorInfo?._key &&
+        data.boardInfo._key === item.boardInfo?._key
+    );
+    taskNum.unRead++;
+    if (index !== -1) {
+      insertInboxList(index, data);
+    } else {
+      addInboxList(data);
+    }
+    //创建者是自己直接在已读列表里 taskList
+  });
+  socket.on("finish", (data) => {
+    console.log("finish", data);
+    finishTask(data);
+  });
+  socket.on("onlineStatus", (data) => {
+    console.log(data, "onlineStatus");
+  });
+  // socket.on("cancelFinish", (data) => {
+  //   console.log("cancelFinish", data);
+  // });
 });
 const getTaskNum = async () => {
   let obj: any = {};
@@ -89,6 +125,42 @@ const clearInbox = async () => {
     });
     clearInboxList();
     getTaskList("today");
+  }
+};
+const finishTask = (data: Task) => {
+  let boxIndex = inboxList.value.findIndex(
+    (item) =>
+      data.creatorInfo?._key === item.creatorInfo?._key &&
+      data.boardInfo?._key === item.boardInfo?._key
+  );
+  console.log(boxIndex);
+  if (boxIndex !== -1) {
+    let boxTaskIndex = inboxList.value[boxIndex].cards.findIndex(
+      (taskItem: Task) => data._key === taskItem._key
+    );
+    console.log(boxTaskIndex);
+    if (boxTaskIndex !== -1) {
+      delInboxList(boxIndex, boxTaskIndex);
+      completeNum.value++;
+    }
+  }
+  let index = taskList.value.findIndex(
+    (item) =>
+      data.creatorInfo?._key === item.creatorInfo?._key &&
+      data.boardInfo?._key === item.boardInfo?._key
+  );
+  console.log(taskList.value[index]);
+  console.log(index);
+  if (index !== -1) {
+    let taskIndex = taskList.value[index].cards.findIndex(
+      (taskItem: Task) => data._key === taskItem._key
+    );
+    console.log(taskList.value[index].cards[taskIndex]);
+    console.log(taskIndex);
+    if (taskIndex !== -1) {
+      delTaskList(index, taskIndex);
+      completeNum.value++;
+    }
   }
 };
 watch(targetKey, (newVal) => {
@@ -309,7 +381,7 @@ watchEffect(() => {
 <style scoped lang="scss">
 .board {
   width: 100%;
-  height: calc(100vh - 95px);
+  height: calc(100vh - 105px);
   .board-nav {
     width: 100%;
     height: 60px;

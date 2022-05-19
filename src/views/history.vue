@@ -69,11 +69,11 @@ watchEffect(() => {
   <theader isMenu>
     <template #left> History </template>
   </theader>
-  <div class="history">
+  <div class="history p-5">
     <template v-if="historyChartList.length > 0">
       <riverChart
         riverId="riverContentId"
-        :width="'100vw'"
+        :width="'100%'"
         :height="'30vh'"
         :data="historyChartList"
       />

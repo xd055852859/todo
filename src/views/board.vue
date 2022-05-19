@@ -9,7 +9,9 @@ import appStore from "@/store";
 import { ElMessage } from "element-plus";
 import Contact from "./contact.vue";
 import Avatar from "@/components/avatar.vue";
+import { Task } from "@/interface/Task";
 const router = useRouter();
+const socket: any = inject("socket");
 const { taskList } = storeToRefs(appStore.taskStore);
 const { boardList, boardIndex, boardKey, boardRole } = storeToRefs(
   appStore.boardStore
@@ -25,8 +27,14 @@ const taskTitle = ref<string>("");
 const multipleCheck = ref<boolean>(false);
 const taskObj = ref<any>(null);
 
+const completeNum = ref<number>(0);
+
 onMounted(() => {
   getBoardList("accessTime", "desc");
+
+  socket.on("finish", (data) => {
+    finishTask(data);
+  });
 });
 const getBoardTask = async (boardKey: string) => {
   const taskRes: any = (await api.request.get("card/board", {
@@ -34,6 +42,7 @@ const getBoardTask = async (boardKey: string) => {
   })) as ResultProps;
   if (taskRes.msg === "OK") {
     taskObj.value = taskRes.data.list;
+    completeNum.value = taskRes.data.completeNum;
     setBoardRole(taskRes.data.role);
   }
 };
@@ -88,6 +97,20 @@ const toTargetList = () => {
   setFriendInfo(boardList.value[boardIndex.value].executorInfo);
   router.push("/home/list");
 };
+const finishTask = (data) => {
+  if (taskObj.value[data.creatorInfo._key]) {
+    let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
+      (item: Task) => data._key === item._key
+    );
+    if (index !== -1) {
+      taskObj.value[data.creatorInfo._key].cards.splice(index, 1);
+      if (taskObj.value[data.creatorInfo._key].cards.length === 0) {
+        delete taskObj.value[data.creatorInfo._key];
+      }
+      completeNum.value++;
+    }
+  }
+};
 // const moveAvatar = (e) => {
 //   //@ts-ignore
 //   avatarRef.value.scrollLeft += e.deltaY;
@@ -120,8 +143,8 @@ watch(
     </template>
   </theader>
 
-  <div class="board p-5" ref="boardRef">
-    <div class="board-header p-5 dp-space-center" v-if="boardList">
+  <div class="board dp-center-center" ref="boardRef">
+    <div class="board-header dp-space-center p-5" v-if="boardList">
       <div class="dp--center">
         <avatar
           :name="boardList[boardIndex].executorInfo.userName"
@@ -154,7 +177,8 @@ watch(
         />
       </div>
     </div>
-    <div class="board-container">
+    <!-- <div class="board-box dp-center"> -->
+    <div class="board-container p-5">
       <div class="board-edit">
         <div class="editor">
           <el-input
@@ -191,9 +215,15 @@ watch(
           <task-item :item="item" :overKey="overKey" type="board" />
         </template>
       </div>
+
       <div class="toTop icon-point" v-if="topVisible" @click="toTop">
         <img :src="toTopSvg" alt="" style="width: 50px; height: 50px" />
       </div>
+    </div>
+    <!-- </div> -->
+    <div class="footer p-5 dp--center">
+      Completed ({{ completeNum }})
+      <div></div>
     </div>
     <div class="contact-box" v-if="contactVisible">
       <contact @close="contactVisible = false" />
@@ -214,19 +244,28 @@ watch(
 <style scoped lang="scss">
 .board {
   width: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
   background: var(--talk-bg-color);
   position: relative;
   z-index: 1;
+  flex-wrap: wrap;
   .board-header {
     width: 100%;
     height: 40px;
+    // max-width: 960px;
   }
+  // .board-box {
+  //   width: 100%;
+  //   height: calc(100vh - 135px);
+  //   overflow-x: hidden;
+  //   overflow-y: auto;
+
   .board-container {
+    // width: 100%;
+    // max-width: 960px;
     width: 100%;
-    height: calc(100vh - 95px);
-    max-width: 960px;
+    height: calc(100vh - 145px);
+    overflow-x: hidden;
+    overflow-y: auto;
     .board-edit {
       width: 100%;
       min-height: 200px;
@@ -262,6 +301,7 @@ watch(
       right: 20px;
       bottom: 40px;
     }
+    // }
   }
 
   .contact-box {

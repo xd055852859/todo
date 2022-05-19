@@ -13,6 +13,8 @@ const props = defineProps<{
   onClick?: Function;
 }>();
 const seriesChart = ref<any>(null);
+const yAxis = ref<any>(null);
+
 onMounted(() => {
   createChart(props.data);
 });
@@ -23,7 +25,6 @@ const createChart = (data: Rank[]) => {
   // https://www.amcharts.com/docs/v5/concepts/themes/
   root.setThemes([am5themes_Animated.new(root)]);
 
-  console.log("xxxxxxxx", data);
   // Create chart
   // https://www.amcharts.com/docs/v5/charts/xy-chart/
   let chart = root.container.children.push(
@@ -43,7 +44,7 @@ const createChart = (data: Rank[]) => {
   let yRenderer = am5xy.AxisRendererY.new(root, {});
   yRenderer.grid.template.set("visible", false);
 
-  let yAxis = chart.yAxes.push(
+  yAxis.value = chart.yAxes.push(
     am5xy.CategoryAxis.new(root, {
       categoryField: "userName",
       renderer: yRenderer,
@@ -67,7 +68,7 @@ const createChart = (data: Rank[]) => {
     am5xy.ColumnSeries.new(root, {
       name: "Income",
       xAxis: xAxis,
-      yAxis: yAxis,
+      yAxis: yAxis.value,
       valueXField: "totalBean",
       categoryYField: "userName",
       sequencedInterpolation: true,
@@ -188,7 +189,7 @@ const createChart = (data: Rank[]) => {
   ]);
 
   seriesChart.value.data.setAll(data);
-  yAxis.data.setAll(data);
+  yAxis.value.data.setAll(data);
 
   let cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
   cursor.lineX.set("visible", false);
@@ -211,6 +212,7 @@ watch(
   (newData) => {
     if (newData) {
       seriesChart.value.data.setAll(newData);
+      yAxis.value.data.setAll(newData);
     }
   }
 );

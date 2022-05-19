@@ -7,6 +7,7 @@ export interface User extends Person {
   email?: string;
   mobile?: string;
   beans?: number;
+  online?: boolean;
 }
 export interface Member extends Person {
   _key: string;
@@ -23,4 +24,5 @@ export interface Mate extends Person {
   yShareBeans: number;
   yTotalBeans: number;
   beans: number;
+  online?: boolean;
 }

@@ -62,7 +62,7 @@ const back = () => {
   width: 100%;
   height: 55px;
   text-align: center;
-  padding: 0px 5% 0px 10px;
+  padding: 0px 20px;
   box-sizing: border-box;
   position: relative;
   z-index: 1;
@@ -79,10 +79,10 @@ const back = () => {
     z-index: 5;
   }
   .left {
-    left: 10px;
+    left: 20px;
   }
   .right {
-    right: 5%;
+    right: 20px;
   }
 }
 </style>

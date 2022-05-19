@@ -10,9 +10,8 @@ import addBeanSvg from "@/assets/svg/addBean.svg";
 import finishBeanSvg from "@/assets/svg/finishBean.svg";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
-import { iteratee } from "lodash";
-import { ITEM_RENDER_EVT } from "element-plus/es/components/virtual-list/src/defaults";
-const { uploadToken } = storeToRefs(appStore.authStore);
+
+const { uploadToken, user } = storeToRefs(appStore.authStore);
 const { taskKey } = storeToRefs(appStore.taskStore);
 const { getUploadToken } = appStore.authStore;
 const { setTaskKey } = appStore.taskStore;
@@ -38,7 +37,7 @@ const emits = defineEmits<{
     index: number,
     listType: string
   ): void;
-  (e: "finishTask"): void;
+  (e: "finishTask", taskItem: Task): void;
 }>();
 onMounted(() => {
   title.value = props.item.title;
@@ -91,8 +90,9 @@ const finishTask = async () => {
     cardKey: props.item._key,
   })) as ResultProps;
   if (taskRes.msg === "OK") {
+    props.item.hasFinished = 1;
     //Todo
-    emits("finishTask");
+    emits("finishTask", props.item);
   }
 };
 const viewImg = (uploadFile) => {
@@ -108,6 +108,13 @@ const updateImg = (e) => {
   });
 };
 const delImg = () => {};
+watch(
+  () => props.item.title,
+  (newVal) => {
+    console.log(newVal);
+    title.value = newVal;
+  }
+);
 </script>
 <template>
   <OnClickOutside @trigger="upDateTask" style="width: 100%">
@@ -116,19 +123,26 @@ const delImg = () => {};
       @click="item._key !== taskKey ? getTaskInfo() : null"
       :style="
         item._key === taskKey
-          ? { boxShadow: '0px 4px 9px 0px var(--talk-hover-shadow)' }
+          ? {
+              boxShadow: '0px 4px 9px 0px var(--talk-hover-shadow)',
+              backgroundColor: 'var(--talk-item-color)',
+            }
           : {}
       "
     >
       <div class="task-top">
         <div class="task-left dp-center-center">
           <icon-font
-            name="unfinish"
+            :name="item.hasFinished ? 'finish' : 'unfinish'"
             :size="22"
             style="margin-right: 18px"
             color="#46a03c"
             class="icon-point"
-            @click.stop="finishTask"
+            @click.stop="
+              item.executorInfo._key === user?._key || role < 3
+                ? finishTask
+                : null
+            "
           />
         </div>
         <div class="task-right">
@@ -184,7 +198,7 @@ const delImg = () => {};
       </div>
       <div
         class="task-bottom dp-space-center"
-        v-if="type !== 'other' && type !== 'report'"
+        v-if="type !== 'other' && type !== 'report' && overKey === item._key"
       >
         <div>
           <span v-if="type === 'send'"># {{ item.boardInfo?.title }}</span>
@@ -295,7 +309,7 @@ const delImg = () => {};
         flex-wrap: wrap;
         .task-upload-img {
           margin-right: 10px;
-          margin-bottom:10px;
+          margin-bottom: 10px;
         }
         .task-upload-button {
           width: 60px;
@@ -306,7 +320,7 @@ const delImg = () => {};
           border: 1px dashed #cdd0d6;
           border-radius: 6px;
           box-sizing: border-box;
-          margin-bottom:10px;
+          margin-bottom: 10px;
           .upload-img {
             width: 100%;
             height: 100%;

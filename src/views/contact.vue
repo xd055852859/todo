@@ -16,7 +16,7 @@ watch(boardList, (newVal, oldVal) => {
   <div class="contact" v-if="boardList">
     <div class="contact-top">
       <div
-        class="container dp-space-center p-5"
+        class="container dp-space-center p-5 icon-point"
         v-for="(item, index) in boardList"
         :key="'add-member' + index"
         @click="

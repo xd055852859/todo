@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<iconProps>(), {
             // opacity: dark ? 0.52 : 0.27,
           }
     " -->
-  <div class="icon dp-center-center">
+  <!-- <div class="icon dp-center-center"> -->
     <i
       class="iconfont"
       :class="`icon-${name}`"
@@ -38,14 +38,9 @@ const props = withDefaults(defineProps<iconProps>(), {
         color: color ? color : 'var(--talk-font-color)',
       }"
     ></i>
-  </div>
+  <!-- </div> -->
 </template>
 <style scoped lang="scss">
-.icon {
-  opacity: 0.52;
-  border-radius: 50%;
-  background-color: transparent;
-}
 .icon-hover {
   &:hover {
     background-color: rgba(113, 113, 113, 0.27);

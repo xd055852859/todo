@@ -25,6 +25,9 @@ export const taskStore = defineStore("taskStore", () => {
   };
   const delTaskList = (index: number, taskIndex: number) => {
     taskList.value[index].cards.splice(taskIndex, 1);
+    if (taskList.value[index].cards.length === 0) {
+      taskList.value.splice(index, 1);
+    }
   };
   const getInboxList = async () => {
     let obj: any = {};
@@ -36,9 +39,22 @@ export const taskStore = defineStore("taskStore", () => {
       inboxList.value = inboxRes.data;
     }
   };
-
+  const addInboxList = (item: Task) => {
+    inboxList.value.unshift({
+      boardInfo: item.boardInfo,
+      cards: [item],
+      creatorInfo: item.creatorInfo,
+    });
+  };
+  const insertInboxList = (index: number, item: Task) => {
+    inboxList.value[index].cards.unshift(item);
+    console.log(inboxList.value[index].cards);
+  };
   const delInboxList = (index: number, taskIndex: number) => {
     inboxList.value[index].cards.splice(taskIndex, 1);
+    if (inboxList.value[index].cards.length === 0) {
+      inboxList.value.splice(index, 1);
+    }
   };
   const clearInboxList = () => {
     inboxList.value = [];
@@ -50,18 +66,20 @@ export const taskStore = defineStore("taskStore", () => {
   const setTaskKey = (key) => {
     taskKey.value = key;
   };
-  taskKey
+  taskKey;
   return {
     taskList,
-    inboxList,
     getTaskList,
     delTaskList,
+    inboxList,
     getInboxList,
+    addInboxList,
+    insertInboxList,
     delInboxList,
     clearInboxList,
     targetKey,
     setTargetKey,
     taskKey,
-    setTaskKey
+    setTaskKey,
   };
 });

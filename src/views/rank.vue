@@ -39,7 +39,7 @@ watchEffect(() => {
       {{ rankMark === "today" ? "Ranking of Beans" : "Ranking of Todo" }}
     </template>
   </theader>
-  <div class="rank">
+  <div class="rank p-5">
     <div class="rank-nav dp-center-center">
       <div
         :style="
@@ -76,7 +76,7 @@ watchEffect(() => {
     <div class="rank-chart" v-if="rankList.length > 0">
       <xyChart
         XYId="XYContentId"
-        :width="'100vw'"
+        :width="'100%'"
         :height="rankList.length * 30 + 150 + 'px'"
         :data="rankList"
       />

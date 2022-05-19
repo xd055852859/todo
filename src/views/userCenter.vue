@@ -6,8 +6,9 @@ import { storeToRefs } from "pinia";
 
 import appStore from "@/store";
 import logoSvg from "../assets/svg/logo.svg";
+const socket: any = inject("socket");
 const router = useRouter();
-const { user } = storeToRefs(appStore.authStore);
+const { user, token } = storeToRefs(appStore.authStore);
 
 const emits = defineEmits(["close"]);
 
@@ -16,6 +17,16 @@ const avatar = ref<string>("");
 const userName = ref<string>("");
 const email = ref<string>("");
 const setVisible = ref<boolean>(false);
+const logout = () => {
+  socket.emit("logout", token.value);
+  localStorage.removeItem("token");
+  router.push("/");
+  ElMessage({
+    message: "LogOut successfully",
+    type: "success",
+    duration: 1000,
+  });
+};
 </script>
 <template>
   <div class="user-center">
@@ -40,7 +51,7 @@ const setVisible = ref<boolean>(false);
         @click="$router.push('/home/list')"
       >
         <icon-font name="list" :size="22" style="margin-right: 18px" />
-        <span>List </span>
+        <span> Todo </span>
       </div>
       <div
         class="userCenter-item dp--center"
@@ -48,6 +59,13 @@ const setVisible = ref<boolean>(false);
       >
         <icon-font name="boards" :size="22" style="margin-right: 18px" />
         <span> Boards </span>
+      </div>
+      <div
+        class="userCenter-item dp--center"
+        @click="$router.push('/home/partner')"
+      >
+        <icon-font name="mates" :size="24" style="margin-right: 15px" />
+        <span> Mates </span>
       </div>
       <div
         class="userCenter-item dp--center"
@@ -63,13 +81,7 @@ const setVisible = ref<boolean>(false);
         <icon-font name="send" style="margin-right: 20px" />
         <span> I send </span>
       </div>
-      <div
-        class="userCenter-item dp--center"
-        @click="$router.push('/home/partner')"
-      >
-        <icon-font name="mates" :size="24" style="margin-right: 15px" />
-        <span> Mates </span>
-      </div>
+
       <div
         class="userCenter-item dp--center"
         @click="$router.push('/home/rank')"
@@ -101,7 +113,7 @@ const setVisible = ref<boolean>(false);
         <icon-font name="community" :size="18" style="margin-right: 15px" />
         <span>Community</span>
       </div>
-      <div class="userCenter-item dp--center">
+      <div class="userCenter-item dp--center" @click="logout">
         <icon-font name="quit" :size="18" style="margin-right: 15px" />
         <span> Quit </span>
       </div>

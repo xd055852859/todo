@@ -7,7 +7,8 @@ import { storeToRefs } from "pinia";
 
 import appStore from "@/store";
 import logoSvg from "../assets/svg/logo.svg";
-
+import Avatar from "@/components/avatar.vue";
+const socket: any = inject("socket");
 const { addMateList, delMateList } = appStore.authStore;
 const route = useRoute();
 const router = useRouter();
@@ -21,6 +22,10 @@ onMounted(() => {
   mateKey.value = route.params.id as string;
   console.log(mateKey.value);
   getMateInfo();
+  socket.on("onlineStatus", (data) => {
+    console.log(data, "onlineStatus");
+    mateInfo.value = { ...mateInfo.value, ...data };
+  });
 });
 const getMateInfo = async () => {
   const targetRes = (await api.request.get("user/target", {
@@ -42,13 +47,12 @@ const getMateInfo = async () => {
       shareTitle.value = "0%";
     } else {
       let num = parseInt(
-        (targetRes.data.yShareBeans / targetRes.data.shareBeans) * 100 + ""
+        ((targetRes.data.shareBeans - targetRes.data.yShareBeans) /
+          targetRes.data.yShareBeans) *
+          100 +
+          ""
       );
-      if (num > 100) {
-        shareTitle.value = "↓ " + (num - 100) + "%";
-      } else {
-        shareTitle.value = "↑ " + num + "%";
-      }
+      shareTitle.value = num < 0 ? "↓ " + num + "%" : "↑ " + num + "%";
     }
     if (targetRes.data.yTotalBeans === 0 && targetRes.data.totalBeans > 0) {
       allTitle.value = "↑ 100%";
@@ -64,13 +68,12 @@ const getMateInfo = async () => {
       allTitle.value = "0%";
     } else {
       let num = parseInt(
-        (targetRes.data.yTotalBeans / targetRes.data.totalBeans) * 100 + ""
+        (targetRes.data.totalBeans -
+          targetRes.data.yTotalBeans / targetRes.data.yTotalBeans) *
+          100 +
+          ""
       );
-      if (num > 100) {
-        allTitle.value = "↓ " + (num - 100) + "%";
-      } else {
-        allTitle.value = "↑ " + num + "%";
-      }
+      allTitle.value = num < 0 ? "↓ " + (num - 100) + "%" : "↑ " + num + "%";
     }
   }
 };
@@ -138,9 +141,16 @@ const delMate = async () => {
   <div class="mate p-5 dp-center-center" v-if="mateInfo">
     <div class="mate-top dp-center-center">
       <div class="mate-avatar dp-center-center">
-        <div class="mate-avatar-img dp-center-center">
-          <img :src="mateInfo.userAvatar" alt="" />
-        </div>
+        <!-- <img :src="mateInfo.userAvatar" alt="" /> -->
+        <avatar
+          :name="mateInfo.userName"
+          :avatar="mateInfo.userAvatar"
+          type="person"
+          :index="0"
+          :size="150"
+          showOnline
+          :online-state="mateInfo.online"
+        />
       </div>
       <div class="mate-name">{{ mateInfo.userName }}</div>
       <template v-if="mateInfo.added">
