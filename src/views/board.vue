@@ -10,6 +10,8 @@ import { ElMessage } from "element-plus";
 import Contact from "./contact.vue";
 import Avatar from "@/components/avatar.vue";
 import { Task } from "@/interface/Task";
+
+import bottlePng from "@/assets/img/bottle.png";
 const router = useRouter();
 const socket: any = inject("socket");
 const { taskList } = storeToRefs(appStore.taskStore);
@@ -31,7 +33,31 @@ const completeNum = ref<number>(0);
 
 onMounted(() => {
   getBoardList("accessTime", "desc");
-
+  socket.on("create", (data) => {
+    if (taskObj.value[data.creatorInfo._key]) {
+      taskObj.value[data.creatorInfo._key].cards.unshift(data);
+    } else {
+      taskObj.value[data.creatorInfo._key] = {
+        cards: [data],
+        userAvatar: data.creatorInfo.userAvatar,
+        userName: data.creatorInfo.userName,
+      };
+    }
+    //创建者是自己直接在已读列表里 taskList
+  });
+  socket.on("update", (data) => {
+    if (taskObj.value[data.creatorInfo._key]) {
+      let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
+        (item: Task) => data._key === item._key
+      );
+      if (index !== -1) {
+        taskObj.value[data.creatorInfo._key].cards[index] = {
+          ...taskObj.value[data.creatorInfo._key].cards[index],
+          ...data,
+        };
+      }
+    }
+  });
   socket.on("finish", (data) => {
     finishTask(data);
   });
@@ -212,7 +238,7 @@ watch(
           :key="'taskItem' + index"
           @mouseenter="overKey = item._key"
         >
-          <task-item :item="item" :overKey="overKey" type="board" />
+          <task-item :item="item" :overKey="overKey" type="board" amimateType />
         </template>
       </div>
 
@@ -222,8 +248,9 @@ watch(
     </div>
     <!-- </div> -->
     <div class="footer p-5 dp--center">
-      Completed ({{ completeNum }})
-      <div></div>
+      <div class="icon-point dp--center">
+        <img :src="bottlePng" alt="" /> Completed ({{ completeNum }})
+      </div>
     </div>
     <div class="contact-box" v-if="contactVisible">
       <contact @close="contactVisible = false" />

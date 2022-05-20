@@ -27,7 +27,7 @@ const props = defineProps<{
           :src="finishBeanSvg"
           alt=""
           v-if="item.scoreIcon === 2 || item.scoreIcon === 3"
-          class="task-bean"
+          class="timeline-bean"
         />
       </div>
       <div class="timeline-time">
@@ -72,8 +72,8 @@ const props = defineProps<{
     width: 50px;
     height: 100%;
     .timeline-bean {
-      width: 30px;
-      height: 30px;
+      width: 22px;
+      height: 22px;
     }
     .timeline-time {
       width: 100%;

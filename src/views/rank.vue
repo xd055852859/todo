@@ -4,12 +4,15 @@ import xyChart from "@/components/chart/xyChart.vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
 import { User } from "@/interface/User";
+import { storeToRefs } from "pinia";
+import appStore from "@/store";
 export interface Rank extends User {
   totalBean: number;
   pictureSettings: {
     src: string;
   };
 }
+const { deviceType } = storeToRefs(appStore.commonStore);
 const rankMark = ref<string>("today");
 const rankList = ref<Rank[]>([]);
 const seeAll = ref<number>(0);
@@ -34,12 +37,15 @@ watchEffect(() => {
 });
 </script>
 <template>
-  <theader isMenu>
+  <theader isMenu v-if="!deviceType">
     <template #left>
       {{ rankMark === "today" ? "Ranking of Beans" : "Ranking of Todo" }}
     </template>
   </theader>
-  <div class="rank p-5">
+  <div
+    class="rank p-5"
+    :style="{ height: deviceType ? '100vh' : 'calc(100vh - 55px)' }"
+  >
     <div class="rank-nav dp-center-center">
       <div
         :style="
@@ -95,8 +101,6 @@ watchEffect(() => {
 <style scoped lang="scss">
 .rank {
   width: 100%;
-  height: calc(100vh - 55px);
-
   position: relative;
   z-index: 1;
   padding-bottom: 40px;

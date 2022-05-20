@@ -7,11 +7,13 @@ import { Task } from "@/interface/Task";
 export const taskStore = defineStore("taskStore", () => {
   const taskList = ref<any>([]);
   const inboxList = ref<any>([]);
+  const completedList = ref<any>([]);
   const targetKey = ref<string>("");
   const taskKey = ref<string>("");
   const getTaskList = async (mark: string, hasFinished?: number) => {
-    let obj: any = { mark };
+    let obj: any = {};
     hasFinished ? (obj.hasFinished = hasFinished) : null;
+    mark ? (obj.mark = mark) : null;
     targetKey.value ? (obj.friendKey = targetKey.value) : null;
     if (mark === "today") {
       getInboxList();
@@ -20,13 +22,83 @@ export const taskStore = defineStore("taskStore", () => {
       ...obj,
     })) as ResultProps;
     if (taskRes.msg === "OK") {
-      taskList.value = taskRes.data;
+      if (hasFinished) {
+        completedList.value = taskRes.data.map((item) => {
+          item.cards = item.cards.map((taskItem) => {
+            taskItem.boardInfo = item.boardInfo;
+            taskItem.creatorInfo = item.creatorInfo;
+            return taskItem;
+          });
+          return item;
+        });
+      } else {
+        taskList.value = taskRes.data.map((item) => {
+          item.cards = item.cards.map((taskItem) => {
+            taskItem.boardInfo = item.boardInfo;
+            taskItem.creatorInfo = item.creatorInfo;
+            return taskItem;
+          });
+          return item;
+        });
+      }
     }
   };
-  const delTaskList = (index: number, taskIndex: number) => {
-    taskList.value[index].cards.splice(taskIndex, 1);
-    if (taskList.value[index].cards.length === 0) {
-      taskList.value.splice(index, 1);
+
+  const addList = (arr: any, item: Task) => {
+    let taskIndex = arr.findIndex(
+      (taskItem) =>
+        item.creatorInfo?._key === taskItem.creatorInfo?._key &&
+        item.boardInfo?._key === taskItem.boardInfo?._key
+    );
+    if (taskIndex !== -1) {
+      arr[taskIndex].cards.unshift(item);
+    } else {
+      arr.unshift({
+        boardInfo: item.boardInfo,
+        cards: [item],
+        creatorInfo: item.creatorInfo,
+      });
+    }
+  };
+
+  const updateList = (arr: any, item: Task) => {
+    let index = inboxList.value.findIndex(
+      (arrItem) =>
+        item.creatorInfo?._key === arrItem.creatorInfo?._key &&
+        item.boardInfo?._key === arrItem.boardInfo?._key
+    );
+    if (index !== -1) {
+      let taskIndex = arr.cards.findIndex(
+        (taskItem: Task) => item._key === taskItem._key
+      );
+      if (taskIndex !== -1) {
+        arr[index].cards[taskIndex] = {
+          ...arr[index].cards[taskIndex],
+          ...item,
+        };
+      }
+    }
+  };
+
+  const delList = (arr: any, item: Task) => {
+    console.log(item);
+    let index = arr.findIndex(
+      (arrItem) =>
+        item.creatorInfo?._key === arrItem.creatorInfo?._key &&
+        item.boardInfo?._key === arrItem.boardInfo?._key
+    );
+    console.log(index);
+    if (index !== -1) {
+      let taskIndex = arr[index].cards.findIndex(
+        (taskItem: Task) => item._key === taskItem._key
+      );
+      console.log(taskIndex);
+      if (taskIndex !== -1) {
+        arr[index].cards.splice(taskIndex, 1);
+        if (arr[index].cards.length === 0) {
+          arr.splice(index, 1);
+        }
+      }
     }
   };
   const getInboxList = async () => {
@@ -36,26 +108,17 @@ export const taskStore = defineStore("taskStore", () => {
       ...obj,
     })) as ResultProps;
     if (inboxRes.msg === "OK") {
-      inboxList.value = inboxRes.data;
+      inboxList.value = inboxRes.data.map((item) => {
+        item.cards = item.cards.map((taskItem) => {
+          taskItem.boardInfo = item.boardInfo;
+          taskItem.creatorInfo = item.creatorInfo;
+          return taskItem;
+        });
+        return item;
+      });
     }
   };
-  const addInboxList = (item: Task) => {
-    inboxList.value.unshift({
-      boardInfo: item.boardInfo,
-      cards: [item],
-      creatorInfo: item.creatorInfo,
-    });
-  };
-  const insertInboxList = (index: number, item: Task) => {
-    inboxList.value[index].cards.unshift(item);
-    console.log(inboxList.value[index].cards);
-  };
-  const delInboxList = (index: number, taskIndex: number) => {
-    inboxList.value[index].cards.splice(taskIndex, 1);
-    if (inboxList.value[index].cards.length === 0) {
-      inboxList.value.splice(index, 1);
-    }
-  };
+
   const clearInboxList = () => {
     inboxList.value = [];
   };
@@ -68,15 +131,15 @@ export const taskStore = defineStore("taskStore", () => {
   };
   taskKey;
   return {
+    addList,
+    updateList,
+    delList,
     taskList,
     getTaskList,
-    delTaskList,
     inboxList,
     getInboxList,
-    addInboxList,
-    insertInboxList,
-    delInboxList,
     clearInboxList,
+    completedList,
     targetKey,
     setTargetKey,
     taskKey,

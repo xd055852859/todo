@@ -20,25 +20,20 @@ const props = defineProps<{
   item: Task;
   type?: string;
   overKey?: string;
-  fatherIndex?: number;
-  index?: number;
+  amimateType?: boolean;
 }>();
+const emits = defineEmits<{
+  (e: "changeNum", type: string, item: Task, listType: string): void;
+  (e: "finishTask", taskItem: Task): void;
+}>();
+
 const title = ref<string>("");
 const detail = ref<string>("");
 const role = ref<number>(5);
 const imageList = ref<any>([]);
 const imageVisible = ref<boolean>(false);
 const imageSrc = ref<string>();
-const emits = defineEmits<{
-  (
-    e: "changeNum",
-    type: string,
-    fatherIndex: number,
-    index: number,
-    listType: string
-  ): void;
-  (e: "finishTask", taskItem: Task): void;
-}>();
+// const imageSrc = ref<any>(null);
 onMounted(() => {
   title.value = props.item.title;
 });
@@ -70,7 +65,7 @@ const changeMark = async (type: string) => {
       duration: 1000,
     });
     //@ts-ignore
-    emits("changeNum", type, props.fatherIndex, props.index, props.type);
+    emits("changeNum", type, props.item, props.type);
   }
 };
 const upDateTask = async () => {
@@ -85,19 +80,51 @@ const upDateTask = async () => {
     }
   }
 };
-const finishTask = async () => {
+const finishTask = async (e) => {
   const taskRes: any = (await api.request.patch("card/finish", {
     cardKey: props.item._key,
   })) as ResultProps;
   if (taskRes.msg === "OK") {
     props.item.hasFinished = 1;
+    console.log(props.amimateType);
+    if (props.amimateType) {
+      addBall(e);
+    }
     //Todo
     emits("finishTask", props.item);
   }
 };
-const viewImg = (uploadFile) => {
-  imageSrc.value = uploadFile.url;
-  imageVisible.value = true;
+const addBall = (e) => {
+  let left = e.pageX - e.target.offsetWidth / 2;
+  let top = e.pageY - e.target.offsetWidth / 2;
+  let width = document.documentElement.offsetWidth;
+  let height = document.documentElement.offsetHeight;
+  console.log(width, height);
+  let bar = document.createElement("div");
+  let img = document.createElement("img");
+  img.src = finishBeanSvg;
+  bar.appendChild(img);
+  bar.className = "bean-ball";
+  bar.style.left = left + "px";
+  bar.style.top = top + "px";
+  bar.style.transition = "left 1s linear, top 1s cubic-bezier(0.5, -0.5, 1, 1)";
+  document.body.appendChild(bar);
+  // 添加动画属性
+  let timer = setTimeout(() => {
+    bar.style.left = width * 0.05 + "px";
+    bar.style.top = height - 40 + "px";
+  }, 0);
+
+  // /**
+  //  * 动画结束后，删除自己
+  //  */
+  bar.ontransitionend = function () {
+    // this.remove();
+    if (document.body.contains(bar)) {
+      document.body.removeChild(bar);
+    }
+    clearTimeout(timer);
+  };
 };
 
 const updateImg = (e) => {
@@ -139,8 +166,8 @@ watch(
             color="#46a03c"
             class="icon-point"
             @click.stop="
-              item.executorInfo._key === user?._key || role < 3
-                ? finishTask
+              item.executorInfo?._key === user?._key || role < 3
+                ? finishTask($event)
                 : null
             "
           />
@@ -183,7 +210,7 @@ watch(
             />
             <div
               class="task-upload-button dp-center-center icon-point"
-              v-if="role < 3"
+              v-if="role < 3 && imageList.length < 10"
             >
               <el-icon><Plus /></el-icon>
               <input
@@ -212,35 +239,32 @@ watch(
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'today' }"
-              @click="changeMark('today')"
+              @click.stop="changeMark('today')"
               >Today
             </span>
             <el-divider direction="vertical" />
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'next' }"
-              @click="changeMark('next')"
+              @click.stop="changeMark('next')"
               >Next</span
             >
             <el-divider direction="vertical" />
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'future' }"
-              @click="changeMark('future')"
+              @click.stop="changeMark('future')"
               >Future</span
             >
           </template>
-          <template
-            v-else-if="
-              (type === 'board' || type === 'send') && overKey === item._key
-            "
-          >
+          <template v-else>
             {{ item.hasRead ? item.mark : "Unread" }}
             <icon-font
               class="icon-point del-button"
               name="image"
-              :size="20"
+              :size="10"
               style="margin-left: 10px"
+              v-if="item.hasImage"
           /></template>
         </div>
       </div>
@@ -366,5 +390,15 @@ watch(
 }
 .task .task-right .el-textarea.is-disabled .el-textarea__inner {
   cursor: default;
+}
+.bean-ball {
+  width: 25px;
+  height: 25px;
+  position: fixed;
+  z-index: 10;
+}
+.bean-ball img {
+  width: 100%;
+  height: 100%;
 }
 </style>

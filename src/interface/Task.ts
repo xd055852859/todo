@@ -9,6 +9,7 @@ export interface Task {
   executorInfo: User;
   creatorInfo?: User;
   hasRead: number;
+  hasImage?: boolean;
   createTime: number;
   boardInfo?: {
     _key: string;

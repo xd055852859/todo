@@ -12,6 +12,7 @@ const socket: any = inject("socket");
 const router = useRouter();
 const { token, user } = storeToRefs(appStore.authStore);
 const { setToken, getUserInfo, getMateList } = appStore.authStore;
+const { setDeviceType } = appStore.commonStore;
 
 onBeforeMount(() => {
   window.addEventListener("message", handle, false);
@@ -25,9 +26,13 @@ onBeforeMount(() => {
     ? window.location.search.split("?")[1]
     : window.location.hash.split("?")[1];
   const token = getSearchParamValue(search, "token") as string;
+  const deviceType = getSearchParamValue(search, "deviceType") as string;
   if (token) {
     request.setToken(token);
     setToken(token);
+  }
+  if (deviceType) {
+    setDeviceType(deviceType);
   }
 });
 onMounted(() => {
@@ -66,26 +71,11 @@ watch(
 );
 watch(user, (newVal, oldVal) => {
   if (newVal && !oldVal) {
-    socket.on("connect", (socketId) => {
-      console.log(socket.id)
+    socket.on("connect", () => {
       socket.emit("login", token.value);
     });
   }
 });
-
-// watchEffect(() => {
-//   if (user.value && messageList.value.length > 0) {
-//     let messageArray: Message[] = [];
-//     messageArray = messageList.value.map((item: Message) => {
-//       item.type = "other";
-//       if (item.creatorInfo._key === user.value?._key) {
-//         item.type = "self";
-//       }
-//       return item;
-//     });
-//     store.commit("message/replaceMessageList", messageArray);
-//   }
-// });
 </script>
 
 <template>

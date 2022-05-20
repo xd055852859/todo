@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
-import { ArrowRight, ArrowDown } from "@element-plus/icons-vue";
+import { ArrowRight, ArrowDown, Plus } from "@element-plus/icons-vue";
 import { Member, User } from "@/interface/User";
 import { storeToRefs } from "pinia";
 import api from "@/services/api";
@@ -10,6 +10,7 @@ import { ResultProps } from "@/interface/Common";
 import chooseSvg from "@/assets/svg/choose.svg";
 import unchooseSvg from "@/assets/svg/unchoose.svg";
 import addPersonSvg from "@/assets/svg/addPerson.svg";
+import { Board } from "@/interface/Board";
 
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { boardRole } = storeToRefs(appStore.boardStore);
@@ -19,7 +20,6 @@ const { setBoardRole } = appStore.boardStore;
 const router = useRouter();
 const route = useRoute();
 
-const boardKey = ref<string>("");
 //看板成员key
 const memberKeyList = computed(() =>
   memberList.value.map((item) => {
@@ -38,6 +38,16 @@ const memberArr = computed(() =>
     return memberKeyList.value.indexOf(item._key) === -1;
   })
 );
+const relativeKeyArr = computed(() => {
+  let arr: string[] = [];
+  relativeList.value.forEach((item: Board) => {
+    if (item.added) {
+      arr.push(item._key);
+    }
+  });
+  return arr;
+});
+const boardKey = ref<string>("");
 const boardName = ref<string>("");
 const memberList = ref<Member[]>([]);
 const addMemberArr = ref<Member[] | User[]>([]);
@@ -49,10 +59,14 @@ const delVisible = ref<boolean>(false);
 const executorInfo = ref<User | null>(null);
 const excutorVisible = ref<boolean>(false);
 const excutorList = ref<Member[] | User[]>([]);
+const relativeVisible = ref<boolean>(false);
+const relativeList = ref<any>([]);
+const relativeChangeVisible = ref<boolean>(false);
 onMounted(() => {
   boardKey.value = route.params.id as string;
   if (boardKey.value !== "create") {
     getInfo();
+    getRelative();
   } else {
     excutorList.value = mateList.value;
     executorInfo.value = friend.value;
@@ -162,6 +176,7 @@ const chooseMember = (item: User) => {
     memberList.value.splice(index, 1);
   }
 };
+
 const upDateMember = (item) => {
   let index = addMemberKeyArr.value.indexOf(item._key as string);
   if (index === -1) {
@@ -203,6 +218,37 @@ const saveMate = async (key, index) => {
     // router.push("/home");
   }
 };
+const getRelative = async () => {
+  let relativeRes = (await api.request.get("board/relative", {
+    boardKey: boardKey.value,
+  })) as ResultProps;
+  if (relativeRes.msg === "OK") {
+    relativeList.value = relativeRes.data;
+  }
+};
+const chooseRelative = (index: number) => {
+  relativeChangeVisible.value = true;
+  relativeList.value[index].added = !relativeList.value[index].added;
+};
+const saveRelative = async (done: any) => {
+  if (relativeChangeVisible.value) {
+    let relativeRes = (await api.request.patch("board/relative", {
+      boardKey: boardKey.value,
+      relativeArr: relativeKeyArr.value,
+    })) as ResultProps;
+    if (relativeRes.msg === "OK") {
+      ElMessage({
+        message: "Save Relative Successful",
+        type: "success",
+        duration: 1000,
+      });
+      relativeChangeVisible.value = false;
+      done();
+    }
+  } else {
+    done();
+  }
+};
 watch(
   user,
   (newVal) => {
@@ -241,12 +287,17 @@ watch(
         placeholder="请输入小组名"
         style="width: calc(100% - 150px)"
         @change="boardKey !== 'create' ? updateBoard('name') : null"
+        :disabled="boardKey !== 'create' && boardRole > 1"
       />
     </div>
     <div
       class="manage-text dp-space-center"
       :class="{ 'icon-point': boardKey !== 'create' }"
-      @click="excutorVisible = true"
+      @click="
+        (boardKey !== 'create' && boardRole > 1) || boardKey === 'create'
+          ? (excutorVisible = true)
+          : false
+      "
     >
       <span>Execativor</span>
       <div class="dp--center">
@@ -287,6 +338,19 @@ watch(
         </div>
       </el-col>
     </el-row>
+    <div
+      class="manage-text dp-space-center icon-point"
+      @click="relativeVisible = true"
+      v-if="boardKey !== 'create'"
+    >
+      <span>关联看板 ( {{ relativeKeyArr.length }} )</span>
+      <div class="dp--center">
+        <el-icon v-if="boardRole < 2">
+          <plus />
+        </el-icon>
+        <el-icon v-else><arrow-right /></el-icon>
+      </div>
+    </div>
   </div>
   <el-drawer
     v-model="excutorVisible"
@@ -309,6 +373,7 @@ watch(
       </div>
     </div>
   </el-drawer>
+
   <el-drawer
     v-model="memberVisible"
     direction="rtl"
@@ -331,7 +396,6 @@ watch(
         @click="boardKey === 'create' ? chooseMember(item) : upDateMember(item)"
       >
         <div class="left dp--center">
-          <el-avatar fit="cover" :size="40" :src="item.userAvatar" />
           <div class="name">{{ item.userName }}</div>
         </div>
         <div class="right">
@@ -339,6 +403,39 @@ watch(
             :src="
               boardKey === 'create'?memberKeyList.indexOf(item._key as string) !== -1 ? chooseSvg : unchooseSvg:addMemberKeyArr.indexOf(item._key as string) !== -1 ? chooseSvg : unchooseSvg
             "
+            alt=""
+            style="width: 20px; height: 20px; margin-right: 10px"
+          />
+        </div>
+      </div>
+    </div>
+  </el-drawer>
+  <el-drawer
+    v-model="relativeVisible"
+    direction="rtl"
+    :size="350"
+    custom-class="p0-drawer"
+    title="Choose Relative"
+    :before-close="
+      (done) => {
+        saveRelative(done);
+      }
+    "
+  >
+    <div class="add-member">
+      <div
+        class="container dp-space-center"
+        v-for="(item, index) in relativeList"
+        :key="'board' + index"
+        @click="chooseRelative(index)"
+      >
+        <div class="left dp--center">
+          <div class="name">{{ item.title }}</div>
+        </div>
+        <!--  addRelativeKeyArr.indexOf(item._key as string) !== -1 -->
+        <div class="right">
+          <img
+            :src="item.added ? chooseSvg : unchooseSvg"
             alt=""
             style="width: 20px; height: 20px; margin-right: 10px"
           />

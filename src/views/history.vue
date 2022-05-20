@@ -12,7 +12,7 @@ export interface HistoryChartProps {
   score: number;
 }
 const dayjs: any = inject("dayjs");
-const { user } = storeToRefs(appStore.authStore);
+const { deviceType } = storeToRefs(appStore.commonStore);
 
 const props = defineProps<{ targetKey: string }>();
 
@@ -66,10 +66,13 @@ watchEffect(() => {
 });
 </script>
 <template>
-  <theader isMenu>
+  <theader isMenu v-if="!deviceType">
     <template #left> History </template>
   </theader>
-  <div class="history p-5">
+  <div
+    class="history p-5"
+    :style="{ height: deviceType ? '100vh' : 'calc(100vh - 55px)' }"
+  >
     <template v-if="historyChartList.length > 0">
       <riverChart
         riverId="riverContentId"
@@ -78,7 +81,13 @@ watchEffect(() => {
         :data="historyChartList"
       />
     </template>
-    <div class="history-box">
+
+    <div
+      class="history-box"
+      :style="{
+        height: deviceType ? 'calc(70vh - 25px)' : 'calc(70vh - 70px)',
+      }"
+    >
       <div class="history-nav dp-center-center">
         <div
           :style="
@@ -135,11 +144,9 @@ watchEffect(() => {
 <style scoped lang="scss">
 .history {
   width: 100%;
-  height: calc(100vh - 55px);
 
   .history-box {
     width: 100%;
-    height: calc(70vh - 70px);
     margin-top: 15px;
     .history-nav {
       width: 100%;

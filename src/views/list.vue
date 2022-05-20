@@ -7,16 +7,17 @@ import appStore from "@/store";
 import TaskItem from "@/components/taskItem.vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
-
+import bottlePng from "@/assets/img/bottle.png";
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
-const { taskList, inboxList, targetKey } = storeToRefs(appStore.taskStore);
+const { taskList, inboxList, completedList, targetKey } = storeToRefs(
+  appStore.taskStore
+);
 const {
   getTaskList,
-  delTaskList,
-  addInboxList,
-  insertInboxList,
+  delList,
+  updateList,
+  addList,
   clearInboxList,
-  delInboxList,
   setTargetKey,
 } = appStore.taskStore;
 const { setFriendInfo } = appStore.authStore;
@@ -28,9 +29,9 @@ const listMateList = computed(() => [user.value, ...mateList.value]);
 const navKey = ref<string>("today");
 const overKey = ref<string>("");
 const completeNum = ref<number>(0);
-const completeList = ref<Task[]>([]);
 const listIndex = ref<number>(0);
 const targetType = ref<string>("self");
+const completedVisible = ref<boolean>(false);
 const taskNum = reactive({
   today: 0,
   next: 0,
@@ -43,30 +44,38 @@ onMounted(() => {
 
   socket.on("create", (data) => {
     console.log("create", data);
-    //新建 创建者不是自己则在inbox inboxList
-    let index = inboxList.value.findIndex(
-      (item) =>
-        data.creatorInfo._key === item.creatorInfo?._key &&
-        data.boardInfo._key === item.boardInfo?._key
-    );
-    taskNum.unRead++;
-    if (index !== -1) {
-      insertInboxList(index, data);
-    } else {
-      addInboxList(data);
+    if (data.creatorInfo._key !== user.value?._key && !data.mark) {
+      //新建 创建者不是自己则在inbox inboxList
+      addList(inboxList.value, data);
+      taskNum.unRead++;
     }
     //创建者是自己直接在已读列表里 taskList
   });
   socket.on("finish", (data) => {
     console.log("finish", data);
-    finishTask(data);
+    // finishTask(data);
+    delList(data.mark ? taskList.value : inboxList.value, data);
+    completeNum.value++;
+    taskNum[data.mark]--;
   });
-  socket.on("onlineStatus", (data) => {
-    console.log(data, "onlineStatus");
+  socket.on("cancelFinish", (data) => {
+    delList(completedList.value, data);
+    completeNum.value--;
+    addList(taskList.value, data);
+    taskNum.today++;
   });
-  // socket.on("cancelFinish", (data) => {
-  //   console.log("cancelFinish", data);
-  // });
+  socket.on("update", (data) => {
+    console.log("update", data);
+    if (data.creatorInfo._key !== user.value?._key) {
+      //新建 创建者不是自己则在inbox inboxList
+      if (data.mark) {
+        //创建者是自己直接在已读列表里 taskList
+        updateList(taskList.value, data);
+      } else {
+        updateList(inboxList.value, data);
+      }
+    }
+  });
 });
 const getTaskNum = async () => {
   let obj: any = {};
@@ -91,12 +100,7 @@ const getTargetTask = async (item, index) => {
     setTargetKey(item._key);
   }
 };
-const changeNum = (
-  type: string,
-  fatherIndex: number,
-  index: number,
-  listType: string
-) => {
+const changeNum = (type: string, item, listType: string) => {
   switch (type) {
     case "today":
       taskNum.today++;
@@ -109,11 +113,7 @@ const changeNum = (
       break;
   }
   taskNum[navKey.value]--;
-  if (listType === "task") {
-    delTaskList(fatherIndex, index);
-  } else {
-    delInboxList(fatherIndex, index);
-  }
+  delList(listType === "task" ? taskList.value : inboxList.value, item);
 };
 const clearInbox = async () => {
   const clearRes = (await api.request.patch("message/read")) as ResultProps;
@@ -127,57 +127,62 @@ const clearInbox = async () => {
     getTaskList("today");
   }
 };
-const finishTask = (data: Task) => {
-  let boxIndex = inboxList.value.findIndex(
-    (item) =>
-      data.creatorInfo?._key === item.creatorInfo?._key &&
-      data.boardInfo?._key === item.boardInfo?._key
-  );
-  console.log(boxIndex);
-  if (boxIndex !== -1) {
-    let boxTaskIndex = inboxList.value[boxIndex].cards.findIndex(
-      (taskItem: Task) => data._key === taskItem._key
-    );
-    console.log(boxTaskIndex);
-    if (boxTaskIndex !== -1) {
-      delInboxList(boxIndex, boxTaskIndex);
-      completeNum.value++;
-    }
-  }
-  let index = taskList.value.findIndex(
-    (item) =>
-      data.creatorInfo?._key === item.creatorInfo?._key &&
-      data.boardInfo?._key === item.boardInfo?._key
-  );
-  console.log(taskList.value[index]);
-  console.log(index);
-  if (index !== -1) {
-    let taskIndex = taskList.value[index].cards.findIndex(
-      (taskItem: Task) => data._key === taskItem._key
-    );
-    console.log(taskList.value[index].cards[taskIndex]);
-    console.log(taskIndex);
-    if (taskIndex !== -1) {
-      delTaskList(index, taskIndex);
-      completeNum.value++;
-    }
-  }
-};
-watch(targetKey, (newVal) => {
+// const finishTask = (data: Task) => {
+//   let boxIndex = inboxList.value.findIndex(
+//     (item) =>
+//       data.creatorInfo?._key === item.creatorInfo?._key &&
+//       data.boardInfo?._key === item.boardInfo?._key
+//   );
+//   if (boxIndex !== -1) {
+//     let boxTaskIndex = inboxList.value[boxIndex].cards.findIndex(
+//       (taskItem: Task) => data._key === taskItem._key
+//     );
+//     if (boxTaskIndex !== -1) {
+//       delList(inboxList.value, data);
+//       completeNum.value++;
+//     }
+//   }
+//   let index = taskList.value.findIndex(
+//     (item) =>
+//       data.creatorInfo?._key === item.creatorInfo?._key &&
+//       data.boardInfo?._key === item.boardInfo?._key
+//   );
+//   if (index !== -1) {
+//     let taskIndex = taskList.value[index].cards.findIndex(
+//       (taskItem: Task) => data._key === taskItem._key
+//     );
+//     if (taskIndex !== -1) {
+//       delList(taskList.value, index, taskIndex);
+//       completeNum.value++;
+//     }
+//   }
+// };
+watch(targetKey, () => {
   getTaskList("today");
   getTaskNum();
 });
-watch(user, (newVal, oldVal) => {
-  if (!oldVal && newVal) {
-    setFriendInfo(newVal);
-  }
-});
+watch(
+  [user, friend],
+  ([newVal, newFriend], [oldVal]) => {
+    if (!oldVal && newVal && !newFriend) {
+      setFriendInfo(newVal);
+    }
+  },
+  { immediate: true }
+);
 watchEffect(() => {
-  if (friend.value && user.value && friend.value._key !== user.value._key) {
-    let index = listMateList.value.findIndex(
-      (item) => item?._key === friend.value?._key
-    );
-    getTargetTask(friend.value, index);
+  if (friend.value) {
+    if (user.value && friend.value._key !== user.value._key) {
+      let index = listMateList.value.findIndex(
+        (item) => item?._key === friend.value?._key
+      );
+      // console.log(friend.value);
+      // console.log(listMateList.value);
+      // listIndex.value = index;
+      getTargetTask(friend.value, index);
+    } else {
+      getTargetTask(friend.value, 0);
+    }
   }
 });
 </script>
@@ -186,12 +191,8 @@ watchEffect(() => {
     <template #left
       ><el-dropdown>
         <div class="dp--center icon-point">
-          <el-avatar
-            fit="cover"
-            :size="30"
-            :src="listMateList[listIndex]?.userAvatar"
-          />
-          {{ listMateList[listIndex]?.userName }}
+          <el-avatar fit="cover" :size="30" :src="friend?.userAvatar" />
+          {{ friend?.userName }}
           <el-icon class="el-icon--right">
             <arrow-down />
           </el-icon>
@@ -222,7 +223,11 @@ watchEffect(() => {
         <icon-font
           name="addBoard"
           class="icon-point"
-          @click="$router.push('/manage/create')"
+          @click="
+            //@ts-ignore
+            setFriendInfo(listMateList[listIndex]);
+            $router.push('/manage/create');
+          "
         />
       </div>
     </template>
@@ -298,6 +303,7 @@ watchEffect(() => {
             style="height: 40px; padding: 0px 30px"
             @click="clearInbox"
             round
+            v-if="targetType === 'self'"
           >
             Sent Read ( {{ taskNum.unRead }} )
           </tbutton>
@@ -308,7 +314,7 @@ watchEffect(() => {
           class="task"
         >
           <div class="task-title">
-            # {{ item.boardInfo.title }} Form
+            # {{ item.boardInfo.title }} From
             {{ item.creatorInfo.userName }}
           </div>
           <div
@@ -319,10 +325,9 @@ watchEffect(() => {
             <task-item
               :item="taskItem"
               :overKey="overKey"
-              :fatherIndex="index"
-              :index="taskIndex"
               :type="targetType === 'self' ? 'inbox' : 'other'"
               @changeNum="changeNum"
+              amimateType
             />
           </div>
         </div>
@@ -333,7 +338,7 @@ watchEffect(() => {
         class="task"
       >
         <div class="task-title">
-          # {{ item.boardInfo.title }} Form
+          # {{ item.boardInfo.title }} From
           {{ item.creatorInfo.userName }}
         </div>
         <div
@@ -344,10 +349,9 @@ watchEffect(() => {
           <task-item
             :item="taskItem"
             :overKey="overKey"
-            :fatherIndex="index"
-            :index="taskIndex"
             :type="targetType === 'self' ? 'task' : 'other'"
             @changeNum="changeNum"
+            amimateType
           />
         </div>
       </div>
@@ -374,9 +378,42 @@ watchEffect(() => {
     </div>
   </div>
   <div class="footer p-5 dp--center">
-    Completed ({{ completeNum }})
-    <div></div>
+    <div
+      class="icon-point dp--center"
+      @click="
+        getTaskList('', 1);
+        completedVisible = true;
+      "
+    >
+      <img :src="bottlePng" alt="" /> Completed ({{ completeNum }})
+    </div>
   </div>
+  <el-drawer
+    v-model="completedVisible"
+    direction="rtl"
+    title="Completed"
+    :size="350"
+  >
+    <div class="completed-box">
+      <div
+        v-for="(item, index) in completedList"
+        :key="'taskItem' + index"
+        class="task"
+      >
+        <div class="task-title">
+          # {{ item.boardInfo.title }} From
+          {{ item.creatorInfo.userName }}
+        </div>
+        <div
+          v-for="(taskItem, taskIndex) in item.cards"
+          :key="'taskItem' + index"
+          @mouseenter="overKey = taskItem._key"
+        >
+          <task-item :item="taskItem" :overKey="overKey" :type="'completed'" />
+        </div>
+      </div>
+    </div>
+  </el-drawer>
 </template>
 <style scoped lang="scss">
 .board {
@@ -455,6 +492,12 @@ watchEffect(() => {
   .board-full .board-img {
     background-image: url("@/assets/img/fullBean.png");
   }
+}
+.completed-box {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 </style>
 <style></style>
