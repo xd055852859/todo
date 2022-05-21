@@ -166,12 +166,14 @@ const changeRole = async (item: Member, index: number, role: number) => {
 const chooseExcutor = (item: User | Member) => {
   executorInfo.value = item;
   excutorVisible.value = false;
-  updateBoard("executor");
+  if (boardKey.value !== "create") {
+    updateBoard("executor");
+  }
 };
 const chooseMember = (item: User) => {
   let index = memberKeyList.value.indexOf(item._key as string);
   if (index === -1) {
-    memberList.value.push({ ...item, role: 4 });
+    memberList.value.push({ ...item, role: 3 });
   } else {
     memberList.value.splice(index, 1);
   }
@@ -245,9 +247,8 @@ const saveRelative = async (done: any) => {
       relativeChangeVisible.value = false;
       done();
     }
-  } else {
-    done();
   }
+  done();
 };
 watch(
   user,
@@ -294,7 +295,7 @@ watch(
       class="manage-text dp-space-center"
       :class="{ 'icon-point': boardKey !== 'create' }"
       @click="
-        (boardKey !== 'create' && boardRole > 1) || boardKey === 'create'
+        (boardKey !== 'create' && boardRole < 2) || boardKey === 'create'
           ? (excutorVisible = true)
           : false
       "

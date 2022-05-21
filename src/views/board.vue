@@ -34,32 +34,38 @@ const completeNum = ref<number>(0);
 onMounted(() => {
   getBoardList("accessTime", "desc");
   socket.on("create", (data) => {
-    if (taskObj.value[data.creatorInfo._key]) {
-      taskObj.value[data.creatorInfo._key].cards.unshift(data);
-    } else {
-      taskObj.value[data.creatorInfo._key] = {
-        cards: [data],
-        userAvatar: data.creatorInfo.userAvatar,
-        userName: data.creatorInfo.userName,
-      };
+    if (data.boardInfo._key === boardKey.value) {
+      if (taskObj.value[data.creatorInfo._key]) {
+        taskObj.value[data.creatorInfo._key].cards.unshift(data);
+      } else {
+        taskObj.value[data.creatorInfo._key] = {
+          cards: [data],
+          userAvatar: data.creatorInfo.userAvatar,
+          userName: data.creatorInfo.userName,
+        };
+      }
     }
     //创建者是自己直接在已读列表里 taskList
   });
   socket.on("update", (data) => {
-    if (taskObj.value[data.creatorInfo._key]) {
-      let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
-        (item: Task) => data._key === item._key
-      );
-      if (index !== -1) {
-        taskObj.value[data.creatorInfo._key].cards[index] = {
-          ...taskObj.value[data.creatorInfo._key].cards[index],
-          ...data,
-        };
+    if (data.boardInfo._key === boardKey.value) {
+      if (taskObj.value[data.creatorInfo._key]) {
+        let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
+          (item: Task) => data._key === item._key
+        );
+        if (index !== -1) {
+          taskObj.value[data.creatorInfo._key].cards[index] = {
+            ...taskObj.value[data.creatorInfo._key].cards[index],
+            ...data,
+          };
+        }
       }
     }
   });
   socket.on("finish", (data) => {
-    finishTask(data);
+    if (data.boardInfo._key === boardKey.value) {
+      finishTask(data);
+    }
   });
 });
 const getBoardTask = async (boardKey: string) => {
@@ -67,7 +73,21 @@ const getBoardTask = async (boardKey: string) => {
     boardKey: boardKey,
   })) as ResultProps;
   if (taskRes.msg === "OK") {
-    taskObj.value = taskRes.data.list;
+    taskObj.value = {};
+    for (let key in taskRes.data.list) {
+      let item = taskRes.data.list[key];
+      console.log(item);
+      item.cards = item.cards.map((taskItem) => {
+        taskItem.creatorInfo = {
+          userAvatar: item.userAvatar,
+          userName: item.userName,
+          _key: key,
+        };
+        return taskItem;
+      });
+      taskObj.value[key] = item;
+    }
+    console.log(taskObj.value);
     completeNum.value = taskRes.data.completeNum;
     setBoardRole(taskRes.data.role);
   }
@@ -95,16 +115,16 @@ const addCard = async () => {
       duration: 1000,
     });
     taskTitle.value = "";
-    taskRes.data.forEach((item) => {
-      if (!taskObj.value[item.creatorInfo._key]) {
-        taskObj.value[item.creatorInfo._key] = {
-          userAvatar: item.creatorInfo.userAvatar,
-          userName: item.creatorInfo.userName,
-          cards: [],
-        };
-      }
-      taskObj.value[item.creatorInfo._key].cards.unshift(item);
-    });
+    // taskRes.data.forEach((item) => {
+    //   if (!taskObj.value[item.creatorInfo._key]) {
+    //     taskObj.value[item.creatorInfo._key] = {
+    //       userAvatar: item.creatorInfo.userAvatar,
+    //       userName: item.creatorInfo.userName,
+    //       cards: [],
+    //     };
+    //   }
+    //   taskObj.value[item.creatorInfo._key].cards.unshift(item);
+    // });
   }
 };
 const toTop = () => {
@@ -157,52 +177,63 @@ watch(
       <div
         class="dp--center icon-point"
         @click="contactVisible = !contactVisible"
+        style="margin-right: 5px"
       >
         {{ boardList && boardList[boardIndex].title }}
-        <el-icon style="margin-left: 10px"
+        <el-icon style="margin-right: 8px; margin-left: 8px"
           ><arrow-up v-if="contactVisible" /><arrow-down v-else
         /></el-icon>
       </div>
-    </template>
-    <template v-slot:right>
       <icon-font name="set" @click="$router.push(`/manage/` + boardKey)" />
     </template>
-  </theader>
-
-  <div class="board dp-center-center" ref="boardRef">
-    <div class="board-header dp-space-center p-5" v-if="boardList">
-      <div class="dp--center">
-        <avatar
-          :name="boardList[boardIndex].executorInfo.userName"
-          :avatar="boardList[boardIndex].executorInfo.userAvatar"
-          type="person"
-          :index="0"
-          :size="30"
-          :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
-        />
-        {{ boardList[boardIndex].executorInfo.userName }}
-      </div>
+    <template v-slot:right>
       <div class="dp--center">
         <icon-font
-          name="list"
-          style="margin-right: 8px"
-          :size="22"
-          class="icon-point"
-          @click="toTargetList"
-        />
-        <icon-font
-          name="history"
-          :size="22"
+          name="addBoard"
           class="icon-point"
           @click="
-            $router.push(
-              //@ts-ignore
-              '/home/history/' + boardList[boardIndex].executorInfo._key
-            )
+            //@ts-ignore
+            setFriendInfo(boardList[boardIndex].executorInfo);
+            $router.push('/manage/create');
           "
         />
       </div>
+    </template>
+  </theader>
+  <div class="board-header dp-space-center" v-if="boardList">
+    <div class="dp--center">
+      <avatar
+        :name="boardList[boardIndex].executorInfo.userName"
+        :avatar="boardList[boardIndex].executorInfo.userAvatar"
+        type="person"
+        :index="0"
+        :size="30"
+        :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+      />
+      {{ boardList[boardIndex].executorInfo.userName }}
     </div>
+    <div class="dp--center">
+      <icon-font
+        name="list"
+        style="margin-right: 8px"
+        :size="22"
+        class="icon-point"
+        @click="toTargetList"
+      />
+      <icon-font
+        name="history"
+        :size="22"
+        class="icon-point"
+        @click="
+          $router.push(
+            //@ts-ignore
+            '/home/history/' + boardList[boardIndex].executorInfo._key
+          )
+        "
+      />
+    </div>
+  </div>
+  <div class="board dp-center-center" ref="boardRef">
     <!-- <div class="board-box dp-center"> -->
     <div class="board-container p-5">
       <div class="board-edit">
@@ -238,7 +269,14 @@ watch(
           :key="'taskItem' + index"
           @mouseenter="overKey = item._key"
         >
-          <task-item :item="item" :overKey="overKey" type="board" amimateType />
+          <task-item
+            :item="item"
+            :overKey="overKey"
+            type="board"
+            amimateType
+            @finishTask="finishTask"
+            :role="boardRole"
+          />
         </template>
       </div>
 
@@ -269,17 +307,20 @@ watch(
   </el-drawer> -->
 </template>
 <style scoped lang="scss">
+.board-header {
+  width: 100%;
+  height: 40px;
+  padding: 0px 20px;
+  box-sizing: border-box;
+  // max-width: 960px;
+}
 .board {
   width: 100%;
   background: var(--talk-bg-color);
   position: relative;
   z-index: 1;
   flex-wrap: wrap;
-  .board-header {
-    width: 100%;
-    height: 40px;
-    // max-width: 960px;
-  }
+
   // .board-box {
   //   width: 100%;
   //   height: calc(100vh - 135px);

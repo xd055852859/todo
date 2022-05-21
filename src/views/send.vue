@@ -56,7 +56,7 @@ watchEffect(() => {
       :key="'taskItem' + index"
       @mouseenter="overKey = item._key"
     >
-      <task-item :item="item" :overKey="overKey" type="send" />
+      <task-item :item="item" :overKey="overKey" type="send" :role="0" />
     </div>
   </div>
   <div

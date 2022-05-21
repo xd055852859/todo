@@ -78,7 +78,7 @@ const logout = () => {
         class="userCenter-item dp--center"
         @click="$router.push('/home/send')"
       >
-        <icon-font name="send" style="margin-right: 20px" />
+        <icon-font name="send" :size="24" style="margin-right: 20px" />
         <span> I send </span>
       </div>
 

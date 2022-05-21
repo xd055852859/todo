@@ -53,10 +53,7 @@ onMounted(() => {
   });
   socket.on("finish", (data) => {
     console.log("finish", data);
-    // finishTask(data);
-    delList(data.mark ? taskList.value : inboxList.value, data);
-    completeNum.value++;
-    taskNum[data.mark]--;
+    finishTask(data);
   });
   socket.on("cancelFinish", (data) => {
     delList(completedList.value, data);
@@ -113,7 +110,7 @@ const changeNum = (type: string, item, listType: string) => {
       break;
   }
   taskNum[navKey.value]--;
-  delList(listType === "task" ? taskList.value : inboxList.value, item);
+  delList(item.mark ? taskList.value : inboxList.value, item);
 };
 const clearInbox = async () => {
   const clearRes = (await api.request.patch("message/read")) as ResultProps;
@@ -127,36 +124,13 @@ const clearInbox = async () => {
     getTaskList("today");
   }
 };
-// const finishTask = (data: Task) => {
-//   let boxIndex = inboxList.value.findIndex(
-//     (item) =>
-//       data.creatorInfo?._key === item.creatorInfo?._key &&
-//       data.boardInfo?._key === item.boardInfo?._key
-//   );
-//   if (boxIndex !== -1) {
-//     let boxTaskIndex = inboxList.value[boxIndex].cards.findIndex(
-//       (taskItem: Task) => data._key === taskItem._key
-//     );
-//     if (boxTaskIndex !== -1) {
-//       delList(inboxList.value, data);
-//       completeNum.value++;
-//     }
-//   }
-//   let index = taskList.value.findIndex(
-//     (item) =>
-//       data.creatorInfo?._key === item.creatorInfo?._key &&
-//       data.boardInfo?._key === item.boardInfo?._key
-//   );
-//   if (index !== -1) {
-//     let taskIndex = taskList.value[index].cards.findIndex(
-//       (taskItem: Task) => data._key === taskItem._key
-//     );
-//     if (taskIndex !== -1) {
-//       delList(taskList.value, index, taskIndex);
-//       completeNum.value++;
-//     }
-//   }
-// };
+const finishTask = (data: Task) => {
+  delList(data.mark ? taskList.value : inboxList.value, data);
+  completeNum.value++;
+  if (data.mark) {
+    taskNum[data.mark]--;
+  }
+};
 watch(targetKey, () => {
   getTaskList("today");
   getTaskNum();
@@ -218,19 +192,7 @@ watchEffect(() => {
         </template>
       </el-dropdown></template
     >
-    <template #right>
-      <div class="dp--center">
-        <icon-font
-          name="addBoard"
-          class="icon-point"
-          @click="
-            //@ts-ignore
-            setFriendInfo(listMateList[listIndex]);
-            $router.push('/manage/create');
-          "
-        />
-      </div>
-    </template>
+    <template #right> </template>
   </theader>
   <div class="board">
     <div class="board-nav dp-space-center p-5">
@@ -305,7 +267,7 @@ watchEffect(() => {
             round
             v-if="targetType === 'self'"
           >
-            Sent Read ( {{ taskNum.unRead }} )
+            Set Read ( {{ taskNum.unRead }} )
           </tbutton>
         </div>
         <div
@@ -327,7 +289,9 @@ watchEffect(() => {
               :overKey="overKey"
               :type="targetType === 'self' ? 'inbox' : 'other'"
               @changeNum="changeNum"
+              @finishTask="finishTask"
               amimateType
+              :role="item.boardInfo.role ? item.boardInfo.role : 0"
             />
           </div>
         </div>
@@ -351,7 +315,9 @@ watchEffect(() => {
             :overKey="overKey"
             :type="targetType === 'self' ? 'task' : 'other'"
             @changeNum="changeNum"
+            @finishTask="finishTask"
             amimateType
+            :role="item.boardInfo.role"
           />
         </div>
       </div>
@@ -409,7 +375,12 @@ watchEffect(() => {
           :key="'taskItem' + index"
           @mouseenter="overKey = taskItem._key"
         >
-          <task-item :item="taskItem" :overKey="overKey" :type="'completed'" />
+          <task-item
+            :item="taskItem"
+            :overKey="overKey"
+            :type="'completed'"
+            :role="item.boardInfo.role"
+          />
         </div>
       </div>
     </div>

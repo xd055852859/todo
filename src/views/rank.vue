@@ -83,7 +83,7 @@ watchEffect(() => {
       <xyChart
         XYId="XYContentId"
         :width="'100%'"
-        :height="rankList.length * 30 + 150 + 'px'"
+        :height="rankList.length * 40 + 150 + 'px'"
         :data="rankList"
       />
     </div>

@@ -13,6 +13,7 @@ import appStore from "@/store";
 
 const { uploadToken, user } = storeToRefs(appStore.authStore);
 const { taskKey } = storeToRefs(appStore.taskStore);
+
 const { getUploadToken } = appStore.authStore;
 const { setTaskKey } = appStore.taskStore;
 
@@ -21,6 +22,7 @@ const props = defineProps<{
   type?: string;
   overKey?: string;
   amimateType?: boolean;
+  role:number
 }>();
 const emits = defineEmits<{
   (e: "changeNum", type: string, item: Task, listType: string): void;
@@ -29,13 +31,14 @@ const emits = defineEmits<{
 
 const title = ref<string>("");
 const detail = ref<string>("");
-const role = ref<number>(5);
 const imageList = ref<any>([]);
 const imageVisible = ref<boolean>(false);
 const imageSrc = ref<string>();
+const hasFinished = ref<number>(0);
 // const imageSrc = ref<any>(null);
 onMounted(() => {
   title.value = props.item.title;
+  hasFinished.value = props.item.hasFinished ? props.item.hasFinished : 0;
 });
 const getTaskInfo = async () => {
   getUploadToken();
@@ -50,7 +53,6 @@ const getTaskInfo = async () => {
     if (infoRes.data.imageList && infoRes.data.imageList.length > 0) {
       imageList.value = infoRes.data.imageList;
     }
-    role.value = infoRes.data.role;
   }
 };
 const changeMark = async (type: string) => {
@@ -69,7 +71,7 @@ const changeMark = async (type: string) => {
   }
 };
 const upDateTask = async () => {
-  if (props.item._key === taskKey.value && role.value < 3) {
+  if (props.item._key === taskKey.value &&props.role < 3) {
     const taskRes: any = (await api.request.patch("card", {
       cardKey: props.item._key,
       title: title.value,
@@ -77,6 +79,7 @@ const upDateTask = async () => {
       imageList: imageList.value,
     })) as ResultProps;
     if (taskRes.msg === "OK") {
+      setTaskKey("");
     }
   }
 };
@@ -85,7 +88,7 @@ const finishTask = async (e) => {
     cardKey: props.item._key,
   })) as ResultProps;
   if (taskRes.msg === "OK") {
-    props.item.hasFinished = 1;
+    hasFinished.value = 1;
     console.log(props.amimateType);
     if (props.amimateType) {
       addBall(e);
@@ -136,10 +139,11 @@ const updateImg = (e) => {
 };
 const delImg = () => {};
 watch(
-  () => props.item.title,
+  () => props.item,
   (newVal) => {
     console.log(newVal);
-    title.value = newVal;
+    title.value = newVal.title;
+    hasFinished.value = newVal.hasFinished ? newVal.hasFinished : 0;
   }
 );
 </script>
@@ -160,13 +164,15 @@ watch(
       <div class="task-top">
         <div class="task-left dp-center-center">
           <icon-font
-            :name="item.hasFinished ? 'finish' : 'unfinish'"
+            :name="hasFinished ? 'finish' : 'unfinish'"
             :size="22"
             style="margin-right: 18px"
             color="#46a03c"
             class="icon-point"
             @click.stop="
-              item.executorInfo?._key === user?._key || role < 3
+              item.executorInfo?._key === user?._key ||
+              item.creatorInfo?._key === user?._key ||
+              role < 3
                 ? finishTask($event)
                 : null
             "
@@ -182,7 +188,10 @@ watch(
           />
           <div
             class="task-detail"
-            v-if="taskKey === item._key && (role < 3 || (detail && role > 2))"
+            v-if="
+              taskKey === item._key &&
+              (role < 3 || (detail && role > 2))
+            "
           >
             <el-input
               v-model="detail"
@@ -225,7 +234,7 @@ watch(
       </div>
       <div
         class="task-bottom dp-space-center"
-        v-if="type !== 'other' && type !== 'report' && overKey === item._key"
+        v-if="type !== 'other' && type !== 'report'"
       >
         <div>
           <span v-if="type === 'send'"># {{ item.boardInfo?.title }}</span>
@@ -257,7 +266,7 @@ watch(
               >Future</span
             >
           </template>
-          <template v-else>
+          <template v-else-if="type==='board'||type==='send'">
             {{ item.hasRead ? item.mark : "Unread" }}
             <icon-font
               class="icon-point del-button"
