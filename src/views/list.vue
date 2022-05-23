@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
-import { ArrowDown } from "@element-plus/icons-vue";
+import { ArrowDown, HomeFilled, MoreFilled } from "@element-plus/icons-vue";
 import { Task } from "@/interface/Task";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
@@ -21,11 +21,18 @@ const {
   setTargetKey,
 } = appStore.taskStore;
 const { setFriendInfo } = appStore.authStore;
-
+const { boardList } = storeToRefs(appStore.boardStore);
+const { setBoardKey } = appStore.boardStore;
 const socket: any = inject("socket");
 
 const listMateList = computed(() => [user.value, ...mateList.value]);
-
+const friendBoardList = computed(
+  () =>
+    boardList.value &&
+    boardList.value.filter(
+      (item) => item.executorInfo._key === friend.value?._key
+    )
+);
 const navKey = ref<string>("today");
 const overKey = ref<string>("");
 const completeNum = ref<number>(0);
@@ -65,12 +72,8 @@ onMounted(() => {
     console.log("update", data);
     if (data.creatorInfo._key !== user.value?._key) {
       //新建 创建者不是自己则在inbox inboxList
-      if (data.mark) {
-        //创建者是自己直接在已读列表里 taskList
-        updateList(taskList.value, data);
-      } else {
-        updateList(inboxList.value, data);
-      }
+      //创建者是自己直接在已读列表里 taskList
+      updateList(data.mark ? taskList.value : inboxList.value, data);
     }
   });
 });
@@ -120,6 +123,7 @@ const clearInbox = async () => {
       type: "success",
       duration: 1000,
     });
+    taskNum.today = taskNum.today + inboxList.value.length;
     clearInboxList();
     getTaskList("today");
   }
@@ -192,7 +196,34 @@ watchEffect(() => {
         </template>
       </el-dropdown></template
     >
-    <template #right> </template>
+    <template #right v-if="targetType !== 'self'">
+      <el-icon
+        style="margin-right: 8px"
+        :size="22"
+        class="icon-point"
+        @click="$router.push('/home/mate/' + friend?._key)"
+        ><HomeFilled
+      /></el-icon>
+      <el-dropdown v-if="friendBoardList && friendBoardList.length > 0">
+        <div class="dp--center icon-point">
+          <el-icon :size="18"><MoreFilled /></el-icon>
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="(item, index) in friendBoardList"
+              :key="'friend' + index"
+              @click="
+                setBoardKey(item._key);
+                $router.push('/home/board');
+              "
+            >
+              {{ item.title }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </template>
   </theader>
   <div class="board">
     <div class="board-nav dp-space-center p-5">

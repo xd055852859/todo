@@ -22,7 +22,7 @@ const props = defineProps<{
   type?: string;
   overKey?: string;
   amimateType?: boolean;
-  role:number
+  role: number;
 }>();
 const emits = defineEmits<{
   (e: "changeNum", type: string, item: Task, listType: string): void;
@@ -35,7 +35,7 @@ const imageList = ref<any>([]);
 const imageVisible = ref<boolean>(false);
 const imageSrc = ref<string>();
 const hasFinished = ref<number>(0);
-// const imageSrc = ref<any>(null);
+
 onMounted(() => {
   title.value = props.item.title;
   hasFinished.value = props.item.hasFinished ? props.item.hasFinished : 0;
@@ -71,7 +71,7 @@ const changeMark = async (type: string) => {
   }
 };
 const upDateTask = async () => {
-  if (props.item._key === taskKey.value &&props.role < 3) {
+  if (props.item._key === taskKey.value && props.role < 3) {
     const taskRes: any = (await api.request.patch("card", {
       cardKey: props.item._key,
       title: title.value,
@@ -137,11 +137,86 @@ const updateImg = (e) => {
     // editorInfo.value?.chain().focus().deleteRange(range).setImage({ src: url });
   });
 };
+// const pasteImg = (event) => {
+//   console.log(event);
+//   var isChrome = false;
+//   if (event.clipboardData || event.originalEvent) {
+//     //not for ie11  某些chrome版本使用的是event.originalEvent
+//     var clipboardData =
+//       event.clipboardData || event.originalEvent.clipboardData;
+//     if (clipboardData.items) {
+//       // for chrome
+//       var items = clipboardData.items,
+//         len = items.length,
+//         blob = null;
+//       isChrome = true;
+//       //阻止默认行为即不让剪贴板内容在div中显示出来
+//       event.preventDefault();
+
+//       //在items里找粘贴的image,据上面分析,需要循环
+//       for (var i = 0; i < len; i++) {
+//         if (items[i].type.indexOf("image") !== -1) {
+//           //getAsFile() 此方法只是living standard firefox ie11 并不支持
+//           blob = items[i].getAsFile();
+//         }
+//       }
+//       if (blob !== null) {
+//         var reader = new FileReader();
+//         reader.onload = function (event) {
+//           // event.target.result 即为图片的Base64编码字符串
+//           //@ts-ignore
+//           var base64_str = event.target.result;
+//           //可以在这里写上传逻辑 直接将base64编码的字符串上传（可以尝试传入blob对象，看看后台程序能否解析）
+//           // uploadImgFromPaste(base64_str, 'paste', isChrome);
+//           console.log(base64_str);
+//         };
+//         reader.readAsDataURL(blob);
+//       }
+//     } else {
+//       //for firefox
+//       setTimeout(function () {
+//         //设置setTimeout的原因是为了保证图片先插入到div里，然后去获取值
+//         var imgList: any = document.querySelectorAll("#tar_box img"),
+//           len = imgList.length,
+//           src_str = "",
+//           i;
+//         for (i = 0; i < len; i++) {
+//           if (imgList[i].className !== "my_img") {
+//             //如果是截图那么src_str就是base64 如果是复制的其他网页图片那么src_str就是此图片在别人服务器的地址
+//             src_str = imgList[i].src;
+//           }
+//         }
+//         console.log(src_str);
+//         // uploadImgFromPaste(src_str, 'paste', isChrome);
+//       }, 1);
+//     }
+//   } else {
+//     //for ie11
+//     setTimeout(function () {
+//       var imgList: any = document.querySelectorAll("#tar_box img"),
+//         len = imgList.length,
+//         src_str = "",
+//         i;
+//       for (i = 0; i < len; i++) {
+//         if (imgList[i].className !== "my_img") {
+//           src_str = imgList[i].src;
+//         }
+//       }
+//       console.log(src_str);
+//       // uploadImgFromPaste(src_str, 'paste', isChrome);
+//     }, 1);
+//   }
+
+//   // let mimeType = ["image/png", "image/jpeg", "image/svg+xml"];
+//   // uploadImage(e.target.files[0], uploadToken.value, mimeType, (url: string) => {
+//   //   imageList.value.push(url);
+//   //   // editorInfo.value?.chain().focus().deleteRange(range).setImage({ src: url });
+//   // });
+// };
 const delImg = () => {};
 watch(
   () => props.item,
   (newVal) => {
-    console.log(newVal);
     title.value = newVal.title;
     hasFinished.value = newVal.hasFinished ? newVal.hasFinished : 0;
   }
@@ -188,10 +263,7 @@ watch(
           />
           <div
             class="task-detail"
-            v-if="
-              taskKey === item._key &&
-              (role < 3 || (detail && role > 2))
-            "
+            v-if="taskKey === item._key && (role < 3 || (detail && role > 2))"
           >
             <el-input
               v-model="detail"
@@ -217,6 +289,7 @@ watch(
               fit="cover"
               class="task-upload-img"
             />
+            <!--    @paste="pasteImg" -->
             <div
               class="task-upload-button dp-center-center icon-point"
               v-if="role < 3 && imageList.length < 10"
@@ -266,15 +339,16 @@ watch(
               >Future</span
             >
           </template>
-          <template v-else-if="type==='board'||type==='send'">
+          <template v-else-if="type === 'board' || type === 'send'">
             {{ item.hasRead ? item.mark : "Unread" }}
-            <icon-font
-              class="icon-point del-button"
-              name="image"
-              :size="10"
-              style="margin-left: 10px"
-              v-if="item.hasImage"
-          /></template>
+          </template>
+          <icon-font
+            class="icon-point del-button"
+            name="image"
+            :size="10"
+            style="margin-left: 10px"
+            v-if="item.hasImage"
+          />
         </div>
       </div>
       <div class="task-bottom dp-space-center" v-if="type === 'report'">

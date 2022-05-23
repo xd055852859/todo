@@ -21,7 +21,7 @@ const back = () => {
     <div class="left dp-space-center">
       <icon-font
         name="menu"
-        @click="themeVisible = true"
+        @mouseenter="themeVisible = true"
         style="margin-right: 10px"
         :size="16"
         v-if="isMenu"

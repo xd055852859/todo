@@ -14,10 +14,13 @@ export const boardStore = defineStore("boardStore", () => {
     return 0;
   });
   const sortArr = ["accessTime", "boardTitle", "master"];
-  const sortIndex = ref<number>(0);
-  const order = ref<string>("asc");
+  const sortIndex = ref<number>(
+    //@ts-ignore
+    localStorage.getItem("sortIndex") ? +localStorage.getItem("sortIndex") : 0
+  );
+  const order = ref<string>(localStorage.getItem("order") ?? "");
   const boardKey = ref<string>(localStorage.getItem("boardKey") ?? "");
-  const boardList = ref<Board[] | null>(null);
+  const boardList = ref<Board[]>([]);
   const boardRole = ref<number>(5);
 
   const setBoardKey = (key: string) => {
@@ -38,6 +41,11 @@ export const boardStore = defineStore("boardStore", () => {
   };
   const setSortIndex = (index: number) => {
     sortIndex.value = index;
+    localStorage.setItem("sortIndex", index + "");
+  };
+  const setOrder = (newOrder: string) => {
+    order.value = newOrder;
+    localStorage.setItem("order", newOrder);
   };
   const setBoardRole = (role: number) => {
     boardRole.value = role;
@@ -53,6 +61,8 @@ export const boardStore = defineStore("boardStore", () => {
     boardIndex,
     sortIndex,
     setSortIndex,
+    order,
+    setOrder,
     boardRole,
     setBoardRole,
   };

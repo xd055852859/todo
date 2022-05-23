@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
+import { Sort } from "@element-plus/icons-vue";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
 
 const emits = defineEmits(["close"]);
-const { boardList, boardKey, sortIndex } = storeToRefs(appStore.boardStore);
-const { setBoardKey, setSortIndex } = appStore.boardStore;
+const { boardList, order, sortIndex } = storeToRefs(appStore.boardStore);
+const { setBoardKey, setSortIndex, setOrder } = appStore.boardStore;
+
+const searchList = computed(() =>
+  boardList.value.filter((item) => {
+    return item.title.indexOf(searchInput.value) !== -1;
+  })
+);
 const sortArr = ["Access time", "Aplhabet", "Master"];
+const searchInput = ref<string>("");
 watch(boardList, (newVal, oldVal) => {
   if (!oldVal && newVal) {
   }
@@ -14,10 +22,44 @@ watch(boardList, (newVal, oldVal) => {
 </script>
 <template>
   <div class="contact" v-if="boardList">
-    <div class="contact-top">
+    <div class="contact-top dp-space-center p-5">
+      <el-input
+        v-model="searchInput"
+        placeholder="Search Board"
+        style="width: 200px; height: 35px"
+      />
+
+      <icon-font
+        :name="order === 'asc' ? 'asc' : 'desc'"
+        :size="22"
+        color="#46a03c"
+        class="icon-point"
+        @click="setOrder(order === 'asc' ? 'desc' : 'asc')"
+      />
+      <el-dropdown>
+        <div class="dp--center icon-point">
+          <el-icon style="margin-right: 10px" class="icon-point" :size="20">
+            <Sort />
+          </el-icon>
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="(item, index) in sortArr"
+              :key="'sort' + index"
+              @click="setSortIndex(index)"
+              class="icon-point"
+            >
+              {{ item }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
+    <div class="contact-bottom">
       <div
         class="container dp-space-center p-5 icon-point"
-        v-for="(item, index) in boardList"
+        v-for="(item, index) in searchList"
         :key="'add-member' + index"
         @click="
           setBoardKey(item._key);
@@ -36,49 +78,20 @@ watch(boardList, (newVal, oldVal) => {
         </div> -->
       </div>
     </div>
-    <div class="contact-bottom dp-space-center p-5">
-      <el-dropdown>
-        <div class="dp--center icon-point">
-          <icon-font name="sort" :size="22" style="margin-right: 10px" /> Access
-          time
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item
-              v-for="(item, index) in sortArr"
-              :key="'sort' + index"
-              @click="setSortIndex(index)"
-              class="icon-point"
-            >
-              {{ item }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <tbutton
-        style="height: 40px; padding: 0px 30px"
-        @click="$router.push('/home/manage/create')"
-        round
-      >
-        New Board
-      </tbutton>
-    </div>
   </div>
 </template>
 <style scoped lang="scss">
 .contact {
-  width: 100%;
-  height: 100%;
+  width: 300px;
   background-color: #fff;
   .contact-top {
-    width: 100%;
-    height: calc(100% - 55px);
-    overflow-x: hidden;
-    overflow-y: auto;
+    height: 45px;
   }
   .contact-bottom {
-    height: 55px;
-    background: #f2f2f2;
+    width: 100%;
+    max-height: calc(100vh - 200px);
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 </style>

@@ -48,35 +48,50 @@ const logout = () => {
       </div>
       <div
         class="userCenter-item dp--center"
-        @click="$router.push('/home/list')"
+        @click="
+          $router.push('/home/list');
+          emits('close');
+        "
       >
         <icon-font name="list" :size="22" style="margin-right: 18px" />
         <span> Todo </span>
       </div>
       <div
         class="userCenter-item dp--center"
-        @click="$router.push('/home/board')"
+        @click="
+          $router.push('/home/board');
+          emits('close');
+        "
       >
         <icon-font name="boards" :size="22" style="margin-right: 18px" />
         <span> Boards </span>
       </div>
       <div
         class="userCenter-item dp--center"
-        @click="$router.push('/home/partner')"
+        @click="
+          $router.push('/home/partner');
+          emits('close');
+        "
       >
         <icon-font name="mates" :size="24" style="margin-right: 15px" />
         <span> Mates </span>
       </div>
       <div
         class="userCenter-item dp--center"
-        @click="$router.push('/home/history/self')"
+        @click="
+          $router.push('/home/history/self');
+          emits('close');
+        "
       >
         <icon-font name="history" :size="24" style="margin-right: 15px" />
         <span> History </span>
       </div>
       <div
         class="userCenter-item dp--center"
-        @click="$router.push('/home/send')"
+        @click="
+          $router.push('/home/send');
+          emits('close');
+        "
       >
         <icon-font name="send" :size="24" style="margin-right: 20px" />
         <span> I send </span>
@@ -84,7 +99,10 @@ const logout = () => {
 
       <div
         class="userCenter-item dp--center"
-        @click="$router.push('/home/rank')"
+        @click="
+          $router.push('/home/rank');
+          emits('close');
+        "
       >
         <icon-font name="beans" :size="24" style="margin-right: 15px" />
         <span> Beans Ranking </span>

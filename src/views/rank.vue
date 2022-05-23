@@ -8,28 +8,59 @@ import { storeToRefs } from "pinia";
 import appStore from "@/store";
 export interface Rank extends User {
   totalBean: number;
-  pictureSettings: {
-    src: string;
-  };
+  createDate: string;
 }
+const dayjs: any = inject("dayjs");
 const { deviceType } = storeToRefs(appStore.commonStore);
 const rankMark = ref<string>("today");
-const rankList = ref<Rank[]>([]);
+const rankList = ref<any>([]);
 const seeAll = ref<number>(0);
+
+const rankDay = ref<number>(7);
+const rankUser = ref<any>({});
+const timeList = ref<string[]>([]);
+const chartUser = ref<any>([]);
 const getRankInfo = async () => {
-  let obj: any = { mark: rankMark.value };
+  let obj: any = {};
+  if (rankMark.value === "today") {
+    obj.startDate = dayjs().subtract(rankDay.value, "day").format("YYYY-MM-DD");
+    obj.endDate = dayjs().format("YYYY-MM-DD");
+  } else {
+    obj.mark = rankMark.value;
+  }
   seeAll.value ? (obj.seeAll = seeAll.value) : null;
+  for (let i = 0; i < rankDay.value; i++) {
+    timeList.value.unshift(dayjs().subtract(i, "day").format("YYYY-MM-DD"));
+  }
   const rankRes = (await api.request.get("partner/rank", {
     ...obj,
   })) as ResultProps;
   if (rankRes.msg === "OK") {
-    rankList.value = rankRes.data.map((item: Rank) => {
-      item.pictureSettings = {
-        src: item.userAvatar,
+    rankRes.data.forEach((item: Rank) => {
+      if (!rankUser.value[item._key]) {
+        rankUser.value[item._key] = {
+          userAvatar: item.userAvatar,
+          userName: item.userName,
+          _key: item._key,
+        };
+      }
+      rankUser.value[item._key][item.createDate] = {
+        totalBean: item.totalBean,
       };
-      return item;
     });
-    rankList.value = [...rankList.value];
+    // rankList.value = [...rankList.value];
+    timeList.value.forEach((item, index) => {
+      rankList.value[index] = [];
+      for (let key in rankUser.value) {
+        let userItem = rankUser.value[key];
+        chartUser.value.push(userItem.userName);
+        if (!userItem[item]) {
+          userItem[item] = { totalBean: 0 };
+        }
+        rankList.value[index].push(userItem[item].totalBean);
+      }
+    });
+    console.log(rankList.value)
   }
 };
 watchEffect(() => {
@@ -46,7 +77,7 @@ watchEffect(() => {
     class="rank p-5"
     :style="{ height: deviceType ? '100vh' : 'calc(100vh - 55px)' }"
   >
-    <div class="rank-nav dp-center-center">
+    <!-- <div class="rank-nav dp-center-center">
       <div
         :style="
           rankMark === 'today'
@@ -78,13 +109,15 @@ watchEffect(() => {
       >
         Future
       </div>
-    </div>
+    </div> -->
     <div class="rank-chart" v-if="rankList.length > 0">
       <xyChart
         XYId="XYContentId"
         :width="'100%'"
         :height="rankList.length * 40 + 150 + 'px'"
-        :data="rankList"
+        :rankData="rankList"
+        :name="chartUser"
+        :day="rankDay"
       />
     </div>
 
@@ -117,7 +150,7 @@ watchEffect(() => {
   }
   .rank-chart {
     width: 100%;
-    min-height: calc(100% - 40px);
+    height: calc(100% - 40px);
     overflow-x: hidden;
     overflow-y: auto;
   }

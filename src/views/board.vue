@@ -28,7 +28,7 @@ const overKey = ref<string>("");
 const taskTitle = ref<string>("");
 const multipleCheck = ref<boolean>(false);
 const taskObj = ref<any>(null);
-
+const splitVisible = ref<any>(null);
 const completeNum = ref<number>(0);
 
 onMounted(() => {
@@ -174,17 +174,22 @@ watch(
 <template>
   <theader isMenu>
     <template v-slot:left>
-      <div
-        class="dp--center icon-point"
-        @click="contactVisible = !contactVisible"
-        style="margin-right: 5px"
-      >
-        {{ boardList && boardList[boardIndex].title }}
-        <el-icon style="margin-right: 8px; margin-left: 8px"
-          ><arrow-up v-if="contactVisible" /><arrow-down v-else
-        /></el-icon>
-      </div>
-      <icon-font name="set" @click="$router.push(`/manage/` + boardKey)" />
+      <el-dropdown trigger="click" v-if="boardList.length > 0">
+        <div>
+          {{ boardList && boardList[boardIndex].title }}
+          <el-icon class="el-icon--right">
+            <arrow-down />
+          </el-icon>
+        </div>
+        <template #dropdown>
+          <contact />
+        </template>
+      </el-dropdown>
+      <icon-font
+        style="margin-left: 10px"
+        name="set"
+        @click="$router.push(`/manage/` + boardKey)"
+      />
     </template>
     <template v-slot:right>
       <div class="dp--center">
@@ -200,7 +205,7 @@ watch(
       </div>
     </template>
   </theader>
-  <div class="board-header dp-space-center" v-if="boardList">
+  <div class="board-header dp-space-center" v-if="boardList.length > 0">
     <div class="dp--center">
       <avatar
         :name="boardList[boardIndex].executorInfo.userName"
@@ -236,32 +241,39 @@ watch(
   <div class="board dp-center-center" ref="boardRef">
     <!-- <div class="board-box dp-center"> -->
     <div class="board-container p-5">
-      <div class="board-edit">
-        <div class="editor">
-          <el-input
-            v-model="taskTitle"
-            :autosize="{ minRows: 8 }"
-            type="textarea"
-            placeholder="Please Enter Task"
-            autofocus
-          />
+      <template v-if="boardRole < 5">
+        <div class="board-edit">
+          <div class="editor">
+            <el-input
+              v-model="taskTitle"
+              :autosize="{ minRows: 8 }"
+              type="textarea"
+              placeholder="Please Enter Task"
+              autofocus
+              @keydown.enter="splitVisible = true"
+            />
+          </div>
+          <div class="bottom dp-space-center">
+            <div>
+              <el-checkbox
+                v-model="multipleCheck"
+                label="Split into multiple"
+                size="large"
+                v-if="splitVisible"
+              />
+            </div>
+
+            <tbutton
+              @click="addCard"
+              :disabled="!taskTitle"
+              :bgColor="taskTitle ? '' : '#d1dbe5'"
+            >
+              Post
+            </tbutton>
+          </div>
         </div>
-        <div class="bottom dp-space-center">
-          <el-checkbox
-            v-model="multipleCheck"
-            label="Split into multiple"
-            size="large"
-          />
-          <tbutton
-            @click="addCard"
-            :disabled="!taskTitle"
-            :bgColor="taskTitle ? '' : '#d1dbe5'"
-          >
-            Post
-          </tbutton>
-        </div>
-      </div>
-      <el-divider border-style="dashed" />
+        <el-divider border-style="dashed" />
+      </template>
       <div v-for="(value, key) in taskObj" :key="'task' + key" class="task">
         <div class="task-title">From {{ value.userName }}</div>
         <template
@@ -289,9 +301,6 @@ watch(
       <div class="icon-point dp--center">
         <img :src="bottlePng" alt="" /> Completed ({{ completeNum }})
       </div>
-    </div>
-    <div class="contact-box" v-if="contactVisible">
-      <contact @close="contactVisible = false" />
     </div>
   </div>
 

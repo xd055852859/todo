@@ -7,28 +7,34 @@ import { ResultProps } from "@/interface/Common";
 import { Task } from "@/interface/Task";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
-export interface HistoryChartProps {
-  date: string;
-  score: number;
-}
 const dayjs: any = inject("dayjs");
 const { deviceType } = storeToRefs(appStore.commonStore);
 
 const props = defineProps<{ targetKey: string }>();
 
-const historyChartList = ref<HistoryChartProps[]>([]);
+const historyChartList = ref<(string | number)[]>([]);
 const historyList = ref<any>([]);
 const timelineList = ref<any>([]);
 const historyType = ref<string>("report");
 const historyDate = ref<string>(dayjs().format("YYYY-MM-DD"));
 const overKey = ref<string>("");
+const historyName = ["创建", "完成"];
 const getHistoryChartInfo = async () => {
   const historyRes = (await api.request.get(
     "card/user/report",
     {}
   )) as ResultProps;
   if (historyRes.msg === "OK") {
-    historyChartList.value = historyRes.data;
+    let arr1: (string | number)[] = [];
+    let arr2: (string | number)[] = [];
+    arr1 = historyRes.data.map((item) => {
+      console.log(item);
+      return [item.fullDate.replace(/-/g, "/"), item.createScore, "创建"];
+    });
+    arr2 = historyRes.data.map((item) => {
+      return [item.fullDate.replace(/-/g, "/"), item.finishScore, "完成"];
+    });
+    historyChartList.value = [...arr1, ...arr2];
   }
 };
 const getHistoryInfo = async () => {
@@ -53,11 +59,9 @@ const getTimelineInfo = async () => {
   }
 };
 watchEffect(() => {
-  console.log("???");
   getHistoryChartInfo();
 });
 watchEffect(() => {
-  console.log("???");
   if (historyType.value === "report") {
     getHistoryInfo();
   } else {
@@ -79,6 +83,7 @@ watchEffect(() => {
         :width="'100%'"
         :height="'30vh'"
         :data="historyChartList"
+        :name="historyName"
       />
     </template>
 
@@ -124,7 +129,12 @@ watchEffect(() => {
               :key="'taskItem' + taskIndex"
               @mouseenter="overKey = taskItem._key"
             >
-              <task-item :item="taskItem" :overKey="overKey" type="report" :role="0"/>
+              <task-item
+                :item="taskItem"
+                :overKey="overKey"
+                type="report"
+                :role="0"
+              />
             </template>
           </div>
         </template>

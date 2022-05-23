@@ -12,9 +12,13 @@ const socket: any = inject("socket");
 const router = useRouter();
 const { token, user } = storeToRefs(appStore.authStore);
 const { setToken, getUserInfo, getMateList } = appStore.authStore;
+const { getBoardList } = appStore.boardStore;
 const { setDeviceType } = appStore.commonStore;
 
-onBeforeMount(() => {
+// onBeforeMount(() => {
+
+// });
+onMounted(() => {
   window.addEventListener("message", handle, false);
   let url = window.location.href;
   //自动切换为https
@@ -25,7 +29,9 @@ onBeforeMount(() => {
   const search = window.location.search
     ? window.location.search.split("?")[1]
     : window.location.hash.split("?")[1];
-  const token = getSearchParamValue(search, "token") as string;
+  const token =
+    (getSearchParamValue(search, "token") as string) ||
+    localStorage.getItem("token");
   const deviceType = getSearchParamValue(search, "deviceType") as string;
   if (token) {
     request.setToken(token);
@@ -34,8 +40,6 @@ onBeforeMount(() => {
   if (deviceType) {
     setDeviceType(deviceType);
   }
-});
-onMounted(() => {
   setTheme("#46a03c");
   setDark(false);
 });
@@ -63,6 +67,7 @@ watch(
     if (newVal) {
       getUserInfo();
       getMateList();
+      getBoardList("accessTime", "desc");
     } else {
       router.push("/");
     }
