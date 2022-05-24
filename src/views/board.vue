@@ -2,7 +2,7 @@
 import TaskItem from "@/components/taskItem.vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
-import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
+import { ArrowDown, MoreFilled } from "@element-plus/icons-vue";
 import { storeToRefs } from "pinia";
 import toTopSvg from "../assets/svg/toTop.svg";
 import appStore from "@/store";
@@ -12,29 +12,45 @@ import Avatar from "@/components/avatar.vue";
 import { Task } from "@/interface/Task";
 
 import bottlePng from "@/assets/img/bottle.png";
+import chooseSvg from "@/assets/svg/choose.svg";
 const router = useRouter();
 const socket: any = inject("socket");
+
+const { user } = storeToRefs(appStore.authStore);
 const { taskList } = storeToRefs(appStore.taskStore);
 const { boardList, boardIndex, boardKey, boardRole } = storeToRefs(
   appStore.boardStore
 );
 const { setFriendInfo } = appStore.authStore;
-const { getBoardList, setBoardRole } = appStore.boardStore;
+const { getBoardList, setBoardRole, addBoardList, setBoardKey } =
+  appStore.boardStore;
 
 const boardRef = ref(null);
 const topVisible = ref<boolean>(false);
 const contactVisible = ref<boolean>(false);
 const overKey = ref<string>("");
 const taskTitle = ref<string>("");
+const mark = ref<string>("");
 const multipleCheck = ref<boolean>(false);
 const taskObj = ref<any>(null);
-const splitVisible = ref<any>(null);
+const taskFinishObj = ref<any>(null);
+const splitVisible = ref<boolean>(false);
 const completeNum = ref<number>(0);
-
+const completedVisible = ref<boolean>(false);
+const markIndex = ref<number>(0);
+const markArr = [
+  { title: "All Todo", value: "" },
+  { title: "Today", value: "today" },
+  { title: "Next Day", value: "next" },
+  { title: "Future", value: "future" },
+];
 onMounted(() => {
   getBoardList("accessTime", "desc");
   socket.on("create", (data) => {
-    if (data.boardInfo._key === boardKey.value) {
+    if (
+      data.boardInfo._key === boardKey.value &&
+      data.creatorInfo._key !== user.value?._key
+    ) {
       if (taskObj.value[data.creatorInfo._key]) {
         taskObj.value[data.creatorInfo._key].cards.unshift(data);
       } else {
@@ -67,13 +83,25 @@ onMounted(() => {
       finishTask(data);
     }
   });
+  socket.on("delete", (data) => {
+    if (data.boardInfo._key === boardKey.value) {
+      delTask(data);
+    }
+  });
 });
-const getBoardTask = async (boardKey: string) => {
+const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
+  let obj: any = { boardKey: boardKey };
+  type ? (obj.hasFinished = 1) : null;
+  mark ? (obj.mark = mark) : null;
   const taskRes: any = (await api.request.get("card/board", {
-    boardKey: boardKey,
+    ...obj,
   })) as ResultProps;
   if (taskRes.msg === "OK") {
-    taskObj.value = {};
+    if (type) {
+      taskFinishObj.value = {};
+    } else {
+      taskObj.value = {};
+    }
     for (let key in taskRes.data.list) {
       let item = taskRes.data.list[key];
       console.log(item);
@@ -85,11 +113,16 @@ const getBoardTask = async (boardKey: string) => {
         };
         return taskItem;
       });
-      taskObj.value[key] = item;
+      if (type) {
+        taskFinishObj.value[key] = item;
+      } else {
+        taskObj.value[key] = item;
+      }
     }
-    console.log(taskObj.value);
-    completeNum.value = taskRes.data.completeNum;
-    setBoardRole(taskRes.data.role);
+    if (!type) {
+      completeNum.value = taskRes.data.completeNum;
+      setBoardRole(taskRes.data.role);
+    }
   }
 };
 const addCard = async () => {
@@ -115,16 +148,20 @@ const addCard = async () => {
       duration: 1000,
     });
     taskTitle.value = "";
-    // taskRes.data.forEach((item) => {
-    //   if (!taskObj.value[item.creatorInfo._key]) {
-    //     taskObj.value[item.creatorInfo._key] = {
-    //       userAvatar: item.creatorInfo.userAvatar,
-    //       userName: item.creatorInfo.userName,
-    //       cards: [],
-    //     };
-    //   }
-    //   taskObj.value[item.creatorInfo._key].cards.unshift(item);
-    // });
+    splitVisible.value = false;
+    taskRes.data.forEach((item) => {
+      if (user.value) {
+        if (!taskObj.value[user.value._key]) {
+          taskObj.value[user.value._key] = {
+            userAvatar: user.value.userAvatar,
+            userName: user.value.userName,
+            cards: [],
+          };
+        }
+        item = { ...item, hasRead: 0, hasImage: 0, hasDetail: 0 };
+        taskObj.value[user.value._key].cards.unshift(item);
+      }
+    });
   }
 };
 const toTop = () => {
@@ -157,6 +194,48 @@ const finishTask = (data) => {
     }
   }
 };
+const delTask = (data) => {
+  if (data.hasFinished) {
+    if (taskFinishObj.value[data.creatorInfo._key]) {
+      let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
+        (item: Task) => data._key === item._key
+      );
+      if (index !== -1) {
+        taskFinishObj.value[data.creatorInfo._key].cards.splice(index, 1);
+        if (taskFinishObj.value[data.creatorInfo._key].cards.length === 0) {
+          delete taskFinishObj.value[data.creatorInfo._key];
+        }
+        completeNum.value--;
+      }
+    }
+  } else {
+    if (taskObj.value[data.creatorInfo._key]) {
+      let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
+        (item: Task) => data._key === item._key
+      );
+      if (index !== -1) {
+        taskObj.value[data.creatorInfo._key].cards.splice(index, 1);
+        if (taskObj.value[data.creatorInfo._key].cards.length === 0) {
+          delete taskObj.value[data.creatorInfo._key];
+        }
+      }
+    }
+  }
+};
+const cloneBoard = async () => {
+  let cloneRes = (await api.request.post("board/clone", {
+    boardKey: boardKey.value,
+  })) as ResultProps;
+  if (cloneRes.msg === "OK") {
+    ElMessage({
+      message: "Clone Board Successful",
+      type: "success",
+      duration: 1000,
+    });
+    addBoardList(cloneRes.data);
+    setBoardKey(cloneRes.data._key);
+  }
+};
 // const moveAvatar = (e) => {
 //   //@ts-ignore
 //   avatarRef.value.scrollLeft += e.deltaY;
@@ -170,12 +249,15 @@ watch(
   },
   { immediate: true }
 );
+watch(mark, (newVal) => {
+  getBoardTask(boardKey.value, "", newVal);
+});
 </script>
 <template>
   <theader isMenu>
     <template v-slot:left>
       <el-dropdown trigger="click" v-if="boardList.length > 0">
-        <div>
+        <div class="board-header-title dp--center icon-point">
           {{ boardList && boardList[boardIndex].title }}
           <el-icon class="el-icon--right">
             <arrow-down />
@@ -185,23 +267,46 @@ watch(
           <contact />
         </template>
       </el-dropdown>
-      <icon-font
-        style="margin-left: 10px"
-        name="set"
-        @click="$router.push(`/manage/` + boardKey)"
-      />
     </template>
     <template v-slot:right>
       <div class="dp--center">
         <icon-font
-          name="addBoard"
+          style="margin-right: 15px"
+          name="set"
           class="icon-point"
-          @click="
-            //@ts-ignore
-            setFriendInfo(boardList[boardIndex].executorInfo);
-            $router.push('/manage/create');
-          "
+          @click="$router.push(`/manage/` + boardKey)"
         />
+        <el-dropdown>
+          <el-icon>
+            <MoreFilled />
+          </el-icon>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="cloneBoard">
+                <icon-font
+                  name="clone"
+                  class="icon-point"
+                  style="margin-right: 5px"
+                />
+                Clone Board
+              </el-dropdown-item>
+              <el-dropdown-item
+                @click="
+                  //@ts-ignore
+                  setFriendInfo(boardList[boardIndex].executorInfo);
+                  $router.push('/manage/create');
+                "
+              >
+                <icon-font
+                  name="addBoard"
+                  class="icon-point"
+                  style="margin-right: 8px"
+                />
+                New Board
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </template>
   </theader>
@@ -214,34 +319,58 @@ watch(
         :index="0"
         :size="30"
         :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+        :class="{
+          'icon-point': boardList[boardIndex].executorInfo?._key !== user?._key,
+        }"
+        @click="
+          boardList[boardIndex].executorInfo?._key !== user?._key
+            ? $router.push(
+                '/home/mate/' + boardList[boardIndex].executorInfo?._key
+              )
+            : null
+        "
       />
       {{ boardList[boardIndex].executorInfo.userName }}
     </div>
     <div class="dp--center">
-      <icon-font
-        name="list"
-        style="margin-right: 8px"
-        :size="22"
-        class="icon-point"
-        @click="toTargetList"
-      />
-      <icon-font
-        name="history"
-        :size="22"
-        class="icon-point"
-        @click="
-          $router.push(
-            //@ts-ignore
-            '/home/history/' + boardList[boardIndex].executorInfo._key
-          )
-        "
-      />
+      <el-dropdown>
+        <span style="font-size: 16px" class="icon-point">{{
+          markArr[markIndex].title
+        }}</span>
+        <template #dropdown>
+          <el-dropdown-menu
+            v-for="(item, index) in markArr"
+            :key="'mark' + index"
+          >
+            <el-dropdown-item
+              @click="
+                markIndex = index;
+                mark = item.value;
+              "
+              ><div
+                class="dp-space-center"
+                style="width: 130px; font-size: 16px"
+              >
+                <div>{{ item.title }}</div>
+                <div class="dp--center">
+                  <img
+                    :src="chooseSvg"
+                    alt=""
+                    style="width: 20px; height: 20px; margin-right: 10px"
+                    v-if="markIndex === index"
+                  />
+                </div>
+              </div>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
   </div>
   <div class="board dp-center-center" ref="boardRef">
     <!-- <div class="board-box dp-center"> -->
     <div class="board-container p-5">
-      <template v-if="boardRole < 5">
+      <template v-if="boardRole < 4">
         <div class="board-edit">
           <div class="editor">
             <el-input
@@ -250,7 +379,10 @@ watch(
               type="textarea"
               placeholder="Please Enter Task"
               autofocus
-              @keydown.enter="splitVisible = true"
+              @keydown.enter="
+                splitVisible = true;
+                multipleCheck = true;
+              "
             />
           </div>
           <div class="bottom dp-space-center">
@@ -276,7 +408,7 @@ watch(
       </template>
       <div v-for="(value, key) in taskObj" :key="'task' + key" class="task">
         <div class="task-title">From {{ value.userName }}</div>
-        <template
+        <div
           v-for="(item, index) in value.cards"
           :key="'taskItem' + index"
           @mouseenter="overKey = item._key"
@@ -287,9 +419,10 @@ watch(
             type="board"
             amimateType
             @finishTask="finishTask"
+            @delTask="delTask"
             :role="boardRole"
           />
-        </template>
+        </div>
       </div>
 
       <div class="toTop icon-point" v-if="topVisible" @click="toTop">
@@ -298,12 +431,49 @@ watch(
     </div>
     <!-- </div> -->
     <div class="footer p-5 dp--center">
-      <div class="icon-point dp--center">
+      <div
+        class="icon-point dp--center"
+        @click="
+          completedVisible = true;
+          getBoardTask(boardKey, 'completed');
+        "
+      >
         <img :src="bottlePng" alt="" /> Completed ({{ completeNum }})
       </div>
     </div>
   </div>
-
+  <el-drawer
+    v-model="completedVisible"
+    direction="rtl"
+    title="Completed"
+    :size="350"
+    custom-class="p10-drawer"
+  >
+    <div class="completed-box">
+      <div
+        v-for="(value, key) in taskFinishObj"
+        :key="'task' + key"
+        class="task"
+      >
+        <div class="task-title">From {{ value.userName }}</div>
+        <div
+          v-for="(item, index) in value.cards"
+          :key="'taskItem' + index"
+          @mouseenter="overKey = item._key"
+        >
+          <task-item
+            :item="item"
+            :overKey="overKey"
+            type="completed"
+            amimateType
+            @finishTask="finishTask"
+            @delTask="delTask"
+            :role="boardRole"
+          />
+        </div>
+      </div>
+    </div>
+  </el-drawer>
   <!-- <el-drawer
     v-model="talkVisible"
     direction="ltr"
@@ -316,6 +486,13 @@ watch(
   </el-drawer> -->
 </template>
 <style scoped lang="scss">
+.board-header-title {
+  width: 100%;
+  height: 100%;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--talk-font-color);
+}
 .board-header {
   width: 100%;
   height: 40px;
@@ -389,6 +566,12 @@ watch(
     left: 0px;
     z-index: 2;
   }
+}
+.completed-box {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 </style>
 <style></style>

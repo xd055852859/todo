@@ -18,7 +18,7 @@ export const boardStore = defineStore("boardStore", () => {
     //@ts-ignore
     localStorage.getItem("sortIndex") ? +localStorage.getItem("sortIndex") : 0
   );
-  const order = ref<string>(localStorage.getItem("order") ?? "");
+  const order = ref<string>(localStorage.getItem("order") ?? "desc");
   const boardKey = ref<string>(localStorage.getItem("boardKey") ?? "");
   const boardList = ref<Board[]>([]);
   const boardRole = ref<number>(5);
@@ -39,6 +39,9 @@ export const boardStore = defineStore("boardStore", () => {
       }
     }
   };
+  const addBoardList = async (boardItem: Board) => {
+    boardList.value.unshift(boardItem);
+  };
   const setSortIndex = (index: number) => {
     sortIndex.value = index;
     localStorage.setItem("sortIndex", index + "");
@@ -58,6 +61,7 @@ export const boardStore = defineStore("boardStore", () => {
     setBoardKey,
     boardList,
     getBoardList,
+    addBoardList,
     boardIndex,
     sortIndex,
     setSortIndex,

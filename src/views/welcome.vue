@@ -14,6 +14,7 @@ const login = () => {
     `${window.location.protocol}//${window.location.host}/`
   );
   console.log(redirect);
+  localStorage.clear()
   // `https://account.qingtime.cn?apphigh=50&redirect=&logo=https://workfly.qingtime.cn/1650849409262_workingVip.png`;
   let href: string = `https://account.qingtime.cn/?app=10&apphigh=54&logo=https://workfly.qingtime.cn/1652428088606_workingVip.png&redirect=${redirect}`;
   if (is_mobile()) {

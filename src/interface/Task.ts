@@ -10,6 +10,7 @@ export interface Task {
   creatorInfo?: User;
   hasRead: number;
   hasImage?: boolean;
+  hasDetail?: boolean;
   createTime: number;
   boardInfo?: {
     _key: string;

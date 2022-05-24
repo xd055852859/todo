@@ -19,8 +19,8 @@ const email = ref<string>("");
 const setVisible = ref<boolean>(false);
 const logout = () => {
   socket.emit("logout", token.value);
-  localStorage.removeItem("token");
   router.push("/");
+  localStorage.clear();
   ElMessage({
     message: "LogOut successfully",
     type: "success",
@@ -79,22 +79,22 @@ const logout = () => {
       <div
         class="userCenter-item dp--center"
         @click="
+          $router.push('/home/send');
+          emits('close');
+        "
+      >
+        <icon-font name="send" :size="24" style="margin-right: 15px" />
+        <span> Created </span>
+      </div>
+      <div
+        class="userCenter-item dp--center"
+        @click="
           $router.push('/home/history/self');
           emits('close');
         "
       >
         <icon-font name="history" :size="24" style="margin-right: 15px" />
         <span> History </span>
-      </div>
-      <div
-        class="userCenter-item dp--center"
-        @click="
-          $router.push('/home/send');
-          emits('close');
-        "
-      >
-        <icon-font name="send" :size="24" style="margin-right: 20px" />
-        <span> I send </span>
       </div>
 
       <div
@@ -105,7 +105,7 @@ const logout = () => {
         "
       >
         <icon-font name="beans" :size="24" style="margin-right: 15px" />
-        <span> Beans Ranking </span>
+        <span> Ranking </span>
       </div>
       <!-- <div
         class="userCenter-item dp--center"
@@ -133,7 +133,7 @@ const logout = () => {
       </div>
       <div class="userCenter-item dp--center" @click="logout">
         <icon-font name="quit" :size="18" style="margin-right: 15px" />
-        <span> Quit </span>
+        <span>Quit</span>
       </div>
     </div>
   </div>

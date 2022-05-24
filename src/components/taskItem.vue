@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ResultProps } from "@/interface/Common";
 import { Task } from "@/interface/Task";
-import { Plus } from "@element-plus/icons-vue";
+import { Plus, MoreFilled, Delete } from "@element-plus/icons-vue";
 import { uploadImage } from "@/services/util";
 import api from "@/services/api";
 import { ElMessage, Props } from "element-plus";
@@ -27,6 +27,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: "changeNum", type: string, item: Task, listType: string): void;
   (e: "finishTask", taskItem: Task): void;
+  (e: "delTask", taskItem: Task): void;
 }>();
 
 const title = ref<string>("");
@@ -95,6 +96,20 @@ const finishTask = async (e) => {
     }
     //Todo
     emits("finishTask", props.item);
+  }
+};
+const delCard = async (e) => {
+  const taskRes: any = (await api.request.delete("card", {
+    cardKey: props.item._key,
+  })) as ResultProps;
+  if (taskRes.msg === "OK") {
+    ElMessage({
+      message: "Deleted Task Successful",
+      type: "success",
+      duration: 1000,
+    });
+    //Todo
+    emits("delTask", props.item);
   }
 };
 const addBall = (e) => {
@@ -305,18 +320,18 @@ watch(
           </div>
         </div>
       </div>
-      <div
-        class="task-bottom dp-space-center"
-        v-if="type !== 'other' && type !== 'report'"
-      >
+      <div class="task-bottom dp-space-center" v-if="type !== 'report'">
         <div>
           <span v-if="type === 'send'"># {{ item.boardInfo?.title }}</span>
         </div>
         <div class="dp--center">
-          <template
+          <div
             v-if="
-              (type === 'task' || type === 'inbox') && overKey === item._key
+              item.executorInfo._key === user?._key &&
+              overKey === item._key &&
+              type !== 'completed'
             "
+            style="margin-right: 10px"
           >
             <span
               class="icon-point"
@@ -338,23 +353,61 @@ watch(
               @click.stop="changeMark('future')"
               >Future</span
             >
-          </template>
-          <template v-else-if="type === 'board' || type === 'send'">
+          </div>
+          <span
+            style="margin-right: 10px"
+            v-if="
+              type !== 'inbox' &&
+              type !== 'task' &&
+              type !== 'completed' &&
+              overKey !== item._key
+            "
+          >
             {{ item.hasRead ? item.mark : "Unread" }}
-          </template>
+          </span>
           <icon-font
             class="icon-point del-button"
             name="image"
             :size="10"
-            style="margin-left: 10px"
+            style="margin-right: 10px"
+            v-if="item.hasDetail"
+          />
+          <icon-font
+            class="icon-point del-button"
+            name="image"
+            :size="10"
+            style="margin-right: 10px"
             v-if="item.hasImage"
           />
+          <!--  item.executorInfo?._key === user?._key ||
+              item.creatorInfo?._key === user?._key ||
+              role < 3 -->
+          <el-dropdown v-if="overKey === item._key">
+            <el-icon>
+              <MoreFilled />
+            </el-icon>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  @click.stop="delCard"
+                  v-if="
+                    item.executorInfo?._key === user?._key ||
+                    item.creatorInfo?._key === user?._key ||
+                    role < 3
+                  "
+                >
+                  <el-icon style="margin-right: 8px"><Delete /></el-icon>
+                  delete
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
       <div class="task-bottom dp-space-center" v-if="type === 'report'">
         <div>
           <span
-            >{{ item.creatorInfo?.userName }} >
+            >{{ item.creatorInfo?.userName }} ⇀
             {{ item.executorInfo.userName }}</span
           >
         </div>

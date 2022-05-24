@@ -8,6 +8,7 @@ import TaskItem from "@/components/taskItem.vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
 import bottlePng from "@/assets/img/bottle.png";
+import Avatar from "@/components/avatar.vue";
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { taskList, inboxList, completedList, targetKey } = storeToRefs(
   appStore.taskStore
@@ -33,12 +34,18 @@ const friendBoardList = computed(
       (item) => item.executorInfo._key === friend.value?._key
     )
 );
+const searchList = computed(() =>
+  listMateList.value.filter((item) => {
+    return item?.userName.indexOf(searchInput.value) !== -1;
+  })
+);
 const navKey = ref<string>("today");
 const overKey = ref<string>("");
 const completeNum = ref<number>(0);
 const listIndex = ref<number>(0);
 const targetType = ref<string>("self");
 const completedVisible = ref<boolean>(false);
+const searchInput = ref<string>("");
 const taskNum = reactive({
   today: 0,
   next: 0,
@@ -51,7 +58,11 @@ onMounted(() => {
 
   socket.on("create", (data) => {
     console.log("create", data);
-    if (data.creatorInfo._key !== user.value?._key && !data.mark) {
+    if (
+      data.creatorInfo._key !== user.value?._key &&
+      !data.mark &&
+      data.executorInfo._key === user.value?._key
+    ) {
       //新建 创建者不是自己则在inbox inboxList
       addList(inboxList.value, data);
       taskNum.unRead++;
@@ -62,11 +73,19 @@ onMounted(() => {
     console.log("finish", data);
     finishTask(data);
   });
+  socket.on("delete", (data) => {
+    console.log("del", data);
+    delTask(data);
+  });
   socket.on("cancelFinish", (data) => {
     delList(completedList.value, data);
-    completeNum.value--;
+    if (data.executorInfo._key === user.value?._key) {
+      completeNum.value--;
+    }
     addList(taskList.value, data);
-    taskNum.today++;
+    if (data.executorInfo._key === user.value?._key) {
+      taskNum.today++;
+    }
   });
   socket.on("update", (data) => {
     console.log("update", data);
@@ -128,11 +147,22 @@ const clearInbox = async () => {
     getTaskList("today");
   }
 };
-const finishTask = (data: Task) => {
+const finishTask = (data) => {
   delList(data.mark ? taskList.value : inboxList.value, data);
-  completeNum.value++;
-  if (data.mark) {
+  if (data.mark && data.executorInfo._key === user.value?._key) {
+    completeNum.value++;
     taskNum[data.mark]--;
+  }
+};
+const delTask = (data) => {
+  if (data.hasFinished) {
+    delList(completedList.value, data);
+    completeNum.value--;
+  } else {
+    delList(data.mark ? taskList.value : inboxList.value, data);
+    if (data.mark && data.executorInfo._key === user.value?._key) {
+      taskNum[data.mark]--;
+    }
   }
 };
 watch(targetKey, () => {
@@ -168,46 +198,69 @@ watchEffect(() => {
   <theader isMenu>
     <template #left
       ><el-dropdown>
-        <div class="dp--center icon-point">
-          <el-avatar fit="cover" :size="30" :src="friend?.userAvatar" />
+        <div
+          class="dp--center icon-point"
+          style="font-size: 16px; font-weight: 600"
+        >
+          <avatar
+            :name="friend?.userName"
+            :avatar="friend?.userAvatar"
+            type="person"
+            :index="0"
+            :size="30"
+            :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+          />
           {{ friend?.userName }}
           <el-icon class="el-icon--right">
             <arrow-down />
           </el-icon>
         </div>
         <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item
-              v-for="(item, index) in listMateList"
-              :key="'listItem' + index"
-              @click="
-                //@ts-ignore
-                setFriendInfo(item)
-                // getTargetTask(item, index);
-              "
-            >
-              <div class="dp--center icon-point">
-                <el-avatar fit="cover" :size="30" :src="item?.userAvatar" />{{
-                  item?.userName
-                }}
-              </div></el-dropdown-item
-            >
-          </el-dropdown-menu>
+          <div class="board-header-contact" v-if="listMateList">
+            <div class="board-contact-top dp-space-center p-5">
+              <el-input
+                v-model="searchInput"
+                placeholder="Search Mate"
+                style="height: 35px"
+              />
+            </div>
+            <div class="board-contact-bottom">
+              <div
+                class="board-contact-item container dp--center p-5 icon-point"
+                v-for="(item, index) in searchList"
+                :key="'listItem' + index"
+                @click="item && setFriendInfo(item)"
+              >
+                <avatar
+                  :name="item?.userName"
+                  :avatar="item?.userAvatar"
+                  type="person"
+                  :index="0"
+                  :size="30"
+                  :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+                />{{ item?.userName }}
+              </div>
+            </div>
+          </div>
         </template>
       </el-dropdown></template
     >
-    <template #right v-if="targetType !== 'self'">
-      <el-icon
+    <template #right>
+      <icon-font
+        name="home"
         style="margin-right: 8px"
         :size="22"
         class="icon-point"
         @click="$router.push('/home/mate/' + friend?._key)"
-        ><HomeFilled
-      /></el-icon>
+        v-if="targetType !== 'self'"
+      />
       <el-dropdown v-if="friendBoardList && friendBoardList.length > 0">
-        <div class="dp--center icon-point">
-          <el-icon :size="18"><MoreFilled /></el-icon>
-        </div>
+        <icon-font
+          name="addTask"
+          style="margin-right: 8px"
+          :size="22"
+          class="icon-point"
+        />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item
@@ -321,6 +374,7 @@ watchEffect(() => {
               :type="targetType === 'self' ? 'inbox' : 'other'"
               @changeNum="changeNum"
               @finishTask="finishTask"
+              @delTask="delTask"
               amimateType
               :role="item.boardInfo.role ? item.boardInfo.role : 0"
             />
@@ -347,6 +401,7 @@ watchEffect(() => {
             :type="targetType === 'self' ? 'task' : 'other'"
             @changeNum="changeNum"
             @finishTask="finishTask"
+            @delTask="delTask"
             amimateType
             :role="item.boardInfo.role"
           />
@@ -370,7 +425,6 @@ watchEffect(() => {
     <div class="board-empty dp-center-center" v-else-if="targetType === 'self'">
       <div class="board-img dp-center-center">
         <div class="board-title">您还没有任务哦~</div>
-        <div class="board-title common-color">立即创建</div>
       </div>
     </div>
   </div>
@@ -390,6 +444,7 @@ watchEffect(() => {
     direction="rtl"
     title="Completed"
     :size="350"
+    custom-class="p10-drawer"
   >
     <div class="completed-box">
       <div
@@ -411,6 +466,7 @@ watchEffect(() => {
             :overKey="overKey"
             :type="'completed'"
             :role="item.boardInfo.role"
+            @delTask="delTask"
           />
         </div>
       </div>
@@ -418,6 +474,25 @@ watchEffect(() => {
   </el-drawer>
 </template>
 <style scoped lang="scss">
+.board-header-contact {
+  max-width: 350px;
+  min-width: 250px;
+  background-color: var(--talk-item-color);
+
+  .board-contact-top {
+    height: 45px;
+  }
+  .board-contact-bottom {
+    width: 100%;
+    max-height: calc(100vh - 200px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    .board-contact-item {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+}
 .board {
   width: 100%;
   height: calc(100vh - 105px);

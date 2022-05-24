@@ -58,7 +58,7 @@ watch(boardList, (newVal, oldVal) => {
     </div>
     <div class="contact-bottom">
       <div
-        class="container dp-space-center p-5 icon-point"
+        class="contact-item container dp-space-center p-5 icon-point"
         v-for="(item, index) in searchList"
         :key="'add-member' + index"
         @click="
@@ -67,7 +67,12 @@ watch(boardList, (newVal, oldVal) => {
         "
       >
         <!-- <div class="left dp--center"> -->
-        {{ item.title }} ( {{ item.executorInfo?.userName }} )
+        <div>
+          <span style="margin-right: 5px; font-weight: 600">{{
+            item.title
+          }}</span>
+          <span>( {{ item.executorInfo?.userName }} )</span>
+        </div>
         <!-- </div> -->
         <!-- <div class="right">
           <img
@@ -83,15 +88,19 @@ watch(boardList, (newVal, oldVal) => {
 <style scoped lang="scss">
 .contact {
   width: 300px;
-  background-color: #fff;
+  background-color: var(--talk-item-color);
   .contact-top {
     height: 45px;
   }
   .contact-bottom {
     width: 100%;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 180px);
     overflow-x: hidden;
     overflow-y: auto;
+    .contact-item {
+      font-size: 14px;
+      font-weight: 400;
+    }
   }
 }
 </style>

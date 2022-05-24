@@ -16,7 +16,7 @@ const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { boardRole } = storeToRefs(appStore.boardStore);
 
 const { addMateList } = appStore.authStore;
-const { setBoardRole } = appStore.boardStore;
+const { setBoardRole, setBoardKey,addBoardList } = appStore.boardStore;
 const router = useRouter();
 const route = useRoute();
 
@@ -104,11 +104,11 @@ const createBoard = async () => {
       type: "success",
       duration: 1000,
     });
+    addBoardList(groupRes.data)
     router.back();
-    // store.commit("auth/addGroupList", [groupRes.data]);
   }
 };
-const updateBoard = async (type: string, done?: any) => {
+const updateBoard = async (type: string) => {
   let config: any = {};
   switch (type) {
     case "name":
@@ -139,9 +139,6 @@ const updateBoard = async (type: string, done?: any) => {
   if (groupRes.msg === "OK") {
     if (type === "member") {
       memberList.value = [...memberList.value, ...groupRes.data];
-    }
-    if (done) {
-      done();
     }
   }
 };
@@ -232,7 +229,7 @@ const chooseRelative = (index: number) => {
   relativeChangeVisible.value = true;
   relativeList.value[index].added = !relativeList.value[index].added;
 };
-const saveRelative = async (done: any) => {
+const saveRelative = async () => {
   if (relativeChangeVisible.value) {
     let relativeRes = (await api.request.patch("board/relative", {
       boardKey: boardKey.value,
@@ -245,10 +242,23 @@ const saveRelative = async (done: any) => {
         duration: 1000,
       });
       relativeChangeVisible.value = false;
-      done();
     }
   }
-  done();
+};
+const cloneBoard = async () => {
+  let cloneRes = (await api.request.post("board/clone", {
+    boardKey: boardKey.value,
+  })) as ResultProps;
+  if (cloneRes.msg === "OK") {
+    ElMessage({
+      message: "Clone Board Successful",
+      type: "success",
+      duration: 1000,
+    });
+    setBoardKey(cloneRes.data._key);
+    router.push("/home/board");
+    addBoardList(cloneRes.data)
+  }
 };
 watch(
   user,
@@ -353,6 +363,14 @@ watch(
       </div>
     </div>
   </div>
+  <div class="board-footer dp-center-center">
+    <div class="dp-center-center">
+      <tbutton @click="cloneBoard" round class="dp-center-center">
+        Board Clone
+      </tbutton>
+    </div>
+    <div class="dp-center-center">Clone name and members</div>
+  </div>
   <el-drawer
     v-model="excutorVisible"
     direction="rtl"
@@ -384,7 +402,8 @@ watch(
     :before-close="
       boardKey !== 'create'
         ? (done) => {
-            updateBoard('member', done);
+            updateBoard('member');
+            done();
           }
         : null
     "
@@ -419,7 +438,8 @@ watch(
     title="Choose Relative"
     :before-close="
       (done) => {
-        saveRelative(done);
+        saveRelative();
+        done();
       }
     "
   >
@@ -553,7 +573,11 @@ watch(
 </template>
 <style scoped lang="scss">
 .config {
+  width: 100%;
+  height: calc(100vh - 140px);
   padding-top: 15px;
+  padding-bottom: 15px;
+
   .manage-text {
     height: 50px;
     margin-bottom: 15px;
@@ -576,6 +600,14 @@ watch(
       width: 80px;
       height: 80px;
     }
+  }
+}
+.board-footer {
+  width: 100%;
+  height: 80px;
+  flex-wrap: wrap;
+  > div {
+    width: 100%;
   }
 }
 .role-container {

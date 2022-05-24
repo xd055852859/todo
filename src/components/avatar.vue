@@ -2,8 +2,8 @@
 import { ElMessage } from "element-plus";
 
 const props = defineProps<{
-  avatar: string | null;
-  name: string;
+  avatar?: string;
+  name?: string;
   type: string;
   index: number;
   size?: number;
