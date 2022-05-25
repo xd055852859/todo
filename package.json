@@ -6,10 +6,8 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "scp": "scp -r dist/* root@132.232.47.47:/home/work/websites/todo.qingtime.cn/",
-    "newscp": "scp -r dist/* root@47.251.3.104:/home/work/websites/qingdou.app/",
-    "deploy": "npm run build && npm run scp",
-    "newdeploy": "npm run build && npm run newscp"
+    "scp": "scp -r dist/* root@47.251.3.104:/home/work/websites/qingdou.app/",
+    "deploy": "npm run build && npm run scp"
   },
   "dependencies": {
     "@types/node": "^17.0.32",

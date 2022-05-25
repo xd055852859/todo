@@ -16,7 +16,7 @@ const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { boardRole } = storeToRefs(appStore.boardStore);
 
 const { addMateList } = appStore.authStore;
-const { setBoardRole, setBoardKey,addBoardList } = appStore.boardStore;
+const { setBoardRole, setBoardKey, addBoardList } = appStore.boardStore;
 const router = useRouter();
 const route = useRoute();
 
@@ -70,6 +70,13 @@ onMounted(() => {
   } else {
     excutorList.value = mateList.value;
     executorInfo.value = friend.value;
+    if (executorInfo.value?._key !== user.value?._key) {
+      //@ts-ignore
+      memberList.value = [executorInfo.value, user.value];
+    } else {
+      //@ts-ignore
+      memberList.value = [user.value];
+    }
   }
 });
 const getInfo = async () => {
@@ -81,7 +88,7 @@ const getInfo = async () => {
     executorInfo.value = infoRes.data.executorInfo;
     memberList.value = infoRes.data.memberList;
     excutorList.value = infoRes.data.memberList;
-    setBoardRole(infoRes.data.myRole);
+    setBoardRole(infoRes.data.role);
   }
 };
 const createBoard = async () => {
@@ -104,7 +111,7 @@ const createBoard = async () => {
       type: "success",
       duration: 1000,
     });
-    addBoardList(groupRes.data)
+    addBoardList(groupRes.data);
     router.back();
   }
 };
@@ -257,7 +264,28 @@ const cloneBoard = async () => {
     });
     setBoardKey(cloneRes.data._key);
     router.push("/home/board");
-    addBoardList(cloneRes.data)
+    addBoardList(cloneRes.data);
+  }
+};
+const TransferOwner = async (key: string, index: number) => {
+  let cloneRes = (await api.request.patch("board/transfer", {
+    boardKey: boardKey.value,
+    memberKey: key,
+  })) as ResultProps;
+  if (cloneRes.msg === "OK") {
+    ElMessage({
+      message: "Transfer Owner Successful",
+      type: "success",
+      duration: 1000,
+    });
+    let adminIndex = memberList.value.findIndex(
+      (item) => item._key === user.value?._key
+    );
+    if (adminIndex !== -1) {
+      memberList.value[adminIndex].role = 1;
+    }
+    setBoardRole(1);
+    memberList.value[index].role = 0;
   }
 };
 watch(
@@ -305,7 +333,7 @@ watch(
       class="manage-text dp-space-center"
       :class="{ 'icon-point': boardKey !== 'create' }"
       @click="
-        (boardKey !== 'create' && boardRole < 2) || boardKey === 'create'
+        (boardKey !== 'create' && boardRole === 0) || boardKey === 'create'
           ? (excutorVisible = true)
           : false
       "
@@ -314,7 +342,10 @@ watch(
       <div class="dp--center">
         <el-avatar fit="cover" :size="40" :src="executorInfo?.userAvatar" />
         <span style="margin-right: 8px">{{ executorInfo?.userName }}</span>
-        <el-icon v-if="boardKey !== 'create' && boardRole < 2"
+        <el-icon
+          v-if="
+            (boardKey !== 'create' && boardRole === 0) || boardKey === 'create'
+          "
           ><arrow-right
         /></el-icon>
       </div>
@@ -343,7 +374,15 @@ watch(
           </div>
         </div>
       </el-col>
-      <el-col :xs="8" :sm="6" :md="4" :lg="3" :xl="1" style="cursor: pointer">
+      <el-col
+        :xs="8"
+        :sm="6"
+        :md="4"
+        :lg="3"
+        :xl="1"
+        style="cursor: pointer"
+        v-if="boardRole < 2"
+      >
         <div class="manage-item" @click="memberVisible = true">
           <img :src="addPersonSvg" alt="" />
         </div>
@@ -363,7 +402,7 @@ watch(
       </div>
     </div>
   </div>
-  <div class="board-footer dp-center-center">
+  <div class="board-footer dp-center-center" v-if="boardKey !== 'create'">
     <div class="dp-center-center">
       <tbutton @click="cloneBoard" round class="dp-center-center">
         Board Clone
@@ -494,24 +533,38 @@ watch(
             :width="50"
             ref="popoverRef"
             trigger="click"
-            :disabled="
-              !(boardRole < 2 && item._key !== user?._key) ||
-              boardRole > item.role
-            "
+            :disabled="boardRole > item.role || item._key === user?._key"
           >
             <template #reference>
               <div class="manage-role dp--center">
                 <span style="margin-right: 10px">
                   {{ roleArray[item.role] }}
                 </span>
-                <el-icon v-if="boardRole < 2 && item._key !== user?._key">
+                <el-icon
+                  v-if="
+                    (boardRole > item.role || boardRole === 0) &&
+                    item._key !== user?._key
+                  "
+                >
                   <arrow-down />
                 </el-icon>
               </div>
             </template>
             <div class="role-container">
-              <div class="role-item" v-if="boardRole === 0">Owner</div>
-              <div class="role-item" @click="changeRole(item, index, 1)">
+              <el-popconfirm
+                title="Are you sure to transfer Owner?"
+                @confirm="TransferOwner(item._key, index)"
+              >
+                <template #reference>
+                  <div class="role-item" v-if="boardRole === 0">Owner</div>
+                </template>
+              </el-popconfirm>
+
+              <div
+                class="role-item"
+                v-if="boardRole === 0"
+                @click="changeRole(item, index, 1)"
+              >
                 Admin
               </div>
               <div class="role-item" @click="changeRole(item, index, 2)">

@@ -4,13 +4,21 @@ import TimelineItem from "@/components/timelineItem.vue";
 import riverChart from "@/components/chart/riverChart.vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
+import { ArrowDown } from "@element-plus/icons-vue";
 import { Task } from "@/interface/Task";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
+import Avatar from "@/components/avatar.vue";
 const dayjs: any = inject("dayjs");
+const { user, mateList } = storeToRefs(appStore.authStore);
 const { deviceType } = storeToRefs(appStore.commonStore);
+const createdMateList = computed(() => [user.value, ...mateList.value]);
 
-const props = defineProps<{ targetKey: string }>();
+const searchList = computed(() =>
+  createdMateList.value.filter((item) => {
+    return item?.userName.indexOf(searchInput.value) !== -1;
+  })
+);
 
 const historyChartList = ref<(string | number)[]>([]);
 const historyList = ref<any>([]);
@@ -18,12 +26,16 @@ const timelineList = ref<any>([]);
 const historyType = ref<string>("report");
 const historyDate = ref<string>(dayjs().format("YYYY-MM-DD"));
 const overKey = ref<string>("");
+const friendKey = ref<string>("");
+const searchInput = ref<string>("");
 const historyName = ["创建", "完成"];
+const createdMateIndex = ref<number>(0);
 const getHistoryChartInfo = async () => {
-  const historyRes = (await api.request.get(
-    "card/user/report",
-    {}
-  )) as ResultProps;
+  let obj: any = { date: historyDate.value };
+  friendKey.value ? (obj.friendKey = friendKey.value) : null;
+  const historyRes = (await api.request.get("card/user/report", {
+    ...obj,
+  })) as ResultProps;
   if (historyRes.msg === "OK") {
     let arr1: (string | number)[] = [];
     let arr2: (string | number)[] = [];
@@ -39,7 +51,7 @@ const getHistoryChartInfo = async () => {
 };
 const getHistoryInfo = async () => {
   let obj: any = { date: historyDate.value };
-  props.targetKey !== "self" ? (obj.friendKey = props.targetKey) : null;
+  friendKey.value ? (obj.friendKey = friendKey.value) : null;
   const historyRes = (await api.request.get("card/user/history", {
     ...obj,
   })) as ResultProps;
@@ -49,7 +61,7 @@ const getHistoryInfo = async () => {
 };
 const getTimelineInfo = async () => {
   let obj: any = { date: historyDate.value };
-  props.targetKey !== "self" ? (obj.friendKey = props.targetKey) : null;
+  friendKey.value ? (obj.friendKey = friendKey.value) : null;
   const timelineRes = (await api.request.get("card/user/timeline", {
     ...obj,
   })) as ResultProps;
@@ -58,10 +70,11 @@ const getTimelineInfo = async () => {
     console.log(timelineList.value);
   }
 };
+const changeDate = (date: string) => {
+  historyDate.value = date;
+};
 watchEffect(() => {
   getHistoryChartInfo();
-});
-watchEffect(() => {
   if (historyType.value === "report") {
     getHistoryInfo();
   } else {
@@ -72,6 +85,59 @@ watchEffect(() => {
 <template>
   <theader isMenu v-if="!deviceType">
     <template #left> History </template>
+    <template #right>
+      <el-dropdown>
+        <div
+          class="dp--center icon-point"
+          style="font-size: 16px; font-weight: 600"
+        >
+          <avatar
+            :name="createdMateList[createdMateIndex]?.userName"
+            :avatar="createdMateList[createdMateIndex]?.userAvatar"
+            type="person"
+            :index="0"
+            :size="30"
+            :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+          />
+          {{ createdMateList[createdMateIndex]?.userName }}
+          <el-icon class="el-icon--right">
+            <arrow-down />
+          </el-icon>
+        </div>
+        <template #dropdown>
+          <div class="header-contact" v-if="searchList">
+            <div class="contact-top dp-space-center p-5">
+              <el-input
+                v-model="searchInput"
+                placeholder="Search Mate"
+                style="height: 35px"
+              />
+            </div>
+            <div class="contact-bottom">
+              <div
+                class="contact-item container dp--center p-5 icon-point"
+                v-for="(item, index) in searchList"
+                :key="'listItem' + index"
+                @click="
+                  //@ts-ignore
+                  friendKey = item?._key;
+                  createdMateIndex = index;
+                "
+              >
+                <avatar
+                  :name="item?.userName"
+                  :avatar="item?.userAvatar"
+                  type="person"
+                  :index="0"
+                  :size="30"
+                  :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+                />{{ item?.userName }}
+              </div>
+            </div>
+          </div>
+        </template>
+      </el-dropdown>
+    </template>
   </theader>
   <div
     class="history p-5"
@@ -84,6 +150,7 @@ watchEffect(() => {
         :height="'30vh'"
         :data="historyChartList"
         :name="historyName"
+        @changeDate="changeDate"
       />
     </template>
 
@@ -93,27 +160,36 @@ watchEffect(() => {
         height: deviceType ? 'calc(70vh - 25px)' : 'calc(70vh - 70px)',
       }"
     >
-      <div class="history-nav dp-center-center">
-        <div
-          :style="
-            historyType === 'report'
-              ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
-              : {}
-          "
-          @click="historyType = 'report'"
-        >
-          Report
+      <div class="dp-space-center">
+        <div class="history-nav dp--center">
+          {{ dayjs(historyDate).format("MM.DD") }} 周{{
+            "日一二三四五六".split("")[dayjs(historyDate).day()]
+          }}
         </div>
-        <div
-          style="margin: 0px 35px"
-          :style="
-            historyType === 'timeline'
-              ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
-              : {}
-          "
-          @click="historyType = 'timeline'"
-        >
-          Timeline
+        <div class="dp--center">
+          <div
+            :style="
+              historyType === 'report'
+                ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+                : {}
+            "
+            @click="historyType = 'report'"
+            class="icon-point"
+          >
+            Report
+          </div>
+          <div
+            style="margin: 0px 15px"
+            :style="
+              historyType === 'timeline'
+                ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+                : {}
+            "
+            @click="historyType = 'timeline'"
+            class="icon-point"
+          >
+            Timeline
+          </div>
         </div>
       </div>
       <div class="history-container">

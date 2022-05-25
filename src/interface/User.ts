@@ -8,6 +8,7 @@ export interface User extends Person {
   mobile?: string;
   beans?: number;
   online?: boolean;
+  added?: boolean;
 }
 export interface Member extends Person {
   _key: string;

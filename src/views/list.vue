@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
-import { ArrowDown, HomeFilled, MoreFilled } from "@element-plus/icons-vue";
+import { ArrowDown } from "@element-plus/icons-vue";
 import { Task } from "@/interface/Task";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
@@ -149,9 +149,11 @@ const clearInbox = async () => {
 };
 const finishTask = (data) => {
   delList(data.mark ? taskList.value : inboxList.value, data);
-  if (data.mark && data.executorInfo._key === user.value?._key) {
+  if (data.mark) {
     completeNum.value++;
-    taskNum[data.mark]--;
+    if (data.executorInfo._key === user.value?._key) {
+      taskNum[data.mark]--;
+    }
   }
 };
 const delTask = (data) => {

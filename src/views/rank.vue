@@ -23,7 +23,9 @@ const chartUser = ref<any>([]);
 const getRankInfo = async () => {
   let obj: any = {};
   if (rankMark.value === "today") {
-    obj.startDate = dayjs().subtract(rankDay.value, "day").format("YYYY-MM-DD");
+    obj.startDate = dayjs()
+      .subtract(rankDay.value - 1, "day")
+      .format("YYYY-MM-DD");
     obj.endDate = dayjs().format("YYYY-MM-DD");
   } else {
     obj.mark = rankMark.value;
@@ -57,10 +59,16 @@ const getRankInfo = async () => {
         if (!userItem[item]) {
           userItem[item] = { totalBean: 0 };
         }
-        rankList.value[index].push(userItem[item].totalBean);
+        if (index === 0) {
+          rankList.value[index].push(userItem[item].totalBean);
+        } else {
+          rankList.value[index].push(
+            userItem[item].totalBean +
+              rankList.value[index - 1][rankList.value[index].length]
+          );
+        }
       }
     });
-    console.log(rankList.value)
   }
 };
 watchEffect(() => {

@@ -2,6 +2,7 @@
 import * as echarts from "echarts";
 import { ElMessage } from "element-plus";
 import { Rank } from "@/views/rank.vue";
+import { watchPostEffect } from "vue";
 const props = defineProps<{
   rankData: number[][];
   XYId: string;
@@ -12,6 +13,7 @@ const props = defineProps<{
   name: string[];
   day: number;
 }>();
+const chart = shallowRef<echarts.EChartsType | null>(null);
 onMounted(() => {
   createChart();
 });
@@ -19,11 +21,9 @@ const createChart = () => {
   type EChartsOption = echarts.EChartsOption;
 
   var chartDom = document.getElementById(props.XYId)!;
-  var myChart = echarts.init(chartDom);
+  chart.value = echarts.init(chartDom);
   let option: EChartsOption;
-  let stepDay = 0;
-  console.log(myChart);
-  let data: number[] = props.rankData[stepDay];
+  let data: number[] = props.rankData[0];
   option = {
     xAxis: {
       max: "dataMax",
@@ -58,22 +58,26 @@ const createChart = () => {
     animationEasingUpdate: "linear",
   };
 
-  setTimeout(function () {
-    run();
-  }, 0);
-  let timer = setInterval(function () {
-    run();
-    if (stepDay > props.day) {
-      clearInterval(timer);
-    }
-  }, 3000);
-  function run() {
+  // let timer = setInterval(function () {
+  //   run();
+  //   if (stepDay > props.day) {
+  //     clearInterval(timer);
+  //   }
+  // }, 3000);
+
+  option && chart.value.setOption(option);
+};
+watch(chart,(newVal) => {
+  if (newVal) {
+    let stepDay = 0;
+    let data: number[] = props.rankData[stepDay];
     for (var i = 0; i < props.day; ++i) {
       data = props.rankData[i];
       stepDay++;
     }
-    console.log(data);
-    myChart.setOption<echarts.EChartsOption>({
+    console.log(i);
+    //@ts-ignore
+    newVal.setOption<echarts.EChartsOption>({
       series: [
         {
           type: "bar",
@@ -82,8 +86,7 @@ const createChart = () => {
       ],
     });
   }
-  option && myChart.setOption(option);
-};
+});
 </script>
 <template>
   <div :id="XYId" :style="{ width: width, height: height }"></div>

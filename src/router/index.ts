@@ -26,7 +26,7 @@ const routes: Array<RouteRecordRaw> = [
         children: [],
       },
       {
-        path: "history/:targetKey",
+        path: "history",
         name: "history",
         component: () => import("@/views/history.vue"),
         props: true,
@@ -54,6 +54,20 @@ const routes: Array<RouteRecordRaw> = [
         path: "partner",
         name: "partner",
         component: () => import("@/views/partner.vue"),
+        children: [],
+      },
+      {
+        path: "matesMate/:id",
+        name: "matesMate",
+        component: () => import("@/views/matesMate.vue"),
+        props: true,
+        children: [],
+      },
+      {
+        path: "matesBoard/:id",
+        name: "matesBoard",
+        component: () => import("@/views/matesBoard.vue"),
+        props: true,
         children: [],
       },
       {

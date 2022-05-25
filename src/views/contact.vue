@@ -4,6 +4,7 @@ import { Sort } from "@element-plus/icons-vue";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
 
+import chooseSvg from "@/assets/svg/choose.svg";
 const emits = defineEmits(["close"]);
 const { boardList, order, sortIndex } = storeToRefs(appStore.boardStore);
 const { setBoardKey, setSortIndex, setOrder } = appStore.boardStore;
@@ -36,25 +37,38 @@ watch(boardList, (newVal, oldVal) => {
         class="icon-point"
         @click="setOrder(order === 'asc' ? 'desc' : 'asc')"
       />
-      <el-dropdown>
-        <div class="dp--center icon-point">
-          <el-icon style="margin-right: 10px" class="icon-point" :size="20">
-            <Sort />
-          </el-icon>
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item
-              v-for="(item, index) in sortArr"
-              :key="'sort' + index"
-              @click="setSortIndex(index)"
-              class="icon-point"
-            >
-              {{ item }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
+      <el-popover
+        placement="bottom"
+        :width="200"
+        trigger="hover"
+        :teleported="false"
+      >
+        <template #reference>
+          <div class="dp--center icon-point">
+            <el-icon style="margin-right: 10px" class="icon-point" :size="20">
+              <Sort />
+            </el-icon>
+          </div>
         </template>
-      </el-dropdown>
+        <div>
+          <div
+            v-for="(item, index) in sortArr"
+            :key="'sort' + index"
+            @click="setSortIndex(index)"
+            class="icon-point container dp-space-center"
+          >
+            <div>{{ item }}</div>
+            <div class="right">
+              <img
+                :src="chooseSvg"
+                alt=""
+                style="width: 20px; height: 20px"
+                v-if="index === sortIndex"
+              />
+            </div>
+          </div>
+        </div>
+      </el-popover>
     </div>
     <div class="contact-bottom">
       <div
@@ -91,6 +105,8 @@ watch(boardList, (newVal, oldVal) => {
   background-color: var(--talk-item-color);
   .contact-top {
     height: 45px;
+    position: relative;
+    z-index: 1;
   }
   .contact-bottom {
     width: 100%;

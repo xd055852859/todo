@@ -10,6 +10,7 @@ import addBeanSvg from "@/assets/svg/addBean.svg";
 import finishBeanSvg from "@/assets/svg/finishBean.svg";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
+import Avatar from "./avatar.vue";
 
 const { uploadToken, user } = storeToRefs(appStore.authStore);
 const { taskKey } = storeToRefs(appStore.taskStore);
@@ -228,13 +229,19 @@ const updateImg = (e) => {
 //   //   // editorInfo.value?.chain().focus().deleteRange(range).setImage({ src: url });
 //   // });
 // };
-const delImg = () => {};
+const delImg = (index) => {
+  imageList.value.splice(index, 1);
+};
 watch(
   () => props.item,
   (newVal) => {
-    title.value = newVal.title;
-    hasFinished.value = newVal.hasFinished ? newVal.hasFinished : 0;
-  }
+    console.log(newVal);
+    if (newVal) {
+      title.value = newVal.title;
+      hasFinished.value = newVal.hasFinished ? 1 : 0;
+    }
+  },
+  { deep: true }
 );
 </script>
 <template>
@@ -273,8 +280,12 @@ watch(
             v-model="title"
             :autosize="{ minRows: 1 }"
             type="textarea"
-            :placeholder="role > 2 ? '' : 'Please Enter Title'"
-            :disabled="role > 2"
+            :placeholder="
+              role > 2 && item.creatorInfo?._key !== user?._key
+                ? ''
+                : 'Please Enter Title'
+            "
+            :disabled="role > 2 && item.creatorInfo?._key !== user?._key"
           />
           <div
             class="task-detail"
@@ -284,30 +295,47 @@ watch(
               v-model="detail"
               :autosize="{ minRows: 1 }"
               type="textarea"
-              :placeholder="role > 2 ? '' : 'Please Enter Detail'"
-              :disabled="role > 2"
+              :placeholder="
+                role > 2 && item.creatorInfo?._key !== user?._key
+                  ? ''
+                  : 'Please Enter Detail'
+              "
+              :disabled="role > 2 && item.creatorInfo?._key !== user?._key"
             />
           </div>
-          <div
-            class="task-upload dp--center"
-            v-if="
-              taskKey === item._key &&
-              (role < 3 || (imageList.length > 0 && role > 2))
-            "
-          >
-            <el-image
-              style="width: 60px; height: 60px"
-              v-for="(item, index) in imageList"
-              :src="item"
-              :preview-src-list="imageList"
-              :initial-index="index"
-              fit="cover"
+          <div class="task-upload dp--center" v-if="taskKey === item._key">
+            <div
               class="task-upload-img"
-            />
+              v-for="(item, index) in imageList"
+              :key="'img' + index"
+            >
+              <el-image
+                style="width: 60px; height: 60px"
+                :src="item"
+                :preview-src-list="imageList"
+                :initial-index="index"
+                fit="cover"
+                :hide-on-click-modal="true"
+              />
+              <div
+                class="task-upload-delete"
+                v-if="role < 3 || item.creatorInfo?._key === user?._key"
+              >
+                <icon-font
+                  name="close"
+                  :size="22"
+                  class="icon-point"
+                  @click.stop="delImg(index)"
+                />
+              </div>
+            </div>
             <!--    @paste="pasteImg" -->
             <div
               class="task-upload-button dp-center-center icon-point"
-              v-if="role < 3 && imageList.length < 10"
+              v-if="
+                (role < 3 || item.creatorInfo?._key === user?._key) &&
+                imageList.length < 10
+              "
             >
               <el-icon><Plus /></el-icon>
               <input
@@ -321,15 +349,30 @@ watch(
         </div>
       </div>
       <div class="task-bottom dp-space-center" v-if="type !== 'report'">
-        <div>
-          <span v-if="type === 'send'"># {{ item.boardInfo?.title }}</span>
+        <div style="padding-left: 35px; box-sizing: border-box">
+          <div v-if="type === 'send'" class="dp--center">
+            # {{ item.boardInfo?.title }}
+            <avatar
+              :name="item.executorInfo.userName"
+              :avatar="item.executorInfo.userAvatar"
+              type="person"
+              :index="0"
+              :size="20"
+              style="margin-left: 8px"
+            />
+          </div>
         </div>
         <div class="dp--center">
+          <!-- item.executorInfo._key === user?._key && -->
+          <!--  ((item.executorInfo._key === user?._key && type !== 'inbox') ||
+                type === 'inbox') && -->
           <div
             v-if="
-              item.executorInfo._key === user?._key &&
-              overKey === item._key &&
-              type !== 'completed'
+              type !== 'other' &&
+              type !== 'completed' &&
+              (type === 'inbox' ||
+                (item.executorInfo._key === user?._key && type !== 'inbox')) &&
+              overKey === item._key
             "
             style="margin-right: 10px"
           >
@@ -366,14 +409,12 @@ watch(
             {{ item.hasRead ? item.mark : "Unread" }}
           </span>
           <icon-font
-            class="icon-point del-button"
-            name="image"
+            name="detail"
             :size="10"
             style="margin-right: 10px"
             v-if="item.hasDetail"
           />
           <icon-font
-            class="icon-point del-button"
             name="image"
             :size="10"
             style="margin-right: 10px"
@@ -438,7 +479,7 @@ watch(
 .task {
   width: 100%;
   margin-top: 10px;
-  padding: 10px;
+  padding: 10px 10px 0px 10px-;
   box-sizing: border-box;
   border-radius: 12px;
   &:hover {
@@ -468,8 +509,26 @@ watch(
       .task-upload {
         flex-wrap: wrap;
         .task-upload-img {
+          width: 60px;
+          height: 60px;
           margin-right: 10px;
           margin-bottom: 10px;
+          position: relative;
+          z-index: 1;
+          .task-upload-delete {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            z-index: 2;
+            top: -8px;
+            right: -8px;
+            display: none;
+          }
+          &:hover .task-upload-delete {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
         }
         .task-upload-button {
           width: 60px;

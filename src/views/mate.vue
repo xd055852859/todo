@@ -158,14 +158,22 @@ const delMate = async () => {
           <img :src="logoSvg" alt="" class="logo" />{{ mateInfo.beans }}
         </div>
         <div class="mate-info dp-space-center">
-          <div class="dp-center-center" style="width: 50%">
+          <div
+            class="dp-center-center icon-point"
+            style="width: 50%"
+            @click="$router.push('/home/matesBoard/' + mateKey)"
+          >
             <icon-font
               name="boards"
               :size="24"
               style="margin-right: 8px"
             />Boards ( {{ mateInfo.boardNum }} )
           </div>
-          <div class="dp-center-center" style="width: 50%">
+          <div
+            class="dp-center-center icon-point"
+            style="width: 50%"
+            @click="$router.push('/home/matesMate/' + mateKey)"
+          >
             <icon-font
               name="mates"
               :size="24"

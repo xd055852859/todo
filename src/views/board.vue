@@ -88,6 +88,22 @@ onMounted(() => {
       delTask(data);
     }
   });
+  socket.on("cancelFinish", (data) => {
+    cancelTask(data);
+    // if (data.mark === markArr[markIndex.value].value || markIndex.value === 0) {
+    if (data.boardInfo._key === boardKey.value) {
+      if (taskObj.value[data.creatorInfo._key]) {
+        taskObj.value[data.creatorInfo._key].cards.unshift(data);
+      } else {
+        taskObj.value[data.creatorInfo._key] = {
+          cards: [data],
+          userAvatar: data.creatorInfo.userAvatar,
+          userName: data.creatorInfo.userName,
+        };
+      }
+    }
+    // }
+  });
 });
 const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
   let obj: any = { boardKey: boardKey };
@@ -195,6 +211,7 @@ const finishTask = (data) => {
   }
 };
 const delTask = (data) => {
+  console.log(data);
   if (data.hasFinished) {
     if (taskFinishObj.value[data.creatorInfo._key]) {
       let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
@@ -219,6 +236,20 @@ const delTask = (data) => {
           delete taskObj.value[data.creatorInfo._key];
         }
       }
+    }
+  }
+};
+const cancelTask = (data) => {
+  if (taskFinishObj.value[data.creatorInfo._key]) {
+    let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
+      (item: Task) => data._key === item._key
+    );
+    if (index !== -1) {
+      taskFinishObj.value[data.creatorInfo._key].cards.splice(index, 1);
+      if (taskFinishObj.value[data.creatorInfo._key].cards.length === 0) {
+        delete taskFinishObj.value[data.creatorInfo._key];
+      }
+      completeNum.value--;
     }
   }
 };
@@ -275,6 +306,7 @@ watch(mark, (newVal) => {
           name="set"
           class="icon-point"
           @click="$router.push(`/manage/` + boardKey)"
+          v-if="boardRole < 2"
         />
         <el-dropdown>
           <el-icon>
@@ -465,8 +497,6 @@ watch(mark, (newVal) => {
             :item="item"
             :overKey="overKey"
             type="completed"
-            amimateType
-            @finishTask="finishTask"
             @delTask="delTask"
             :role="boardRole"
           />

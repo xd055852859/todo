@@ -50,7 +50,7 @@ export const taskStore = defineStore("taskStore", () => {
         item.creatorInfo?._key === taskItem.creatorInfo?._key &&
         item.boardInfo?._key === taskItem.boardInfo?._key
     );
-   
+
     if (taskIndex !== -1) {
       arr[taskIndex].cards.unshift(item);
     } else {
@@ -63,20 +63,25 @@ export const taskStore = defineStore("taskStore", () => {
   };
 
   const updateList = (arr: any, item: Task) => {
-    let index = inboxList.value.findIndex(
+    console.log(arr)
+    let index = arr.findIndex(
       (arrItem) =>
         item.creatorInfo?._key === arrItem.creatorInfo?._key &&
         item.boardInfo?._key === arrItem.boardInfo?._key
     );
+    console.log(index)
     if (index !== -1) {
-      let taskIndex = arr.cards.findIndex(
+      let taskIndex = arr[index].cards.findIndex(
         (taskItem: Task) => item._key === taskItem._key
       );
+      console.log(taskIndex)
       if (taskIndex !== -1) {
         arr[index].cards[taskIndex] = {
           ...arr[index].cards[taskIndex],
           ...item,
         };
+        console.log(item);
+        console.log(arr[index].cards[taskIndex]);
       }
     }
   };

@@ -37,7 +37,13 @@ const logout = () => {
           <div class="center">
             {{ user?.userName }}
           </div>
-          <div class="dp--center common-color">
+          <div
+            class="dp--center common-color icon-point"
+            @click="
+              $router.push('/home/history');
+              emits('close');
+            "
+          >
             <img
               :src="logoSvg"
               alt=""
@@ -89,7 +95,7 @@ const logout = () => {
       <div
         class="userCenter-item dp--center"
         @click="
-          $router.push('/home/history/self');
+          $router.push('/home/history');
           emits('close');
         "
       >

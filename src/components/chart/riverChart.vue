@@ -9,12 +9,17 @@ const props = defineProps<{
   onClick?: Function;
   name: string[];
 }>();
+const emits = defineEmits<{
+  (e: "changeDate", date: string): void;
+}>();
+const dayjs: any = inject("dayjs");
 onMounted(() => {
   createChart();
 });
+const chart = ref<any>(null);
 const createChart = () => {
   var chartDom = document.getElementById(props.riverId)!;
-  var myChart = echarts.init(chartDom);
+  chart.value = echarts.init(chartDom);
   var option;
 
   option = {
@@ -35,6 +40,7 @@ const createChart = () => {
     singleAxis: {
       top: 50,
       bottom: 50,
+      triggerEvent: true,
       axisTick: {},
       axisLabel: {},
       type: "time",
@@ -55,6 +61,7 @@ const createChart = () => {
     series: [
       {
         type: "themeRiver",
+        label: { show: false },
         emphasis: {
           itemStyle: {
             shadowBlur: 20,
@@ -66,8 +73,26 @@ const createChart = () => {
     ],
   };
 
-  option && myChart.setOption(option);
+  option && chart.value.setOption(option);
+  console.log(props.data);
+  chart.value.on("click", function (params) {
+    if (params.componentType === "singleAxis") {
+      emits("changeDate", dayjs(params.value).format("YYYY-MM-DD"));
+    }
+  });
 };
+watch(
+  () => props.data,
+  (newVal) => {
+    chart.value.setOption({
+      series: [
+        {
+          data: newVal,
+        },
+      ],
+    });
+  }
+);
 </script>
 <template>
   <div :id="riverId" :style="{ width: width, height: height }"></div>

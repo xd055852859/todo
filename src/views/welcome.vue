@@ -11,7 +11,7 @@ onMounted(() => {
 
 const login = () => {
   let redirect = encodeURIComponent(
-    `${window.location.protocol}//${window.location.host}/`
+    `${window.location.protocol}//${window.location.host}/#/home/`
   );
   console.log(redirect);
   localStorage.clear()
