@@ -149,11 +149,9 @@ const clearInbox = async () => {
 };
 const finishTask = (data) => {
   delList(data.mark ? taskList.value : inboxList.value, data);
-  if (data.mark) {
-    completeNum.value++;
-    if (data.executorInfo._key === user.value?._key) {
-      taskNum[data.mark]--;
-    }
+  completeNum.value++;
+  if (data.mark && data.executorInfo._key === user.value?._key) {
+    taskNum[data.mark]--;
   }
 };
 const delTask = (data) => {
@@ -198,10 +196,10 @@ watchEffect(() => {
 </script>
 <template>
   <theader isMenu>
-    <template #left
+    <template #title
       ><el-dropdown>
         <div
-          class="dp--center icon-point"
+          class="dp-space-center icon-point"
           style="font-size: 16px; font-weight: 600"
         >
           <avatar

@@ -26,7 +26,7 @@ const routes: Array<RouteRecordRaw> = [
         children: [],
       },
       {
-        path: "history",
+        path: "history/:id",
         name: "history",
         component: () => import("@/views/history.vue"),
         props: true,

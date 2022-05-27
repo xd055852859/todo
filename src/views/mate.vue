@@ -8,7 +8,9 @@ import { storeToRefs } from "pinia";
 import appStore from "@/store";
 import logoSvg from "../assets/svg/logo.svg";
 import Avatar from "@/components/avatar.vue";
+import RiverChart from "@/components/chart/riverChart.vue";
 const socket: any = inject("socket");
+const dayjs: any = inject("dayjs");
 const { addMateList, delMateList } = appStore.authStore;
 const route = useRoute();
 const router = useRouter();
@@ -18,10 +20,14 @@ const mateInfo = ref<Mate | null>(null);
 const shareTitle = ref<string>("");
 const allTitle = ref<string>("");
 const delVisible = ref<boolean>(false);
+const historyDate = ref<string>(dayjs().format("YYYY-MM-DD"));
+const historyChartList = ref<(string | number)[]>([]);
+const historyName = ["创建", "完成"];
 onMounted(() => {
   mateKey.value = route.params.id as string;
   console.log(mateKey.value);
   getMateInfo();
+  getHistoryChartInfo();
   socket.on("onlineStatus", (data) => {
     console.log(data, "onlineStatus");
     mateInfo.value = { ...mateInfo.value, ...data };
@@ -75,6 +81,24 @@ const getMateInfo = async () => {
       );
       allTitle.value = num < 0 ? "↓ " + (num - 100) + "%" : "↑ " + num + "%";
     }
+  }
+};
+const getHistoryChartInfo = async () => {
+  const historyRes = (await api.request.get("card/user/report", {
+    date: historyDate.value,
+    friendKey: mateKey.value,
+  })) as ResultProps;
+  if (historyRes.msg === "OK") {
+    let arr1: (string | number)[] = [];
+    let arr2: (string | number)[] = [];
+    arr1 = historyRes.data.map((item) => {
+      console.log(item);
+      return [item.fullDate.replace(/-/g, "/"), item.createScore, "创建"];
+    });
+    arr2 = historyRes.data.map((item) => {
+      return [item.fullDate.replace(/-/g, "/"), item.finishScore, "完成"];
+    });
+    historyChartList.value = [...arr1, ...arr2];
   }
 };
 const saveMate = async () => {
@@ -138,7 +162,7 @@ const delMate = async () => {
       <span style="font-size: 14px">{{ mateInfo?.viewNum }}</span>
     </template>
   </theader>
-  <div class="mate p-5 dp-center-center" v-if="mateInfo">
+  <div class="mate p-5" v-if="mateInfo">
     <div class="mate-top dp-center-center">
       <div class="mate-avatar dp-center-center">
         <!-- <img :src="mateInfo.userAvatar" alt="" /> -->
@@ -212,6 +236,15 @@ const delMate = async () => {
         </div>
       </template>
     </div>
+    <template v-if="historyChartList.length > 0">
+      <river-chart
+        riverId="riverContentId"
+        :width="'100%'"
+        :height="'30vh'"
+        :data="historyChartList"
+        :name="historyName"
+      />
+    </template>
   </div>
   <el-dialog v-model="delVisible" title="Delete prompt" width="350px">
     <span>Delete Mate</span>
@@ -231,8 +264,6 @@ const delMate = async () => {
   height: calc(100vh - 55px);
   overflow-x: hidden;
   overflow-y: auto;
-  flex-wrap: wrap;
-  align-content: center;
   .mate-top {
     width: 100%;
     min-height: 300px;

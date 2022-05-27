@@ -10,6 +10,7 @@ import { storeToRefs } from "pinia";
 import appStore from "@/store";
 import Avatar from "@/components/avatar.vue";
 const dayjs: any = inject("dayjs");
+const route = useRoute();
 const { user, mateList } = storeToRefs(appStore.authStore);
 const { deviceType } = storeToRefs(appStore.commonStore);
 const createdMateList = computed(() => [user.value, ...mateList.value]);
@@ -30,6 +31,12 @@ const friendKey = ref<string>("");
 const searchInput = ref<string>("");
 const historyName = ["创建", "完成"];
 const createdMateIndex = ref<number>(0);
+onMounted(() => {
+  console.log(route.params.id)
+  if (route.params.id && route.params.id !== "create") {
+    friendKey.value == route.params.id;
+  }
+});
 const getHistoryChartInfo = async () => {
   let obj: any = { date: historyDate.value };
   friendKey.value ? (obj.friendKey = friendKey.value) : null;
@@ -83,7 +90,7 @@ watchEffect(() => {
 });
 </script>
 <template>
-  <theader isMenu v-if="!deviceType">
+  <theader isMenu>
     <template #left> History </template>
     <template #right>
       <el-dropdown>

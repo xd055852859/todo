@@ -559,7 +559,6 @@ watch(
     height: 25px;
     color: var(--talk-font-color-1);
     font-size: 12px;
-    padding: 0px 10px;
     box-sizing: border-box;
   }
   .task-bean {

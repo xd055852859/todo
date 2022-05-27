@@ -88,13 +88,14 @@ const BgColorArray = [
     }
   }
   .online {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     position: absolute;
     bottom: 1%;
     right: 1%;
     z-index: 2;
+    box-shadow: 0px 2px 4px 0px rgba(122,122,122,0.50); 
   }
 }
 </style>

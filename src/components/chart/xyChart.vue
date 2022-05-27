@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import * as echarts from "echarts";
-import { ElMessage } from "element-plus";
-import { Rank } from "@/views/rank.vue";
-import { watchPostEffect } from "vue";
+import { useThrottleFn } from "@vueuse/core";
 const props = defineProps<{
   rankData: number[][];
   XYId: string;
@@ -10,21 +8,22 @@ const props = defineProps<{
   height?: string;
   zoom?: number;
   onClick?: Function;
-  name: string[];
+  name: any;
   day: number;
 }>();
+const emits = defineEmits<{
+  (e: "changeMate", key: string): void;
+}>();
 const chart = shallowRef<echarts.EChartsType | null>(null);
+const option = shallowRef<echarts.EChartsOption | null>(null);
 onMounted(() => {
   createChart();
 });
 const createChart = () => {
-  type EChartsOption = echarts.EChartsOption;
-
   var chartDom = document.getElementById(props.XYId)!;
   chart.value = echarts.init(chartDom);
-  let option: EChartsOption;
   let data: number[] = props.rankData[0];
-  option = {
+  option.value = {
     xAxis: {
       max: "dataMax",
     },
@@ -34,7 +33,7 @@ const createChart = () => {
       inverse: true,
       animationDuration: 300,
       animationDurationUpdate: 300,
-      max: props.rankData[0].length - 1, // only the largest 3 bars will be displayed
+      triggerEvent: true,
     },
     series: [
       {
@@ -47,10 +46,14 @@ const createChart = () => {
           position: "right",
           valueAnimation: true,
         },
+        // barWidth: 5,
+        // backgroundStyle: {
+        //   borderWidth: 40,
+        // },
       },
     ],
     legend: {
-      show: false,
+      show: false
     },
     animationDuration: 0,
     animationDurationUpdate: 3000,
@@ -64,20 +67,53 @@ const createChart = () => {
   //     clearInterval(timer);
   //   }
   // }, 3000);
-
-  option && chart.value.setOption(option);
+  option.value && chart.value.setOption(option.value);
+  window.onresize = useThrottleFn(() => {
+    if (chart.value) {
+      //@ts-ignore
+      chart.value.resize();
+    }
+  }, 50);
+  chart.value.on("click", function (params) {
+    console.log(params);
+    if (params.componentType === "yAxis") {
+      emits("changeMate", props.name[params.dataIndex]._key);
+    }
+  });
 };
-watch(chart,(newVal) => {
-  if (newVal) {
-    let stepDay = 0;
-    let data: number[] = props.rankData[stepDay];
+watch(chart, (newChart) => {
+  if (newChart) {
+    let data: any = null;
     for (var i = 0; i < props.day; ++i) {
       data = props.rankData[i];
-      stepDay++;
     }
     console.log(i);
     //@ts-ignore
-    newVal.setOption<echarts.EChartsOption>({
+    newChart.setOption<echarts.EChartsOption>({
+      yAxis: {
+        data: props.name,
+      },
+      series: [
+        {
+          data,
+        },
+      ],
+    });
+  }
+});
+watch(
+  () => props.rankData,
+  (newVal) => {
+    let data: any = null;
+    for (var i = 0; i < props.day; ++i) {
+      data = newVal[i];
+    }
+    console.log(props.name);
+    //@ts-ignore
+    chart.value.setOption<echarts.EChartsOption>({
+      yAxis: {
+        data: props.name,
+      },
       series: [
         {
           type: "bar",
@@ -85,8 +121,11 @@ watch(chart,(newVal) => {
         },
       ],
     });
-  }
-});
+    //@ts-ignore
+    chart.value.resize();
+  },
+  { deep: true }
+);
 </script>
 <template>
   <div :id="XYId" :style="{ width: width, height: height }"></div>

@@ -95,7 +95,7 @@ const logout = () => {
       <div
         class="userCenter-item dp--center"
         @click="
-          $router.push('/home/history');
+          $router.push('/home/history/create');
           emits('close');
         "
       >

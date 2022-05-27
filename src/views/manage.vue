@@ -145,7 +145,10 @@ const updateBoard = async (type: string) => {
   })) as ResultProps;
   if (groupRes.msg === "OK") {
     if (type === "member") {
-      memberList.value = [...memberList.value, ...groupRes.data];
+      memberList.value = [
+        ...memberList.value,
+        ...(addMemberArr.value as Member[]),
+      ];
     }
   }
 };

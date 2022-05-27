@@ -286,7 +286,7 @@ watch(mark, (newVal) => {
 </script>
 <template>
   <theader isMenu>
-    <template v-slot:left>
+    <template #title>
       <el-dropdown trigger="click" v-if="boardList.length > 0">
         <div class="board-header-title dp--center icon-point">
           {{ boardList && boardList[boardIndex].title }}
@@ -342,7 +342,7 @@ watch(mark, (newVal) => {
       </div>
     </template>
   </theader>
-  <div class="board-header dp-space-center" v-if="boardList.length > 0">
+  <div class="board-header dp-space-center p-5" v-if="boardList.length > 0">
     <div class="dp--center">
       <avatar
         :name="boardList[boardIndex].executorInfo.userName"
@@ -526,7 +526,6 @@ watch(mark, (newVal) => {
 .board-header {
   width: 100%;
   height: 40px;
-  padding: 0px 20px;
   box-sizing: border-box;
   // max-width: 960px;
 }

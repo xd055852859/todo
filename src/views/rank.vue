@@ -1,27 +1,42 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
 import xyChart from "@/components/chart/xyChart.vue";
+import { ArrowDown } from "@element-plus/icons-vue";
 import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
 import { User } from "@/interface/User";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
+import { userInfo } from "os";
 export interface Rank extends User {
   totalBean: number;
   createDate: string;
 }
+const router = useRouter();
 const dayjs: any = inject("dayjs");
+const { user } = storeToRefs(appStore.authStore);
 const { deviceType } = storeToRefs(appStore.commonStore);
 const rankMark = ref<string>("today");
 const rankList = ref<any>([]);
 const seeAll = ref<number>(0);
 
-const rankDay = ref<number>(7);
+const rankDay = ref<number>(1);
+const rankStr = ref<string>("Today");
 const rankUser = ref<any>({});
 const timeList = ref<string[]>([]);
 const chartUser = ref<any>([]);
+const chartUserObj = ref<any>({});
+onMounted(()=>{
+  getRankInfo()
+})
 const getRankInfo = async () => {
   let obj: any = {};
+  timeList.value = [];
+  rankList.value = [];
+  chartUser.value = [];
+  chartUserObj.value = {};
+  rankUser.value = {};
+
   if (rankMark.value === "today") {
     obj.startDate = dayjs()
       .subtract(rankDay.value - 1, "day")
@@ -55,7 +70,16 @@ const getRankInfo = async () => {
       rankList.value[index] = [];
       for (let key in rankUser.value) {
         let userItem = rankUser.value[key];
-        chartUser.value.push(userItem.userName);
+        if (!chartUserObj.value[userItem._key]) {
+          chartUser.value.push({
+            value: userItem.userName,
+            _key: userItem._key,
+          });
+          chartUserObj.value[userItem._key] = {
+            value: userItem.userName,
+            _key: userItem._key,
+          };
+        }
         if (!userItem[item]) {
           userItem[item] = { totalBean: 0 };
         }
@@ -71,18 +95,68 @@ const getRankInfo = async () => {
     });
   }
 };
-watchEffect(() => {
-  getRankInfo();
-});
+const changeMate = (key: string) => {
+  console.log(key);
+  if (key !== user.value?._key) {
+    router.push("/home/mate/" + key);
+  }
+};
+
 </script>
 <template>
-  <theader isMenu v-if="!deviceType">
+  <theader isMenu>
     <template #left>
       {{ rankMark === "today" ? "Ranking of Beans" : "Ranking of Todo" }}
     </template>
+    <template #right>
+      <el-dropdown>
+        <div>
+          {{ rankStr }}
+          <el-icon class="el-icon--right">
+            <arrow-down />
+          </el-icon>
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              @click="
+                rankStr = 'Today';
+                rankDay = 1;
+                getRankInfo()
+              "
+              >Today</el-dropdown-item
+            >
+            <el-dropdown-item
+              @click="
+                rankStr = 'Yesterday';
+                rankDay = 2;
+                getRankInfo()
+              "
+              >Yesterday</el-dropdown-item
+            >
+            <el-dropdown-item
+              @click="
+                rankStr = 'Latest 7 days';
+                rankDay = 7;
+                getRankInfo()
+              "
+              >Latest 7 days</el-dropdown-item
+            >
+            <el-dropdown-item
+              @click="
+                rankStr = 'Latest 30 days';
+                rankDay = 30;
+                getRankInfo()
+              "
+              >Latest 30 days</el-dropdown-item
+            >
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </template>
   </theader>
   <div
-    class="rank p-5"
+    class="rank"
     :style="{ height: deviceType ? '100vh' : 'calc(100vh - 55px)' }"
   >
     <!-- <div class="rank-nav dp-center-center">
@@ -124,8 +198,10 @@ watchEffect(() => {
         :width="'100%'"
         :height="rankList.length * 40 + 150 + 'px'"
         :rankData="rankList"
+        :timeList="timeList"
         :name="chartUser"
         :day="rankDay"
+        @changeMate="changeMate"
       />
     </div>
 

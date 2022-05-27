@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import UserCenter from "@/views/userCenter.vue";
 import { ArrowLeft } from "@element-plus/icons-vue";
+import { storeToRefs } from "pinia";
+import appStore from "@/store";
 const router = useRouter();
 const props = defineProps<{
   isMenu?: boolean;
 }>();
 const emits = defineEmits(["iconClick"]);
-
+const { deviceType } = storeToRefs(appStore.commonStore);
 const themeVisible = ref<boolean>(false);
 const menuVisible = ref<boolean>(true);
 
@@ -17,27 +19,29 @@ const back = () => {
 };
 </script>
 <template>
-  <div class="common-header" :class="'dp-center-center'">
-    <div class="left dp-space-center">
-      <icon-font
-        name="menu"
-        @mouseenter="themeVisible = true"
-        style="margin-right: 10px"
-        :size="16"
-        v-if="isMenu"
-        class="icon-point"
-      />
-      <el-icon
-        style="margin-right: 10px; cursor: pointer"
-        size="20px"
-        @click="back()"
-        v-else
-      >
-        <arrow-left />
-      </el-icon>
-      <slot name="left"></slot>
-    </div>
-    <div class="title"><slot name="title"></slot></div>
+  <div class="common-header p-5" :class="'dp-center-center'">
+    <template v-if="!deviceType">
+      <div class="left dp-space-center">
+        <icon-font
+          name="menu"
+          @mouseenter="themeVisible = true"
+          style="margin-right: 10px"
+          :size="16"
+          v-if="isMenu"
+          class="icon-point"
+        />
+        <el-icon
+          style="margin-right: 10px; cursor: pointer"
+          size="20px"
+          @click="back()"
+          v-else
+        >
+          <arrow-left />
+        </el-icon>
+        <slot name="left"></slot>
+      </div>
+      <div class="title dp--center"><slot name="title"></slot></div>
+    </template>
     <div class="right dp--center">
       <slot name="right"></slot>
       <!-- <icon-font
@@ -59,15 +63,14 @@ const back = () => {
 </template>
 <style scoped lang="scss">
 .common-header {
-  width: 100%;
+  width: 100vw;
   height: 55px;
   text-align: center;
-  padding: 0px 20px;
   box-sizing: border-box;
   position: relative;
   z-index: 1;
   .title {
-    width: calc(100% - 200px);
+    width: 100%;
     font-size: 18px;
     font-weight: 600;
   }
@@ -79,10 +82,10 @@ const back = () => {
     z-index: 5;
   }
   .left {
-    left: 20px;
+    left: 10px;
   }
   .right {
-    right: 20px;
+    right: 10px;
   }
 }
 </style>
