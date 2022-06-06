@@ -81,7 +81,7 @@ body,
 .footer {
   width: 100%;
   height: 50px;
-  background: #ebebeb;
+  background: var(--talk-footer-color) ;
   position: relative;
   z-index: 1;
   > div {

@@ -2,6 +2,7 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import SocketIO from "./plugins/io";
+import i18n from "./language/i18n";
 import { createPinia } from "pinia";
 import { registerStore } from "@/store";
 import dayjs from "dayjs";
@@ -24,7 +25,7 @@ app
   .component("theader", Theader)
   .component("tbutton", Tbutton)
   .component("icon-font", IconFont);
-  
+
 app
   .use(router)
   .use(ElementPlus, {
@@ -33,7 +34,7 @@ app
   .use(SocketIO, {
     connection: "https://tddata.qingtime.cn",
   })
-  .use(createPinia());
-
+  .use(createPinia())
+  .use(i18n);
 registerStore();
 app.mount("#app");

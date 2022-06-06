@@ -26,9 +26,9 @@ const rankUser = ref<any>({});
 const timeList = ref<string[]>([]);
 const chartUser = ref<any>([]);
 const chartUserObj = ref<any>({});
-onMounted(()=>{
-  getRankInfo()
-})
+onMounted(() => {
+  getRankInfo();
+});
 const getRankInfo = async () => {
   let obj: any = {};
   timeList.value = [];
@@ -53,46 +53,48 @@ const getRankInfo = async () => {
     ...obj,
   })) as ResultProps;
   if (rankRes.msg === "OK") {
-    rankRes.data.forEach((item: Rank) => {
-      if (!rankUser.value[item._key]) {
-        rankUser.value[item._key] = {
-          userAvatar: item.userAvatar,
-          userName: item.userName,
-          _key: item._key,
-        };
-      }
-      rankUser.value[item._key][item.createDate] = {
-        totalBean: item.totalBean,
-      };
-    });
-    // rankList.value = [...rankList.value];
-    timeList.value.forEach((item, index) => {
-      rankList.value[index] = [];
-      for (let key in rankUser.value) {
-        let userItem = rankUser.value[key];
-        if (!chartUserObj.value[userItem._key]) {
-          chartUser.value.push({
-            value: userItem.userName,
-            _key: userItem._key,
-          });
-          chartUserObj.value[userItem._key] = {
-            value: userItem.userName,
-            _key: userItem._key,
+    if (rankRes.data.length > 0) {
+      rankRes.data.forEach((item: Rank) => {
+        if (!rankUser.value[item._key]) {
+          rankUser.value[item._key] = {
+            userAvatar: item.userAvatar,
+            userName: item.userName,
+            _key: item._key,
           };
         }
-        if (!userItem[item]) {
-          userItem[item] = { totalBean: 0 };
+        rankUser.value[item._key][item.createDate] = {
+          totalBean: item.totalBean,
+        };
+      });
+      // rankList.value = [...rankList.value];
+      timeList.value.forEach((item, index) => {
+        rankList.value[index] = [];
+        for (let key in rankUser.value) {
+          let userItem = rankUser.value[key];
+          if (!chartUserObj.value[userItem._key]) {
+            chartUser.value.push({
+              value: userItem.userName,
+              _key: userItem._key,
+            });
+            chartUserObj.value[userItem._key] = {
+              value: userItem.userName,
+              _key: userItem._key,
+            };
+          }
+          if (!userItem[item]) {
+            userItem[item] = { totalBean: 0 };
+          }
+          if (index === 0) {
+            rankList.value[index].push(userItem[item].totalBean);
+          } else {
+            rankList.value[index].push(
+              userItem[item].totalBean +
+                rankList.value[index - 1][rankList.value[index].length]
+            );
+          }
         }
-        if (index === 0) {
-          rankList.value[index].push(userItem[item].totalBean);
-        } else {
-          rankList.value[index].push(
-            userItem[item].totalBean +
-              rankList.value[index - 1][rankList.value[index].length]
-          );
-        }
-      }
-    });
+      });
+    }
   }
 };
 const changeMate = (key: string) => {
@@ -101,7 +103,6 @@ const changeMate = (key: string) => {
     router.push("/home/mate/" + key);
   }
 };
-
 </script>
 <template>
   <theader isMenu>
@@ -110,7 +111,7 @@ const changeMate = (key: string) => {
     </template>
     <template #right>
       <el-dropdown>
-        <div>
+        <div class="icon-point">
           {{ rankStr }}
           <el-icon class="el-icon--right">
             <arrow-down />
@@ -122,7 +123,7 @@ const changeMate = (key: string) => {
               @click="
                 rankStr = 'Today';
                 rankDay = 1;
-                getRankInfo()
+                getRankInfo();
               "
               >Today</el-dropdown-item
             >
@@ -130,7 +131,7 @@ const changeMate = (key: string) => {
               @click="
                 rankStr = 'Yesterday';
                 rankDay = 2;
-                getRankInfo()
+                getRankInfo();
               "
               >Yesterday</el-dropdown-item
             >
@@ -138,7 +139,7 @@ const changeMate = (key: string) => {
               @click="
                 rankStr = 'Latest 7 days';
                 rankDay = 7;
-                getRankInfo()
+                getRankInfo();
               "
               >Latest 7 days</el-dropdown-item
             >
@@ -146,7 +147,7 @@ const changeMate = (key: string) => {
               @click="
                 rankStr = 'Latest 30 days';
                 rankDay = 30;
-                getRankInfo()
+                getRankInfo();
               "
               >Latest 30 days</el-dropdown-item
             >
@@ -204,7 +205,7 @@ const changeMate = (key: string) => {
         @changeMate="changeMate"
       />
     </div>
-
+    <el-empty :description="'No Rank'" v-else />
     <div class="rank-button p-5">
       <span class="icon-point" @click="seeAll = 1" v-if="seeAll === 0"
         >See All</span

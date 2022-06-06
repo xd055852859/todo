@@ -82,6 +82,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/inviteOut.vue"),
         children: [],
       },
+      {
+        path: "notice",
+        name: "notice",
+        component: () => import("@/views/notice.vue"),
+        children: [],
+      },
     ],
   },
   {
@@ -90,12 +96,12 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("@/views/manage.vue"),
     children: [],
   },
-  {
-    path: "/chart",
-    name: "chart",
-    component: () => import("@/views/chart.vue"),
-    children: [],
-  },
+  // {
+  //   path: "/chart",
+  //   name: "chart",
+  //   component: () => import("@/views/chart.vue"),
+  //   children: [],
+  // },
 ];
 const routerHistory = createWebHashHistory();
 const router = createRouter({

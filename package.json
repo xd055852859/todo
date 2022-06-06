@@ -7,7 +7,9 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "scp": "scp -r dist/* root@47.251.3.104:/home/work/websites/qingdou.app/",
-    "deploy": "npm run build && npm run scp"
+    "deploy": "npm run build && npm run scp",
+    "oldscp": "scp -r dist/* root@132.232.47.47:/home/work/websites/todo.qingtime.cn/",
+    "olddeploy": "npm run build && npm run oldscp"
   },
   "dependencies": {
     "@types/node": "^17.0.32",
@@ -25,6 +27,7 @@
     "unplugin-auto-import": "^0.7.1",
     "vue": "^3.2.25",
     "vue-clipboard3": "^2.0.0",
+    "vue-i18n": "^9.1.10",
     "vue-router": "^4.0.15"
   },
   "devDependencies": {

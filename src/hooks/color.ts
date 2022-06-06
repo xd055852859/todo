@@ -21,6 +21,8 @@ export const lightColors = [
   { name: "--talk-font-color-2", value: "#9c9c9c" },
   { name: "--talk-font-color-3", value: "#999" },
   { name: "--talk-hover-shadow", value: "rgba(178, 178, 178, 0.5)" },
+  { name: "--talk-footer-color", value: "#ebebeb" },
+  { name: "--talk-opposite-color", value: "#fff" },
 ];
 
 export const darkColors = [
@@ -37,15 +39,16 @@ export const darkColors = [
   { name: "--el-color-primary", value: "#46a03c" },
 
   { name: "--talk-font-color", value: "#fff" },
-  { name: "--talk-bg-color", value: "#333" },
-  { name: "--talk-item-color", value: "#3f3f3f" },
-  { name: "--talk-hover-color", value: "#e8f2e7" },
+  { name: "--talk-bg-color", value: "#373a48" },
+  { name: "--talk-item-color", value: "#171923" },
+  { name: "--talk-hover-color", value: "#373a48" },
   { name: "--talk-button-hover-color", value: "#16ab78ba" },
   { name: "--talk-font-color-1", value: "#fff" },
   { name: "--talk-font-color-2", value: "#fff" },
   { name: "--talk-font-color-3", value: "#fff" },
   { name: "--talk-hover-shadow", value: "rgba(178, 178, 178, 0.5)" },
-  // { name: "--notes-color-border", value: "#171923" },
+  { name: "--talk-footer-color", value: "#171923" },
+  { name: "--talk-opposite-color", value: "#333" },
 ];
 export const color = () => {
   // 主题颜色变量组

@@ -52,7 +52,12 @@ export const taskStore = defineStore("taskStore", () => {
     );
 
     if (taskIndex !== -1) {
-      arr[taskIndex].cards.unshift(item);
+      let newIndex = arr[taskIndex].cards.findIndex(
+        (newItem) => item._key === newItem._key
+      );
+      if (newIndex === -1) {
+        arr[taskIndex].cards.unshift(item);
+      }
     } else {
       arr.unshift({
         boardInfo: item.boardInfo,
@@ -63,18 +68,18 @@ export const taskStore = defineStore("taskStore", () => {
   };
 
   const updateList = (arr: any, item: Task) => {
-    console.log(arr)
+    console.log(arr);
     let index = arr.findIndex(
       (arrItem) =>
         item.creatorInfo?._key === arrItem.creatorInfo?._key &&
         item.boardInfo?._key === arrItem.boardInfo?._key
     );
-    console.log(index)
+    console.log(index);
     if (index !== -1) {
       let taskIndex = arr[index].cards.findIndex(
         (taskItem: Task) => item._key === taskItem._key
       );
-      console.log(taskIndex)
+      console.log(taskIndex);
       if (taskIndex !== -1) {
         arr[index].cards[taskIndex] = {
           ...arr[index].cards[taskIndex],

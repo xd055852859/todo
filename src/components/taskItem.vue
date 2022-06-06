@@ -11,7 +11,7 @@ import finishBeanSvg from "@/assets/svg/finishBean.svg";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
 import Avatar from "./avatar.vue";
-
+const dayjs: any = inject("dayjs");
 const { uploadToken, user } = storeToRefs(appStore.authStore);
 const { taskKey } = storeToRefs(appStore.taskStore);
 
@@ -28,7 +28,9 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: "changeNum", type: string, item: Task, listType: string): void;
   (e: "finishTask", taskItem: Task): void;
-  (e: "delTask", taskItem: Task): void;
+  (e: "updateCard", taskItem: Task): void;
+
+  (e: "delTask", taskItem: Task, type?: string): void;
 }>();
 
 const title = ref<string>("");
@@ -37,10 +39,45 @@ const imageList = ref<any>([]);
 const imageVisible = ref<boolean>(false);
 const imageSrc = ref<string>();
 const hasFinished = ref<number>(0);
-
+const taskTime = ref<string>("");
 onMounted(() => {
   title.value = props.item.title;
   hasFinished.value = props.item.hasFinished ? props.item.hasFinished : 0;
+  let todayStartTime = dayjs().startOf("day").valueOf();
+  let todayEndTime = dayjs().endOf("day").valueOf();
+  let yesterStartTime = dayjs().subtract(1, "day").startOf("day").valueOf();
+  let yesterEndTime = dayjs().subtract(1, "day").endOf("day").valueOf();
+  let beYesterStartTime = dayjs().subtract(2, "day").startOf("day").valueOf();
+  let beYesterEndTime = dayjs().subtract(2, "day").endOf("day").valueOf();
+  let yearStartTime = dayjs().startOf("year").startOf("day").valueOf();
+  let yearEndTime = dayjs().endOf("year").endOf("day").valueOf();
+  if (props.item.createTime) {
+    if (
+      todayStartTime <= props.item.createTime &&
+      todayEndTime >= props.item.createTime
+    ) {
+      taskTime.value = dayjs(props.item.createTime).format("HH:mm");
+    } else if (
+      yesterStartTime <= props.item.createTime &&
+      yesterEndTime >= props.item.createTime
+    ) {
+      taskTime.value = "yesterday";
+    } else if (
+      beYesterStartTime <= props.item.createTime &&
+      beYesterEndTime >= props.item.createTime
+    ) {
+      taskTime.value = "the day before yesterday";
+    } else if (beYesterStartTime > props.item.createTime) {
+      if (
+        props.item.createTime >= yearStartTime &&
+        props.item.createTime <= yearEndTime
+      ) {
+        taskTime.value = dayjs(props.item.createTime).format("M.D");
+      } else if (props.item.createTime < yearStartTime) {
+        taskTime.value = dayjs(props.item.createTime).format("YYYY.MM.DD");
+      }
+    }
+  }
 });
 const getTaskInfo = async () => {
   getUploadToken();
@@ -70,6 +107,7 @@ const changeMark = async (type: string) => {
     });
     //@ts-ignore
     emits("changeNum", type, props.item, props.type);
+    emits("updateCard", { ...props.item, mark: type });
   }
 };
 const upDateTask = async () => {
@@ -90,13 +128,17 @@ const finishTask = async (e) => {
     cardKey: props.item._key,
   })) as ResultProps;
   if (taskRes.msg === "OK") {
-    hasFinished.value = 1;
-    console.log(props.amimateType);
-    if (props.amimateType) {
-      addBall(e);
+    hasFinished.value = props.item.hasFinished ? 0 : 1;
+    let newItem = { ...props.item, hasFinished: hasFinished.value };
+    if (hasFinished.value) {
+      if (props.amimateType) {
+        addBall(e);
+      }
+      emits("finishTask", newItem);
+    } else {
+      emits("delTask", newItem, "cancel");
     }
     //Todo
-    emits("finishTask", props.item);
   }
 };
 const delCard = async (e) => {
@@ -130,7 +172,7 @@ const addBall = (e) => {
   document.body.appendChild(bar);
   // 添加动画属性
   let timer = setTimeout(() => {
-    bar.style.left = width * 0.05 + "px";
+    bar.style.left = width * 0.08 + "px";
     bar.style.top = height - 40 + "px";
   }, 0);
 
@@ -235,7 +277,6 @@ const delImg = (index) => {
 watch(
   () => props.item,
   (newVal) => {
-    console.log(newVal);
     if (newVal) {
       title.value = newVal.title;
       hasFinished.value = newVal.hasFinished ? 1 : 0;
@@ -406,7 +447,13 @@ watch(
               overKey !== item._key
             "
           >
-            {{ item.hasRead ? item.mark : "Unread" }}
+            {{
+              item.hasRead ||
+              (item.executorInfo?._key === user?._key &&
+                item.creatorInfo?._key === user?._key)
+                ? item.mark
+                : "Unread"
+            }}
           </span>
           <icon-font
             name="detail"
@@ -423,6 +470,7 @@ watch(
           <!--  item.executorInfo?._key === user?._key ||
               item.creatorInfo?._key === user?._key ||
               role < 3 -->
+          <div style="margin:0px 8px">{{ taskTime }}</div>
           <el-dropdown v-if="overKey === item._key">
             <el-icon>
               <MoreFilled />
@@ -479,7 +527,7 @@ watch(
 .task {
   width: 100%;
   margin-top: 10px;
-  padding: 10px 10px 0px 10px-;
+  padding: 10px 10px 0px 10px;
   box-sizing: border-box;
   border-radius: 12px;
   &:hover {

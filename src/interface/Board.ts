@@ -5,5 +5,6 @@ export interface Board {
   title: string;
   avatar: string | null;
   executorInfo: User;
-  added?:boolean
+  added?:boolean;
+  applyed?:boolean
 }

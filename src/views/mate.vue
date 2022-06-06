@@ -11,6 +11,7 @@ import Avatar from "@/components/avatar.vue";
 import RiverChart from "@/components/chart/riverChart.vue";
 const socket: any = inject("socket");
 const dayjs: any = inject("dayjs");
+const { setFriendInfo } = appStore.authStore;
 const { addMateList, delMateList } = appStore.authStore;
 const route = useRoute();
 const router = useRouter();
@@ -30,7 +31,9 @@ onMounted(() => {
   getHistoryChartInfo();
   socket.on("onlineStatus", (data) => {
     console.log(data, "onlineStatus");
-    mateInfo.value = { ...mateInfo.value, ...data };
+    if (data._key === mateKey.value) {
+      mateInfo.value = { ...mateInfo.value, ...data };
+    }
   });
 });
 const getMateInfo = async () => {
@@ -137,22 +140,20 @@ const delMate = async () => {
   <theader>
     <template #left>Mate</template>
     <template #right>
-      <el-tooltip content="Delete Mate" v-if="mateInfo?.added">
-        <icon-font
-          name="delMate"
-          :size="22"
-          class="icon-point"
-          @click="delVisible = true"
-        />
-      </el-tooltip>
-      <el-tooltip content="Add Mate" v-else>
-        <icon-font
-          name="addMate"
-          :size="22"
-          class="icon-point"
-          @click="saveMate"
-        />
-      </el-tooltip>
+      <icon-font
+        name="delMate"
+        :size="22"
+        class="icon-point"
+        @click="delVisible = true"
+        v-if="mateInfo?.added"
+      />
+      <icon-font
+        name="addMate"
+        :size="22"
+        class="icon-point"
+        @click="saveMate"
+        v-else
+      />
 
       <icon-font
         name="eye"
@@ -184,7 +185,21 @@ const delMate = async () => {
         <div class="mate-info dp-space-center">
           <div
             class="dp-center-center icon-point"
-            style="width: 50%"
+            style="width: 33%"
+            @click="
+            setFriendInfo({
+               _key:  mateKey,
+               userAvatar: mateInfo?.userAvatar as string,
+               userName: mateInfo?.userName as string
+            });
+            $router.push('/home/list')"
+          >
+            <icon-font name="list" :size="24" style="margin-right: 8px" />Todo (
+            {{ mateInfo.todoNum }} )
+          </div>
+          <div
+            class="dp-center-center icon-point"
+            style="width: 33%"
             @click="$router.push('/home/matesBoard/' + mateKey)"
           >
             <icon-font
@@ -195,7 +210,7 @@ const delMate = async () => {
           </div>
           <div
             class="dp-center-center icon-point"
-            style="width: 50%"
+            style="width: 33%"
             @click="$router.push('/home/matesMate/' + mateKey)"
           >
             <icon-font

@@ -5,15 +5,16 @@ import { Member, User } from "@/interface/User";
 import { storeToRefs } from "pinia";
 import api from "@/services/api";
 import appStore from "@/store";
-import { ResultProps } from "@/interface/Common";
+import { Notice, ResultProps } from "@/interface/Common";
 
 import chooseSvg from "@/assets/svg/choose.svg";
 import unchooseSvg from "@/assets/svg/unchoose.svg";
 import addPersonSvg from "@/assets/svg/addPerson.svg";
 import { Board } from "@/interface/Board";
+import NoticeItem from "@/components/noticeItem.vue";
 
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
-const { boardRole } = storeToRefs(appStore.boardStore);
+const { boardList, boardRole } = storeToRefs(appStore.boardStore);
 
 const { addMateList } = appStore.authStore;
 const { setBoardRole, setBoardKey, addBoardList } = appStore.boardStore;
@@ -62,18 +63,24 @@ const excutorList = ref<Member[] | User[]>([]);
 const relativeVisible = ref<boolean>(false);
 const relativeList = ref<any>([]);
 const relativeChangeVisible = ref<boolean>(false);
+const exitVisible = ref<boolean>(false);
+const disbandVisible = ref<boolean>(false);
+const cloneVisible = ref<boolean>(false);
+const applyList = ref<Notice[]>([]);
 onMounted(() => {
   boardKey.value = route.params.id as string;
   if (boardKey.value !== "create") {
     getInfo();
     getRelative();
+    getNotice();
   } else {
     excutorList.value = mateList.value;
-    executorInfo.value = friend.value;
+    executorInfo.value = friend.value ? friend.value : user.value;
     if (executorInfo.value?._key !== user.value?._key) {
       //@ts-ignore
       memberList.value = [executorInfo.value, user.value];
     } else {
+      console.log(user.value);
       //@ts-ignore
       memberList.value = [user.value];
     }
@@ -89,6 +96,16 @@ const getInfo = async () => {
     memberList.value = infoRes.data.memberList;
     excutorList.value = infoRes.data.memberList;
     setBoardRole(infoRes.data.role);
+  }
+};
+const getNotice = async () => {
+  const noticeRes: any = (await api.request.get("message/list", {
+    page: 1,
+    limit: 50,
+    type: "join",
+  })) as ResultProps;
+  if (noticeRes.msg === "OK") {
+    applyList.value = noticeRes.data;
   }
 };
 const createBoard = async () => {
@@ -270,6 +287,42 @@ const cloneBoard = async () => {
     addBoardList(cloneRes.data);
   }
 };
+const disbandBoard = async () => {
+  let disbandRes = (await api.request.delete("board", {
+    boardKey: boardKey.value,
+  })) as ResultProps;
+  if (disbandRes.msg === "OK") {
+    ElMessage({
+      message: "Disband Board Successful",
+      type: "success",
+      duration: 1000,
+    });
+    if (boardKey.value !== boardList.value[0]._key) {
+      setBoardKey(boardList.value[0]._key);
+    } else {
+      setBoardKey(boardList.value[1]._key);
+    }
+    router.push("/home/board");
+  }
+};
+const exitBoard = async () => {
+  const quitRes: any = (await api.request.delete("board/exit", {
+    boardKey: boardKey.value,
+  })) as ResultProps;
+  if (quitRes.msg === "OK") {
+    ElMessage({
+      message: "Exit Board Successful",
+      type: "success",
+      duration: 1000,
+    });
+    if (boardKey.value !== boardList.value[0]._key) {
+      setBoardKey(boardList.value[0]._key);
+    } else {
+      setBoardKey(boardList.value[1]._key);
+    }
+    router.push("/home/board");
+  }
+};
 const TransferOwner = async (key: string, index: number) => {
   let cloneRes = (await api.request.patch("board/transfer", {
     boardKey: boardKey.value,
@@ -291,6 +344,16 @@ const TransferOwner = async (key: string, index: number) => {
     memberList.value[index].role = 0;
   }
 };
+const applyMessage = (index: number, item) => {
+  applyList.value.splice(index);
+  memberList.value.push({
+    added: false,
+    role: 4,
+    userAvatar: item.userAvatar,
+    userName: item.userName,
+    _key: item._key,
+  });
+};
 watch(
   user,
   (newVal) => {
@@ -300,6 +363,8 @@ watch(
         userName: newVal.userName,
         _key: newVal._key,
       };
+      //@ts-ignore
+      memberList.value = [newVal];
     }
   },
   { immediate: true }
@@ -322,6 +387,17 @@ watch(
     </template>
   </theader>
   <div class="board-container config p-5">
+    <div v-if="boardKey !== 'create' && boardRole < 2 && applyList.length > 0">
+      <div v-for="(item, index) in applyList" :key="'noticeItem' + index">
+        <template v-if="item.status === 1">
+          <notice-item
+            :item="item"
+            @applyMessage="applyMessage"
+            :index="index"
+          />
+        </template>
+      </div>
+    </div>
     <div class="manage-text dp-space-center">
       <span>Board Name</span>
       <el-input
@@ -329,7 +405,7 @@ watch(
         placeholder="请输入小组名"
         style="width: calc(100% - 150px)"
         @change="boardKey !== 'create' ? updateBoard('name') : null"
-        :disabled="boardKey !== 'create' && boardRole > 1"
+        :disabled="boardKey !== 'create' && boardRole === 0"
       />
     </div>
     <div
@@ -360,23 +436,26 @@ watch(
       <span>Members ( {{ memberList.length }} )</span>
       <el-icon v-if="boardKey !== 'create'"><arrow-right /></el-icon>
     </div>
+
     <el-row :gutter="20">
-      <el-col
-        v-for="(item, index) in memberList"
-        :key="'contact' + index"
-        :xs="6"
-        :sm="4"
-        :md="3"
-        :lg="2"
-        :xl="2"
-        style="cursor: pointer"
-      >
-        <div class="manage-item">
-          <div class="manage-item-img">
-            <img :src="item.userAvatar" alt="" />
+      <template v-if="memberList.length > 0">
+        <el-col
+          v-for="(item, index) in memberList"
+          :key="'contact' + index"
+          :xs="6"
+          :sm="4"
+          :md="3"
+          :lg="2"
+          :xl="2"
+          style="cursor: pointer"
+        >
+          <div class="manage-item">
+            <div class="manage-item-img">
+              <img :src="item.userAvatar" alt="" />
+            </div>
           </div>
-        </div>
-      </el-col>
+        </el-col>
+      </template>
       <el-col
         :xs="8"
         :sm="6"
@@ -384,7 +463,7 @@ watch(
         :lg="3"
         :xl="1"
         style="cursor: pointer"
-        v-if="boardRole < 2"
+        v-if="boardKey === 'create' || (boardRole < 2 && boardKey !== 'create')"
       >
         <div class="manage-item" @click="memberVisible = true">
           <img :src="addPersonSvg" alt="" />
@@ -406,12 +485,30 @@ watch(
     </div>
   </div>
   <div class="board-footer dp-center-center" v-if="boardKey !== 'create'">
-    <div class="dp-center-center">
-      <tbutton @click="cloneBoard" round class="dp-center-center">
-        Board Clone
+    <div style="width: 50%" class="dp-center-center">
+      <tbutton
+        @click="disbandVisible = true"
+        round
+        class="dp-center-center"
+        v-if="boardRole === 0"
+      >
+        Disband
+      </tbutton>
+      <tbutton
+        @click="exitVisible = true"
+        round
+        class="dp-center-center"
+        v-else
+      >
+        Exit
       </tbutton>
     </div>
-    <div class="dp-center-center">Clone name and members</div>
+
+    <div style="width: 50%" class="dp-center-center">
+      <tbutton @click="cloneVisible = true" round class="dp-center-center">
+        Clone
+      </tbutton>
+    </div>
   </div>
   <el-drawer
     v-model="excutorVisible"
@@ -523,15 +620,6 @@ watch(
           <div class="name">{{ item.userName }}</div>
         </div>
         <div class="right dp--center">
-          <!-- <div class="dp--center">
-            <span style="margin-right: 10px">{{
-              $t(`text['${roleArray[item.role]}']`)
-            }}</span>
-            <el-icon v-if="groupRole < 2 && item._key !== user?._key">
-              <arrow-down />
-            </el-icon>
-          </div> -->
-
           <el-popover
             :width="50"
             ref="popoverRef"
@@ -612,7 +700,7 @@ watch(
       </div>
     </div>
   </el-drawer>
-  <el-dialog v-model="delVisible" title="Delete prompt" width="350px">
+  <el-dialog v-model="delVisible" title="Delete Prompt" width="350px">
     <span>Delete Board Member</span>
     <template #footer>
       <span class="dialog-footer dp-space-center">
@@ -623,6 +711,39 @@ watch(
           @click="delItem ? delMember(delItem.item, delItem.index) : null"
           >OK</tbutton
         >
+      </span>
+    </template>
+  </el-dialog>
+  <el-dialog v-model="cloneVisible" title="Clone Prompt" width="350px">
+    <span>Clone Board</span>
+    <template #footer>
+      <span class="dialog-footer dp-space-center">
+        <tbutton @click="cloneVisible = false" bgColor="#d1dbe5">
+          Cancel
+        </tbutton>
+        <tbutton @click="cloneBoard">OK</tbutton>
+      </span>
+    </template>
+  </el-dialog>
+  <el-dialog v-model="exitVisible" title="Exit Prompt" width="350px">
+    <span>Exit Board</span>
+    <template #footer>
+      <span class="dialog-footer dp-space-center">
+        <tbutton @click="exitVisible = false" bgColor="#d1dbe5">
+          Cancel
+        </tbutton>
+        <tbutton @click="exitBoard">OK</tbutton>
+      </span>
+    </template>
+  </el-dialog>
+  <el-dialog v-model="disbandVisible" title="Disband Prompt" width="350px">
+    <span>Disband Board</span>
+    <template #footer>
+      <span class="dialog-footer dp-space-center">
+        <tbutton @click="disbandVisible = false" bgColor="#d1dbe5">
+          Cancel
+        </tbutton>
+        <tbutton @click="disbandBoard">OK</tbutton>
       </span>
     </template>
   </el-dialog>
@@ -661,10 +782,6 @@ watch(
 .board-footer {
   width: 100%;
   height: 80px;
-  flex-wrap: wrap;
-  > div {
-    width: 100%;
-  }
 }
 .role-container {
   .role-item {

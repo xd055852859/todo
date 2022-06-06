@@ -64,44 +64,36 @@ onMounted(() => {
     //创建者是自己直接在已读列表里 taskList
   });
   socket.on("update", (data) => {
+    console.log("update", data);
     if (data.boardInfo._key === boardKey.value) {
-      if (taskObj.value[data.creatorInfo._key]) {
-        let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
-          (item: Task) => data._key === item._key
-        );
-        if (index !== -1) {
-          taskObj.value[data.creatorInfo._key].cards[index] = {
-            ...taskObj.value[data.creatorInfo._key].cards[index],
-            ...data,
-          };
-        }
-      }
+      updateCard(data);
     }
   });
   socket.on("finish", (data) => {
-    if (data.boardInfo._key === boardKey.value) {
+    if (
+      data.operator !== user.value?._key &&
+      data.boardInfo._key === boardKey.value
+    ) {
       finishTask(data);
     }
   });
   socket.on("delete", (data) => {
-    if (data.boardInfo._key === boardKey.value) {
+    if (
+      data.operator !== user.value?._key &&
+      data.boardInfo._key === boardKey.value
+    ) {
       delTask(data);
     }
   });
   socket.on("cancelFinish", (data) => {
-    cancelTask(data);
-    // if (data.mark === markArr[markIndex.value].value || markIndex.value === 0) {
-    if (data.boardInfo._key === boardKey.value) {
-      if (taskObj.value[data.creatorInfo._key]) {
-        taskObj.value[data.creatorInfo._key].cards.unshift(data);
-      } else {
-        taskObj.value[data.creatorInfo._key] = {
-          cards: [data],
-          userAvatar: data.creatorInfo.userAvatar,
-          userName: data.creatorInfo.userName,
-        };
-      }
+    if (
+      data.operator !== user.value?._key &&
+      data.boardInfo._key === boardKey.value
+    ) {
+      delTask(data, "cancel");
     }
+    // if (data.mark === markArr[markIndex.value].value || markIndex.value === 0) {
+
     // }
   });
 });
@@ -120,7 +112,6 @@ const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
     }
     for (let key in taskRes.data.list) {
       let item = taskRes.data.list[key];
-      console.log(item);
       item.cards = item.cards.map((taskItem) => {
         taskItem.creatorInfo = {
           userAvatar: item.userAvatar,
@@ -180,6 +171,17 @@ const addCard = async () => {
     });
   }
 };
+const updateCard = async (data) => {
+  let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
+    (item: Task) => data._key === item._key
+  );
+  if (index !== -1) {
+    taskObj.value[data.creatorInfo._key].cards[index] = {
+      ...taskObj.value[data.creatorInfo._key].cards[index],
+      ...data,
+    };
+  }
+};
 const toTop = () => {
   topVisible.value = false;
   let timer = setInterval(function () {
@@ -210,10 +212,9 @@ const finishTask = (data) => {
     }
   }
 };
-const delTask = (data) => {
-  console.log(data);
-  if (data.hasFinished) {
-    if (taskFinishObj.value[data.creatorInfo._key]) {
+const delTask = (data, type?: string) => {
+  if (data.hasFinished || type === "cancel") {
+    if (taskFinishObj.value && taskFinishObj.value[data.creatorInfo._key]) {
       let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
         (item: Task) => data._key === item._key
       );
@@ -223,6 +224,17 @@ const delTask = (data) => {
           delete taskFinishObj.value[data.creatorInfo._key];
         }
         completeNum.value--;
+      }
+    }
+    if (type === "cancel") {
+      if (taskObj.value[data.creatorInfo._key]) {
+        taskObj.value[data.creatorInfo._key].cards.unshift(data);
+      } else {
+        taskObj.value[data.creatorInfo._key] = {
+          cards: [data],
+          userAvatar: data.creatorInfo.userAvatar,
+          userName: data.creatorInfo.userName,
+        };
       }
     }
   } else {
@@ -239,34 +251,22 @@ const delTask = (data) => {
     }
   }
 };
-const cancelTask = (data) => {
-  if (taskFinishObj.value[data.creatorInfo._key]) {
-    let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
-      (item: Task) => data._key === item._key
-    );
-    if (index !== -1) {
-      taskFinishObj.value[data.creatorInfo._key].cards.splice(index, 1);
-      if (taskFinishObj.value[data.creatorInfo._key].cards.length === 0) {
-        delete taskFinishObj.value[data.creatorInfo._key];
-      }
-      completeNum.value--;
-    }
-  }
-};
-const cloneBoard = async () => {
-  let cloneRes = (await api.request.post("board/clone", {
-    boardKey: boardKey.value,
-  })) as ResultProps;
-  if (cloneRes.msg === "OK") {
-    ElMessage({
-      message: "Clone Board Successful",
-      type: "success",
-      duration: 1000,
-    });
-    addBoardList(cloneRes.data);
-    setBoardKey(cloneRes.data._key);
-  }
-};
+
+// const cancelTask = (data) => {
+//   if (taskFinishObj.value[data.creatorInfo._key]) {
+//     let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
+//       (item: Task) => data._key === item._key
+//     );
+//     console.log(index)
+//     if (index !== -1) {
+//       taskFinishObj.value[data.creatorInfo._key].cards.splice(index, 1);
+//       if (taskFinishObj.value[data.creatorInfo._key].cards.length === 0) {
+//         delete taskFinishObj.value[data.creatorInfo._key];
+//       }
+//       completeNum.value--;
+//     }
+//   }
+// };
 // const moveAvatar = (e) => {
 //   //@ts-ignore
 //   avatarRef.value.scrollLeft += e.deltaY;
@@ -306,39 +306,13 @@ watch(mark, (newVal) => {
           name="set"
           class="icon-point"
           @click="$router.push(`/manage/` + boardKey)"
-          v-if="boardRole < 2"
         />
-        <el-dropdown>
-          <el-icon>
-            <MoreFilled />
-          </el-icon>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="cloneBoard">
-                <icon-font
-                  name="clone"
-                  class="icon-point"
-                  style="margin-right: 5px"
-                />
-                Clone Board
-              </el-dropdown-item>
-              <el-dropdown-item
-                @click="
-                  //@ts-ignore
-                  setFriendInfo(boardList[boardIndex].executorInfo);
-                  $router.push('/manage/create');
-                "
-              >
-                <icon-font
-                  name="addBoard"
-                  class="icon-point"
-                  style="margin-right: 8px"
-                />
-                New Board
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <icon-font
+          name="addBoard"
+          class="icon-point"
+          style="margin-right: 8px"
+           @click="$router.push(`/manage/create` )"
+        />
       </div>
     </template>
   </theader>
@@ -452,6 +426,7 @@ watch(mark, (newVal) => {
             amimateType
             @finishTask="finishTask"
             @delTask="delTask"
+            @updateCard="updateCard"
             :role="boardRole"
           />
         </div>
@@ -481,7 +456,7 @@ watch(mark, (newVal) => {
     :size="350"
     custom-class="p10-drawer"
   >
-    <div class="completed-box">
+    <div class="completed-box" v-if="taskFinishObj">
       <div
         v-for="(value, key) in taskFinishObj"
         :key="'task' + key"
@@ -504,16 +479,6 @@ watch(mark, (newVal) => {
       </div>
     </div>
   </el-drawer>
-  <!-- <el-drawer
-    v-model="talkVisible"
-    direction="ltr"
-    :with-header="false"
-    :size="'80%'"
-    custom-class="p0-drawer"
-    destroy-on-close
-  >
-   
-  </el-drawer> -->
 </template>
 <style scoped lang="scss">
 .board-header-title {
@@ -603,4 +568,12 @@ watch(mark, (newVal) => {
   overflow-y: auto;
 }
 </style>
-<style></style>
+<style>
+.board-container .board-edit .el-textarea__inner {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--talk-font-color);
+  padding: 0px;
+  background-color: transparent;
+}
+</style>

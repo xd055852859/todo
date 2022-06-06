@@ -71,20 +71,38 @@ onMounted(() => {
   });
   socket.on("finish", (data) => {
     console.log("finish", data);
-    finishTask(data);
+    if (
+      data.operator !== user.value?._key &&
+      data.creatorInfo._key !== user.value?._key &&
+      data.executorInfo._key === user.value?._key
+    ) {
+      finishTask(data);
+    }
   });
   socket.on("delete", (data) => {
     console.log("del", data);
-    delTask(data);
+    if (
+      data.operator !== user.value?._key &&
+      data.creatorInfo._key !== user.value?._key &&
+      data.executorInfo._key === user.value?._key
+    ) {
+      delTask(data);
+    }
   });
   socket.on("cancelFinish", (data) => {
-    delList(completedList.value, data);
-    if (data.executorInfo._key === user.value?._key) {
-      completeNum.value--;
-    }
-    addList(taskList.value, data);
-    if (data.executorInfo._key === user.value?._key) {
-      taskNum.today++;
+    if (
+      data.operator !== user.value?._key &&
+      data.creatorInfo._key !== user.value?._key &&
+      data.executorInfo._key === user.value?._key
+    ) {
+      delList(completedList.value, data);
+      if (data.executorInfo._key === user.value?._key) {
+        completeNum.value--;
+      }
+      addList(taskList.value, data);
+      if (data.executorInfo._key === user.value?._key) {
+        taskNum.today++;
+      }
     }
   });
   socket.on("update", (data) => {
@@ -154,10 +172,18 @@ const finishTask = (data) => {
     taskNum[data.mark]--;
   }
 };
-const delTask = (data) => {
-  if (data.hasFinished) {
+const delTask = (data, type?: string) => {
+  if (data.hasFinished || type === "cancel") {
     delList(completedList.value, data);
-    completeNum.value--;
+    if (data.executorInfo._key === user.value?._key) {
+      completeNum.value--;
+    }
+    if (type === "cancel") {
+      addList(taskList.value, data);
+      if (data.executorInfo._key === user.value?._key) {
+        taskNum.today++;
+      }
+    }
   } else {
     delList(data.mark ? taskList.value : inboxList.value, data);
     if (data.mark && data.executorInfo._key === user.value?._key) {
@@ -376,7 +402,13 @@ watchEffect(() => {
               @finishTask="finishTask"
               @delTask="delTask"
               amimateType
-              :role="item.boardInfo.role ? item.boardInfo.role : 0"
+              :role="
+                targetType === 'self'
+                  ? 0
+                  : item.boardInfo.role
+                  ? item.boardInfo.role
+                  : 0
+              "
             />
           </div>
         </div>

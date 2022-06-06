@@ -2,14 +2,20 @@
 import { ElMessage } from "element-plus";
 import { uploadImage } from "@/services/util";
 import api from "@/services/api";
+import useCurrentInstance from "@/hooks/useCurrentInstance";
 import { storeToRefs } from "pinia";
-
+import setDark from "@/hooks/dark";
 import appStore from "@/store";
 import logoSvg from "../assets/svg/logo.svg";
+import i18n from "@/language/i18n";
+const { proxy } = useCurrentInstance();
+
 const socket: any = inject("socket");
 const router = useRouter();
 const { user, token } = storeToRefs(appStore.authStore);
-
+const { dark, locale, noticeNum } = storeToRefs(appStore.commonStore);
+const { setDeviceType, setCommonDark, setCommonLocale } =
+  appStore.commonStore;
 const emits = defineEmits(["close"]);
 
 const userVisible = ref<boolean>(false);
@@ -17,6 +23,38 @@ const avatar = ref<string>("");
 const userName = ref<string>("");
 const email = ref<string>("");
 const setVisible = ref<boolean>(false);
+const localeValue = ref<string>("");
+const darkValue = ref<string>("");
+
+const changeLanguage = (value: string) => {
+  switch (value) {
+    case "中文":
+      value = "zh";
+      darkValue.value = dark.value ? "黑暗模式" : "明亮模式";
+      break;
+    case "English":
+      value = "en";
+      darkValue.value = dark.value ? "Dark mode" : "Bright mode";
+      break;
+    case "日本語":
+      value = "jp";
+      darkValue.value = dark.value ? "ダークモード" : "ブライトモード";
+      break;
+    case "繁体":
+      value = "tc";
+      darkValue.value = dark.value ? "黑暗模式" : "明亮模式";
+      break;
+  }
+  proxy.$i18n.locale = value;
+  setCommonLocale(value);
+  localStorage.setItem("LANGUAGE", value);
+};
+const changeDark = (value: string | boolean) => {
+  value = value === i18n.global.t(`text['Dark mode']`);
+  setDark(value);
+  setCommonDark(value);
+};
+
 const logout = () => {
   socket.emit("logout", token.value);
   router.push("/");
@@ -27,29 +65,67 @@ const logout = () => {
     duration: 1000,
   });
 };
+
+watch(
+  user,
+  (newVal) => {
+    if (newVal) {
+      switch (locale.value) {
+        case "zh":
+          localeValue.value = "中文";
+          break;
+        case "en":
+          localeValue.value = "English";
+          break;
+        case "jp":
+          localeValue.value = "日本語";
+          break;
+        case "tc":
+          localeValue.value = "繁体";
+          break;
+      }
+      darkValue.value = dark.value
+        ? i18n.global.t(`text['Dark mode']`)
+        : i18n.global.t(`text['Bright mode']`);
+    }
+  },
+  { immediate: true }
+);
 </script>
 <template>
   <div class="user-center">
     <div style="width: 100%">
       <div class="userCenter-user dp-space-center">
         <el-avatar fit="cover" :src="user?.userAvatar" :size="50" />
-        <div class="right dp-space-center">
-          <div class="center">
-            {{ user?.userName }}
+        <div class="right">
+          <div class="center">{{ user?.userName }}</div>
+          <div class="bottom">
+            <div
+              class="dp--center common-color icon-point"
+              @click="
+                $router.push('/home/history/create');
+                emits('close');
+              "
+            >
+              <img
+                :src="logoSvg"
+                alt=""
+                style="width: 20px; height: 20px; margin-right: 5px"
+              />{{ user?.beans }}
+            </div>
           </div>
-          <div
-            class="dp--center common-color icon-point"
+        </div>
+        <div class="dp-center-center">
+          <icon-font
+            name="notice"
+            :size="22"
+            class="icon-point"
             @click="
-              $router.push('/home/history');
+              $router.push('/home/notice');
               emits('close');
             "
-          >
-            <img
-              :src="logoSvg"
-              alt=""
-              style="width: 20px; height: 20px; margin-right: 5px"
-            />{{ user?.beans }}
-          </div>
+          />
+          <el-badge :value="noticeNum" style="margin-bottom:10px" v-if="noticeNum"></el-badge>
         </div>
       </div>
       <div
@@ -127,19 +203,27 @@ const logout = () => {
     <div class="user-set">
       <div class="userCenter-item dp--center" @click="setVisible = true">
         <icon-font name="set" :size="18" style="margin-right: 15px" />
-        <span>Setting</span>
+        <span>
+          {{ $t(`text.Setting`) }}
+        </span>
       </div>
       <div class="userCenter-item dp--center">
         <icon-font name="help" :size="18" style="margin-right: 15px" />
-        <span>Help</span>
+        <span>
+          {{ $t(`text.Help`) }}
+        </span>
       </div>
       <div class="userCenter-item dp--center">
         <icon-font name="community" :size="18" style="margin-right: 15px" />
-        <span>Community</span>
+        <span>
+          {{ $t(`text.Communication`) }}
+        </span>
       </div>
       <div class="userCenter-item dp--center" @click="logout">
         <icon-font name="quit" :size="18" style="margin-right: 15px" />
-        <span>Quit</span>
+        <span>
+          {{ $t(`text['Sign out']`) }}
+        </span>
       </div>
     </div>
   </div>
@@ -168,6 +252,40 @@ const logout = () => {
       </span>
     </template>
   </el-dialog>
+  <el-dialog v-model="setVisible" :title="$t(`text.Setting`)" :width="400">
+    <div class="user-edit dp-center-center">
+      <div class="text dp-space-center">
+        {{ $t(`text.Language`) }} :
+        <el-select
+          v-model="localeValue"
+          :placeholder="'choose language'"
+          size="large"
+          @change="changeLanguage"
+        >
+          <el-option value="中文">中文</el-option>
+          <el-option value="English">English</el-option>
+          <el-option value="日本語">日本語</el-option>
+          <el-option value="繁体">繁体</el-option>
+        </el-select>
+      </div>
+      <div class="text dp-space-center">
+        {{ $t(`text['Dark mode']`) }} :
+        <el-select
+          v-model="darkValue"
+          :placeholder="'choose mode'"
+          size="large"
+          @change="changeDark"
+        >
+          <el-option :value="$t(`text['Dark mode']`)">{{
+            $t(`text['Dark mode']`)
+          }}</el-option>
+          <el-option :value="$t(`text['Bright mode']`)"
+            >{{ $t(`text['Bright mode']`) }}
+          </el-option>
+        </el-select>
+      </div>
+    </div>
+  </el-dialog>
 </template>
 <style scoped lang="scss">
 .user-center {
@@ -186,7 +304,7 @@ const logout = () => {
       margin-right: 0px;
     }
     .right {
-      width: calc(100% - 60px);
+      width: calc(100% - 100px);
       text-align: left;
       margin-left: 20px;
       .center {
@@ -203,11 +321,6 @@ const logout = () => {
         color: #999999;
         line-height: 20px;
       }
-    }
-    .userCenter-user-edit {
-      position: absolute;
-      top: -5px;
-      right: -20px;
     }
   }
   .user-set {

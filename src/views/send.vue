@@ -50,6 +50,10 @@ const getSendTask = async () => {
   })) as ResultProps;
   if (sentRes.msg === "OK") {
     total.value = sentRes.total;
+    sentRes.data = sentRes.data.map((item) => {
+      item.creatorInfo = createdMateList.value[createdMateIndex.value];
+      return item;
+    });
     sendList.value = [...sendList.value, ...sentRes.data];
   }
 };
@@ -85,22 +89,26 @@ const chooseCreatedType = (index: number) => {
 const finishTask = (data) => {
   let index = sendList.value.findIndex((item: Task) => data._key === item._key);
   if (index !== -1) {
+    console.log(completedIndex.value);
     if (completedIndex.value !== 0) {
       sendList.value.splice(index, 1);
     } else {
-      sendList.value[index].hasFinished = sendList.value[index].hasFinished
-        ? 0
-        : 1;
-      console.log(sendList.value[index]);
+      sendList.value[index].hasFinished = data.hasFinished;
     }
   }
 };
-const delTask = (data) => {
-  let index = sendList.value.findIndex((item: Task) => data._key === item._key);
-  if (index !== -1) {
-    sendList.value.splice(index, 1);
-  }
-};
+// const delTask = (data) => {
+//   if (completedIndex.value !== 0) {
+//     let index = sendList.value.findIndex(
+//       (item: Task) => data._key === item._key
+//     );
+//     if (index !== -1) {
+//       sendList.value.splice(index, 1);
+//     }
+//   }else{
+
+//   }
+// };
 watchEffect(() => {
   getSendTask();
 });
@@ -174,7 +182,7 @@ watchEffect(() => {
         type="send"
         :role="item.role"
         @finishTask="finishTask"
-        @delTask="delTask"
+        @delTask="finishTask"
       />
     </div>
   </div>

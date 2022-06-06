@@ -11,9 +11,11 @@ import setDark from "@/hooks/dark";
 const socket: any = inject("socket");
 const router = useRouter();
 const { token, user } = storeToRefs(appStore.authStore);
+const { dark, locale, noticeNum } = storeToRefs(appStore.commonStore);
 const { setToken, getUserInfo, getMateList } = appStore.authStore;
 const { getBoardList } = appStore.boardStore;
-const { setDeviceType } = appStore.commonStore;
+const { setDeviceType, setCommonDark, setCommonLocale, setNoticeNum } =
+  appStore.commonStore;
 
 // onBeforeMount(() => {
 
@@ -33,6 +35,22 @@ onMounted(() => {
     (getSearchParamValue(search, "token") as string) ||
     localStorage.getItem("token");
   const deviceType = getSearchParamValue(search, "deviceType") as string;
+  setDark(dark.value);
+  const lang = getSearchParamValue(search, "lang") as string;
+  const darkTheme = getSearchParamValue(search, "dark") as string;
+  if (lang) {
+    localStorage.setItem("LANGUAGE", lang);
+    setCommonLocale(lang);
+  }
+  if (darkTheme === "1") {
+    localStorage.setItem("DARK", darkTheme);
+    setCommonDark(true);
+    setDark(true);
+  } else if (darkTheme === "0") {
+    localStorage.removeItem("DARK");
+    setCommonDark(false);
+    setDark(false);
+  }
   if (token) {
     request.setToken(token);
     setToken(token);
@@ -41,7 +59,6 @@ onMounted(() => {
     setDeviceType(deviceType);
   }
   setTheme("#46a03c");
-  setDark(false);
 });
 onUnmounted(() => {
   window.removeEventListener("message", handle, false);
@@ -76,8 +93,13 @@ watch(
 );
 watch(user, (newVal, oldVal) => {
   if (newVal && !oldVal) {
+    setNoticeNum(newVal.unReadNum ? newVal.unReadNum : 0);
     socket.on("connect", () => {
       socket.emit("login", token.value);
+      socket.on("message", () => {
+        setNoticeNum(noticeNum.value + 1);
+        // noticeList.value.push(data);
+      });
     });
   }
 });

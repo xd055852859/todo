@@ -64,3 +64,15 @@
   left: 0px;
   top: 0px;
 }
+.el-popper,
+.el-dropdown-menu {
+  background-color: var(--talk-bg-color) !important;
+}
+
+.el-badge__content{
+  color:var(--talk-opposite-color) !important;
+}
+// .el-popper.is-light .el-popper__arrow::before,
+// .el-dropdown__popper.el-popper[role="tooltip"] .el-popper__arrow::before {
+//   border: 1px solid var(--talk-bg-color) !important;
+// }
