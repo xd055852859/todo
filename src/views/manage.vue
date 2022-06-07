@@ -103,6 +103,7 @@ const getNotice = async () => {
     page: 1,
     limit: 50,
     type: "join",
+    boardKey: boardKey.value
   })) as ResultProps;
   if (noticeRes.msg === "OK") {
     applyList.value = noticeRes.data;

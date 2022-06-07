@@ -35,7 +35,7 @@ const joinBoard = async (key, index) => {
       type: "success",
       duration: 1000,
     });
-    friendBoardList[index].applyed = true;
+    friendBoardList.value[index].applyed = true;
   }
 };
 const toBoard = (added: boolean, key: string) => {

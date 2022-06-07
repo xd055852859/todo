@@ -11,6 +11,7 @@ import Avatar from "@/components/avatar.vue";
 import RiverChart from "@/components/chart/riverChart.vue";
 const socket: any = inject("socket");
 const dayjs: any = inject("dayjs");
+const { user } = storeToRefs(appStore.authStore);
 const { setFriendInfo } = appStore.authStore;
 const { addMateList, delMateList } = appStore.authStore;
 const route = useRoute();
@@ -140,21 +141,22 @@ const delMate = async () => {
   <theader>
     <template #left>Mate</template>
     <template #right>
-      <icon-font
-        name="delMate"
-        :size="22"
-        class="icon-point"
-        @click="delVisible = true"
-        v-if="mateInfo?.added"
-      />
-      <icon-font
-        name="addMate"
-        :size="22"
-        class="icon-point"
-        @click="saveMate"
-        v-else
-      />
-
+      <template v-if="mateKey !== user?._key">
+        <icon-font
+          name="delMate"
+          :size="22"
+          class="icon-point"
+          @click="delVisible = true"
+          v-if="mateInfo?.added"
+        />
+        <icon-font
+          name="addMate"
+          :size="22"
+          class="icon-point"
+          @click="saveMate"
+          v-else
+        />
+      </template>
       <icon-font
         name="eye"
         :size="14"
@@ -178,78 +180,77 @@ const delMate = async () => {
         />
       </div>
       <div class="mate-name">{{ mateInfo.userName }}</div>
-      <template v-if="mateInfo.added">
-        <div class="mate-bean common-color dp-center-center">
-          <img :src="logoSvg" alt="" class="logo" />{{ mateInfo.beans }}
+      <div class="mate-bean common-color dp-center-center">
+        <img :src="logoSvg" alt="" class="logo" />{{ mateInfo.beans }}
+      </div>
+      <div class="mate-info dp-space-center">
+        <div
+          class="dp-center-center"
+          :class="{ 'icon-point': mateInfo?.added }"
+          style="width: 33%"
+          @click="
+            if(mateInfo?.added){
+              setFriendInfo({
+                _key:  mateKey,
+                userAvatar: mateInfo?.userAvatar as string,
+                userName: mateInfo?.userName as string
+              });
+              $router.push('/home/list')
+            }"
+        >
+          <icon-font name="list" :size="24" style="margin-right: 8px" />Todo (
+          {{ mateInfo.todoNum }} )
         </div>
-        <div class="mate-info dp-space-center">
-          <div
-            class="dp-center-center icon-point"
-            style="width: 33%"
-            @click="
-            setFriendInfo({
-               _key:  mateKey,
-               userAvatar: mateInfo?.userAvatar as string,
-               userName: mateInfo?.userName as string
-            });
-            $router.push('/home/list')"
-          >
-            <icon-font name="list" :size="24" style="margin-right: 8px" />Todo (
-            {{ mateInfo.todoNum }} )
-          </div>
-          <div
-            class="dp-center-center icon-point"
-            style="width: 33%"
-            @click="$router.push('/home/matesBoard/' + mateKey)"
-          >
-            <icon-font
-              name="boards"
-              :size="24"
-              style="margin-right: 8px"
-            />Boards ( {{ mateInfo.boardNum }} )
-          </div>
-          <div
-            class="dp-center-center icon-point"
-            style="width: 33%"
-            @click="$router.push('/home/matesMate/' + mateKey)"
-          >
-            <icon-font
-              name="mates"
-              :size="24"
-              style="margin-right: 8px"
-            />Parnter ( {{ mateInfo.partnerNum }} )
-          </div>
+        <div
+          class="dp-center-center"
+          :class="{ 'icon-point': mateInfo?.added }"
+          style="width: 33%"
+          @click="
+            mateInfo?.added ? $router.push('/home/matesBoard/' + mateKey) : null
+          "
+        >
+          <icon-font name="boards" :size="24" style="margin-right: 8px" />Boards
+          ( {{ mateInfo.boardNum }} )
         </div>
-      </template>
+        <div
+          class="dp-center-center"
+          :class="{ 'icon-point': mateInfo?.added }"
+          style="width: 33%"
+          @click="
+            mateInfo?.added ? $router.push('/home/matesMate/' + mateKey) : null
+          "
+        >
+          <icon-font name="mates" :size="24" style="margin-right: 8px" />Parnter
+          ( {{ mateInfo.partnerNum }} )
+        </div>
+      </div>
     </div>
 
     <div
       class="mate-box p-5 dp-center-center"
       :style="{ background: mateInfo.added ? '#fff' : '' }"
     >
-      <template v-if="mateInfo.added">
-        <div class="mate-bottle dp-center-center">
-          <div class="mate-bottle-img dp-center-center">
-            <div class="mate-bottle-title common-color">Beans Today</div>
+      <div class="mate-bottle dp-center-center">
+        <div class="mate-bottle-img dp-center-center">
+          <div class="mate-bottle-title common-color">Beans Today</div>
+        </div>
+      </div>
+      <div class="mate-data dp-space-center">
+        <div class="mate-data-item dp-center-center common-color">
+          <div>{{ mateInfo.shareBeans }}</div>
+          <div>Share</div>
+          <div>
+            较昨日 <span>{{ shareTitle }}</span>
           </div>
         </div>
-        <div class="mate-data dp-space-center">
-          <div class="mate-data-item dp-center-center common-color">
-            <div>{{ mateInfo.shareBeans }}</div>
-            <div>Share</div>
-            <div>
-              较昨日 <span>{{ shareTitle }}</span>
-            </div>
-          </div>
-          <div class="mate-data-item dp-center-center common-color">
-            <div>{{ mateInfo.totalBeans }}</div>
-            <div>All</div>
-            <div>
-              较昨日 <span>{{ allTitle }}</span>
-            </div>
+        <div class="mate-data-item dp-center-center common-color">
+          <div>{{ mateInfo.totalBeans }}</div>
+          <div>All</div>
+          <div>
+            较昨日 <span>{{ allTitle }}</span>
           </div>
         </div>
-      </template>
+      </div>
     </div>
     <template v-if="historyChartList.length > 0">
       <river-chart
@@ -331,6 +332,7 @@ const delMate = async () => {
     min-height: 390px;
     height: 50%;
     flex-wrap: wrap;
+    margin-bottom: 15px;
     .mate-bottle {
       width: 100%;
       height: 280px;

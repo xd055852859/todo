@@ -50,16 +50,16 @@ const changeJoin = async (verifyResult: boolean) => {
     :style="item.cardInfo ? {} : { marginBottom: '20px' }"
   >
     <div
-      class="dp-space-center notice-left"
+      class="notice-left"
       :style="{ width: item.type === 'join' ? 'calc(100% - 155px)' : '100%' }"
     >
-      <div class="notice-left-avatar dp-center-center">
+      <div class="notice-left-avatar">
         <avatar
           :name="item.fromUserInfo.userName"
           :avatar="item.fromUserInfo.userAvatar"
           type="person"
           :index="0"
-          :size="70"
+          :size="55"
           :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
         />
       </div>
@@ -70,25 +70,22 @@ const changeJoin = async (verifyResult: boolean) => {
           }}</span>
           {{ item.log }}
         </div>
-        <div v-if="noticeType === 'board'" class="notice-time">
+        <div v-if="noticeType === 'board'" class="notice-info-name">
           {{ item.boardInfo.title }}
         </div>
-        <div v-else-if="noticeType === 'task'" class="notice-time">
+        <div
+          v-else-if="noticeType === 'task'"
+          class="notice-info-name"
+          style=""
+        >
           {{ item.cardInfo?.title }}
         </div>
         <div class="notice-time">{{ noticeTime }}</div>
       </div>
     </div>
-    <div
-      class="dp-center-center notice-right"
-      v-if="item.type === 'join'"
-      
-    >
+    <div class="dp-center-center notice-right" v-if="item.type === 'join'">
       <template v-if="item.status === 1">
-        <tbutton
-          @click="changeJoin(true)"
-          style="margin-right: 15px"
-        >
+        <tbutton @click="changeJoin(true)" style="margin-right: 15px">
           agree
         </tbutton>
         <tbutton @click="changeJoin(false)" :bgColor="'#F2494A'">
@@ -103,29 +100,42 @@ const changeJoin = async (verifyResult: boolean) => {
 <style scoped lang="scss">
 .notice-item {
   width: 100%;
-  height: 90px;
+  min-height: 90px;
+  margin-bottom: 15px;
+  padding: 0px 2vw;
+  box-sizing: border-box;
+
+  &:hover {
+    box-shadow: 0px 4px 9px 0px var(--talk-hover-shadow);
+  }
   .notice-left {
+    display: flex;
+    justify-content: space-between;
     .notice-left-avatar {
-      width: 80px;
+      width: 60px;
     }
     .notice-left-info {
-      width: calc(100% - 90px);
+      width: calc(100% - 70px);
       .notice-title {
         width: 100%;
-        height: 30px;
-        line-height: 30px;
+        height: 35px;
+        line-height: 35px;
         .notice-title-name {
           font-size: 20px;
           font-weight: 600;
           margin-right: 10px;
         }
       }
-      .notice-time {
+      .notice-time,
+      .notice-info-name {
         width: 100%;
-        height: 25px;
+        min-height: 25px;
         font-size: 14px;
         color: var(--talk-font-color-3);
         line-height: 25px;
+      }
+      .notice-time {
+        height: 25px;
       }
     }
   }

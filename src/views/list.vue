@@ -278,7 +278,6 @@ watchEffect(() => {
         :size="22"
         class="icon-point"
         @click="$router.push('/home/mate/' + friend?._key)"
-        v-if="targetType !== 'self'"
       />
       <el-dropdown v-if="friendBoardList && friendBoardList.length > 0">
         <icon-font

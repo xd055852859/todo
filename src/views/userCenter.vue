@@ -8,14 +8,15 @@ import setDark from "@/hooks/dark";
 import appStore from "@/store";
 import logoSvg from "../assets/svg/logo.svg";
 import i18n from "@/language/i18n";
+import { ResultProps } from "@/interface/Common";
 const { proxy } = useCurrentInstance();
 
 const socket: any = inject("socket");
 const router = useRouter();
 const { user, token } = storeToRefs(appStore.authStore);
 const { dark, locale, noticeNum } = storeToRefs(appStore.commonStore);
-const { setDeviceType, setCommonDark, setCommonLocale } =
-  appStore.commonStore;
+const { setUserInfo } = appStore.authStore;
+const { setDeviceType, setCommonDark, setCommonLocale } = appStore.commonStore;
 const emits = defineEmits(["close"]);
 
 const userVisible = ref<boolean>(false);
@@ -54,7 +55,25 @@ const changeDark = (value: string | boolean) => {
   setDark(value);
   setCommonDark(value);
 };
-
+const changeConfig = async () => {
+  let config = {
+    userAvatar: avatar.value,
+    userName: userName.value,
+  };
+  const configRes = (await api.request.patch("user/config", {
+    ...config,
+  })) as ResultProps;
+  if (configRes.msg === "OK") {
+    ElMessage({
+      message: "Edit Successful",
+      type: "success",
+      duration: 1000,
+    });
+    userVisible.value = false;
+    //@ts-ignore
+    setUserInfo({ ...user.value, ...config });
+  }
+};
 const logout = () => {
   socket.emit("logout", token.value);
   router.push("/");
@@ -70,6 +89,8 @@ watch(
   user,
   (newVal) => {
     if (newVal) {
+      avatar.value = newVal.userAvatar ? newVal.userAvatar : "";
+      userName.value = newVal.userName ? newVal.userName : "";
       switch (locale.value) {
         case "zh":
           localeValue.value = "中文";
@@ -96,7 +117,13 @@ watch(
   <div class="user-center">
     <div style="width: 100%">
       <div class="userCenter-user dp-space-center">
-        <el-avatar fit="cover" :src="user?.userAvatar" :size="50" />
+        <el-avatar
+          fit="cover"
+          :src="user?.userAvatar"
+          :size="40"
+          @click="userVisible = true"
+          class="icon-point"
+        />
         <div class="right">
           <div class="center">{{ user?.userName }}</div>
           <div class="bottom">
@@ -125,7 +152,11 @@ watch(
               emits('close');
             "
           />
-          <el-badge :value="noticeNum" style="margin-bottom:10px" v-if="noticeNum"></el-badge>
+          <el-badge
+            :value="noticeNum"
+            style="margin-bottom: 10px"
+            v-if="noticeNum"
+          ></el-badge>
         </div>
       </div>
       <div
@@ -234,21 +265,17 @@ watch(
         <input type="file" accept="image/*" class="upload-img" />˝
       </div>
 
-      <div class="text dp-space-center">
-        <el-input
-          class="input"
-          v-model="userName"
-          placeholder="enter userName"
-        />
-      </div>
-      <div class="text dp-space-center">
-        <el-input class="input" v-model="email" placeholder="enter email" />
-      </div>
+      <el-input
+        class="input"
+        v-model="userName"
+        placeholder="enter userName"
+        style="width: 100%; margin-top: 20px"
+      />
     </div>
 
     <template #footer>
       <span class="dialog-footer dp-center-center">
-        <tbutton>Save</tbutton>
+        <tbutton @click="changeConfig()">Save</tbutton>
       </span>
     </template>
   </el-dialog>
@@ -303,10 +330,16 @@ watch(
     span {
       margin-right: 0px;
     }
+    .userCenter-user-edit {
+      position: absolute;
+      top: 25px;
+      left: 25px;
+      z-index: 2;
+    }
     .right {
-      width: calc(100% - 100px);
+      width: calc(100% - 120px);
       text-align: left;
-      margin-left: 20px;
+      margin-left: 15px;
       .center {
         width: 100%;
         height: 20px;

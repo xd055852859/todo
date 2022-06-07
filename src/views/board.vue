@@ -51,10 +51,12 @@ onMounted(() => {
       data.boardInfo._key === boardKey.value &&
       data.creatorInfo._key !== user.value?._key
     ) {
-      if (taskObj.value[data.creatorInfo._key]) {
-        taskObj.value[data.creatorInfo._key].cards.unshift(data);
+      if (taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]) {
+        taskObj.value[
+          data.creatorInfo._key + data.creatorInfo.userName
+        ].cards.unshift(data);
       } else {
-        taskObj.value[data.creatorInfo._key] = {
+        taskObj.value[data.creatorInfo._key + data.creatorInfo.userName] = {
           cards: [data],
           userAvatar: data.creatorInfo.userAvatar,
           userName: data.creatorInfo.userName,
@@ -99,6 +101,10 @@ onMounted(() => {
 });
 const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
   let obj: any = { boardKey: boardKey };
+  let obj1: any = {};
+  let obj2: any = {};
+  let finishobj1: any = {};
+  let finishobj2: any = {};
   type ? (obj.hasFinished = 1) : null;
   mark ? (obj.mark = mark) : null;
   const taskRes: any = (await api.request.get("card/board", {
@@ -121,12 +127,25 @@ const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
         return taskItem;
       });
       if (type) {
-        taskFinishObj.value[key] = item;
+        if (key === user.value?._key) {
+          finishobj1[key + item.userName] = item;
+        } else {
+          finishobj2[key + item.userName] = item;
+        }
       } else {
-        taskObj.value[key] = item;
+        if (key === user.value?._key) {
+          obj1[key + item.userName] = item;
+        } else {
+          obj2[key + item.userName] = item;
+        }
       }
     }
-    if (!type) {
+    if (type) {
+      taskFinishObj.value = { ...finishobj1, ...finishobj2 };
+    } else if (!type) {
+      taskObj.value = { ...obj1, ...obj2 };
+      console.log(obj1, obj2);
+      console.log(taskObj.value);
       completeNum.value = taskRes.data.completeNum;
       setBoardRole(taskRes.data.role);
     }
@@ -158,26 +177,32 @@ const addCard = async () => {
     splitVisible.value = false;
     taskRes.data.forEach((item) => {
       if (user.value) {
-        if (!taskObj.value[user.value._key]) {
-          taskObj.value[user.value._key] = {
+        if (!taskObj.value[user.value._key + user.value.userName]) {
+          taskObj.value[user.value._key + user.value.userName] = {
             userAvatar: user.value.userAvatar,
             userName: user.value.userName,
             cards: [],
           };
         }
         item = { ...item, hasRead: 0, hasImage: 0, hasDetail: 0 };
-        taskObj.value[user.value._key].cards.unshift(item);
+        taskObj.value[user.value._key + user.value.userName].cards.unshift(
+          item
+        );
       }
     });
   }
 };
 const updateCard = async (data) => {
-  let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
-    (item: Task) => data._key === item._key
-  );
+  let index = taskObj.value[
+    data.creatorInfo._key + data.creatorInfo.userName
+  ].cards.findIndex((item: Task) => data._key === item._key);
   if (index !== -1) {
-    taskObj.value[data.creatorInfo._key].cards[index] = {
-      ...taskObj.value[data.creatorInfo._key].cards[index],
+    taskObj.value[data.creatorInfo._key + data.creatorInfo.userName].cards[
+      index
+    ] = {
+      ...taskObj.value[data.creatorInfo._key + data.creatorInfo.userName].cards[
+        index
+      ],
       ...data,
     };
   }
@@ -199,14 +224,14 @@ const toTargetList = () => {
   router.push("/home/list");
 };
 const finishTask = (data) => {
-  if (taskObj.value[data.creatorInfo._key]) {
-    let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
+  if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
+    let index = taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.findIndex(
       (item: Task) => data._key === item._key
     );
     if (index !== -1) {
-      taskObj.value[data.creatorInfo._key].cards.splice(index, 1);
-      if (taskObj.value[data.creatorInfo._key].cards.length === 0) {
-        delete taskObj.value[data.creatorInfo._key];
+      taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.splice(index, 1);
+      if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.length === 0) {
+        delete taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName];
       }
       completeNum.value++;
     }
@@ -214,23 +239,23 @@ const finishTask = (data) => {
 };
 const delTask = (data, type?: string) => {
   if (data.hasFinished || type === "cancel") {
-    if (taskFinishObj.value && taskFinishObj.value[data.creatorInfo._key]) {
-      let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
+    if (taskFinishObj.value && taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
+      let index = taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.findIndex(
         (item: Task) => data._key === item._key
       );
       if (index !== -1) {
-        taskFinishObj.value[data.creatorInfo._key].cards.splice(index, 1);
-        if (taskFinishObj.value[data.creatorInfo._key].cards.length === 0) {
-          delete taskFinishObj.value[data.creatorInfo._key];
+        taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.splice(index, 1);
+        if (taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.length === 0) {
+          delete taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName];
         }
         completeNum.value--;
       }
     }
     if (type === "cancel") {
-      if (taskObj.value[data.creatorInfo._key]) {
-        taskObj.value[data.creatorInfo._key].cards.unshift(data);
+      if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
+        taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.unshift(data);
       } else {
-        taskObj.value[data.creatorInfo._key] = {
+        taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName] = {
           cards: [data],
           userAvatar: data.creatorInfo.userAvatar,
           userName: data.creatorInfo.userName,
@@ -238,14 +263,14 @@ const delTask = (data, type?: string) => {
       }
     }
   } else {
-    if (taskObj.value[data.creatorInfo._key]) {
-      let index = taskObj.value[data.creatorInfo._key].cards.findIndex(
+    if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
+      let index = taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.findIndex(
         (item: Task) => data._key === item._key
       );
       if (index !== -1) {
-        taskObj.value[data.creatorInfo._key].cards.splice(index, 1);
-        if (taskObj.value[data.creatorInfo._key].cards.length === 0) {
-          delete taskObj.value[data.creatorInfo._key];
+        taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.splice(index, 1);
+        if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.length === 0) {
+          delete taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName];
         }
       }
     }
@@ -311,13 +336,18 @@ watch(mark, (newVal) => {
           name="addBoard"
           class="icon-point"
           style="margin-right: 8px"
-           @click="$router.push(`/manage/create` )"
+          @click="$router.push(`/manage/create`)"
         />
       </div>
     </template>
   </theader>
   <div class="board-header dp-space-center p-5" v-if="boardList.length > 0">
-    <div class="dp--center">
+    <div
+      class="dp--center"
+      @click="
+        $router.push('/home/mate/' + boardList[boardIndex].executorInfo._key)
+      "
+    >
       <avatar
         :name="boardList[boardIndex].executorInfo.userName"
         :avatar="boardList[boardIndex].executorInfo.userAvatar"
@@ -386,8 +416,10 @@ watch(mark, (newVal) => {
               placeholder="Please Enter Task"
               autofocus
               @keydown.enter="
-                splitVisible = true;
-                multipleCheck = true;
+                if (!splitVisible) {
+                  splitVisible = true;
+                  multipleCheck = true;
+                }
               "
             />
           </div>
@@ -570,7 +602,7 @@ watch(mark, (newVal) => {
 </style>
 <style>
 .board-container .board-edit .el-textarea__inner {
-  font-size: 17px;
+  font-size: 20px !important;
   font-weight: 600;
   color: var(--talk-font-color);
   padding: 0px;

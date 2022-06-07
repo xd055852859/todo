@@ -92,7 +92,7 @@ watchEffect(() => {
       </div>
     </div>
     <div class="notice-container" @scroll="scrollNotice">
-      <div class="notice-box p-5">
+      <div class="notice-box p-3">
         <div v-for="(item, index) in noticeList" :key="'noticeItem' + index">
           <notice-item
             :item="item"
