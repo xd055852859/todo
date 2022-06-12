@@ -25,4 +25,5 @@ export interface Notice {
   type: string;
   status?: number;
   applyKey?: string;
+  newRole?: number;
 }

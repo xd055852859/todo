@@ -12,6 +12,7 @@ import unchooseSvg from "@/assets/svg/unchoose.svg";
 import addPersonSvg from "@/assets/svg/addPerson.svg";
 import { Board } from "@/interface/Board";
 import NoticeItem from "@/components/noticeItem.vue";
+import i18n from "@/language/i18n";
 
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
 const { boardList, boardRole } = storeToRefs(appStore.boardStore);
@@ -54,7 +55,7 @@ const memberList = ref<Member[]>([]);
 const addMemberArr = ref<Member[] | User[]>([]);
 const memberVisible = ref<boolean>(false);
 const roleVisible = ref<boolean>(false);
-const roleArray = ["Owner", "Admin", "Editer", "Author", "Follower"];
+const roleArray = ref<string[]>([]);
 const delItem = ref<{ item: Member; index: number } | null>(null);
 const delVisible = ref<boolean>(false);
 const executorInfo = ref<User | null>(null);
@@ -69,22 +70,16 @@ const cloneVisible = ref<boolean>(false);
 const applyList = ref<Notice[]>([]);
 onMounted(() => {
   boardKey.value = route.params.id as string;
-  if (boardKey.value !== "create") {
-    getInfo();
-    getRelative();
-    getNotice();
-  } else {
-    excutorList.value = mateList.value;
-    executorInfo.value = friend.value ? friend.value : user.value;
-    if (executorInfo.value?._key !== user.value?._key) {
-      //@ts-ignore
-      memberList.value = [executorInfo.value, user.value];
-    } else {
-      console.log(user.value);
-      //@ts-ignore
-      memberList.value = [user.value];
-    }
-  }
+  roleArray.value = [
+    i18n.global.t(`Owner`),
+    i18n.global.t(`Admin`),
+    i18n.global.t(`Editer`),
+    i18n.global.t(`Author`),
+    i18n.global.t(`Follower`),
+  ];
+  getInfo();
+  getRelative();
+  getNotice();
 });
 const getInfo = async () => {
   let infoRes = (await api.request.get("board/info", {
@@ -103,34 +98,10 @@ const getNotice = async () => {
     page: 1,
     limit: 50,
     type: "join",
-    boardKey: boardKey.value
+    boardKey: boardKey.value,
   })) as ResultProps;
   if (noticeRes.msg === "OK") {
     applyList.value = noticeRes.data;
-  }
-};
-const createBoard = async () => {
-  if (memberList.value.length === 0) {
-    ElMessage({
-      message: "please choose a member",
-      type: "error",
-      duration: 1000,
-    });
-    return;
-  }
-  const groupRes = (await api.request.post("board", {
-    title: boardName.value,
-    avatar: "",
-    memberKeyArr: memberKeyList.value,
-  })) as ResultProps;
-  if (groupRes.msg === "OK") {
-    ElMessage({
-      message: "Board created successfully",
-      type: "success",
-      duration: 1000,
-    });
-    addBoardList(groupRes.data);
-    router.back();
   }
 };
 const updateBoard = async (type: string) => {
@@ -139,7 +110,7 @@ const updateBoard = async (type: string) => {
     case "name":
       if (!boardName.value) {
         ElMessage({
-          message: "Please Enter Board Name",
+          message: i18n.global.t(`InPut Board Name`),
           type: "error",
           duration: 1000,
         });
@@ -173,7 +144,7 @@ const updateBoard = async (type: string) => {
 const changeRole = async (item: Member, index: number, role: number) => {
   if (item.role < boardRole.value) {
     ElMessage({
-      message: "Error Role",
+      message: i18n.global.t(`Wrong permission`),
       type: "error",
       duration: 1000,
     });
@@ -207,7 +178,7 @@ const chooseMember = (item: User) => {
 const upDateMember = (item) => {
   let index = addMemberKeyArr.value.indexOf(item._key as string);
   if (index === -1) {
-    addMemberArr.value.push(item);
+    addMemberArr.value.push({ ...item, role: 3 });
   } else {
     addMemberArr.value.splice(index, 1);
   }
@@ -220,7 +191,7 @@ const delMember = async (item: Member, index: number) => {
   })) as ResultProps;
   if (delRes.msg === "OK") {
     ElMessage({
-      message: "Delete Member Successful",
+      message: i18n.global.t(`Delete board members successfully`),
       type: "success",
       duration: 1000,
     });
@@ -235,7 +206,7 @@ const saveMate = async (key, index) => {
   })) as ResultProps;
   if (saveRes.msg === "OK") {
     ElMessage({
-      message: "add Mate succeeded",
+      message: i18n.global.t(`Adding friends successful`),
       type: "success",
       duration: 1000,
     });
@@ -265,7 +236,7 @@ const saveRelative = async () => {
     })) as ResultProps;
     if (relativeRes.msg === "OK") {
       ElMessage({
-        message: "Save Relative Successful",
+        message: i18n.global.t(`Save associated board successfully`),
         type: "success",
         duration: 1000,
       });
@@ -279,7 +250,7 @@ const cloneBoard = async () => {
   })) as ResultProps;
   if (cloneRes.msg === "OK") {
     ElMessage({
-      message: "Clone Board Successful",
+      message: i18n.global.t(`Clone associated Kanban board successfully`),
       type: "success",
       duration: 1000,
     });
@@ -294,7 +265,7 @@ const disbandBoard = async () => {
   })) as ResultProps;
   if (disbandRes.msg === "OK") {
     ElMessage({
-      message: "Disband Board Successful",
+      message: i18n.global.t(`Dissolve Kanban board successfully`),
       type: "success",
       duration: 1000,
     });
@@ -312,7 +283,7 @@ const exitBoard = async () => {
   })) as ResultProps;
   if (quitRes.msg === "OK") {
     ElMessage({
-      message: "Exit Board Successful",
+      message: i18n.global.t(`Exit kanban board successfully`),
       type: "success",
       duration: 1000,
     });
@@ -331,7 +302,7 @@ const TransferOwner = async (key: string, index: number) => {
   })) as ResultProps;
   if (cloneRes.msg === "OK") {
     ElMessage({
-      message: "Transfer Owner Successful",
+      message: i18n.global.t(`Transferring owner successful`),
       type: "success",
       duration: 1000,
     });
@@ -346,7 +317,7 @@ const TransferOwner = async (key: string, index: number) => {
   }
 };
 const applyMessage = (index: number, item) => {
-  applyList.value.splice(index);
+  applyList.value.splice(index, 1);
   memberList.value.push({
     added: false,
     role: 4,
@@ -355,40 +326,19 @@ const applyMessage = (index: number, item) => {
     _key: item._key,
   });
 };
-watch(
-  user,
-  (newVal) => {
-    if (newVal && boardKey.value === "create") {
-      executorInfo.value = {
-        userAvatar: newVal.userAvatar,
-        userName: newVal.userName,
-        _key: newVal._key,
-      };
-      //@ts-ignore
-      memberList.value = [newVal];
-    }
-  },
-  { immediate: true }
-);
-watch(
-  mateList,
-  (newVal) => {
-    if (newVal && boardKey.value === "create") {
-      excutorList.value = newVal;
-    }
-  },
-  { immediate: true }
-);
 </script>
 <template>
-  <theader>
-    <template #left> Board Config </template>
-    <template #right v-if="boardKey === 'create'">
-      <tbutton @click="createBoard">Create</tbutton>
-    </template>
+  <theader
+    @clickBack="
+      setBoardKey(boardKey);
+      router.push('/home/board');
+    "
+    clickState
+  >
+    <template #left> {{ $t(`Board Config`) }} </template>
   </theader>
-  <div class="board-container config p-5">
-    <div v-if="boardKey !== 'create' && boardRole < 2 && applyList.length > 0">
+  <div class="board-container config p-3">
+    <div v-if="boardRole < 2 && applyList.length > 0">
       <div v-for="(item, index) in applyList" :key="'noticeItem' + index">
         <template v-if="item.status === 1">
           <notice-item
@@ -400,42 +350,30 @@ watch(
       </div>
     </div>
     <div class="manage-text dp-space-center">
-      <span>Board Name</span>
+      <span>{{ $t(`Board Name`) }}</span>
       <el-input
         v-model="boardName"
-        placeholder="请输入小组名"
+        :placeholder="$t(`InPut Board Name`)"
         style="width: calc(100% - 150px)"
-        @change="boardKey !== 'create' ? updateBoard('name') : null"
-        :disabled="boardKey !== 'create' && boardRole === 0"
+        @change="updateBoard('name')"
+        :disabled="boardRole !== 0"
       />
     </div>
     <div
       class="manage-text dp-space-center"
       :class="{ 'icon-point': boardKey !== 'create' }"
-      @click="
-        (boardKey !== 'create' && boardRole === 0) || boardKey === 'create'
-          ? (excutorVisible = true)
-          : false
-      "
+      @click="boardRole === 0 ? (excutorVisible = true) : false"
     >
-      <span>Execativor</span>
+      <span>{{ $t(`Executor`) }}</span>
       <div class="dp--center">
         <el-avatar fit="cover" :size="40" :src="executorInfo?.userAvatar" />
         <span style="margin-right: 8px">{{ executorInfo?.userName }}</span>
-        <el-icon
-          v-if="
-            (boardKey !== 'create' && boardRole === 0) || boardKey === 'create'
-          "
-          ><arrow-right
-        /></el-icon>
+        <el-icon v-if="boardRole === 0"><arrow-right /></el-icon>
       </div>
     </div>
-    <div
-      class="manage-text dp-space-center"
-      @click="boardKey !== 'create' ? (roleVisible = true) : null"
-    >
-      <span>Members ( {{ memberList.length }} )</span>
-      <el-icon v-if="boardKey !== 'create'"><arrow-right /></el-icon>
+    <div class="manage-text dp-space-center" @click="roleVisible = true">
+      <span>{{ $t(`Members`) }} ( {{ memberList.length }} )</span>
+      <el-icon><arrow-right /></el-icon>
     </div>
 
     <el-row :gutter="20">
@@ -458,13 +396,13 @@ watch(
         </el-col>
       </template>
       <el-col
-        :xs="8"
-        :sm="6"
-        :md="4"
-        :lg="3"
-        :xl="1"
+        :xs="6"
+        :sm="4"
+        :md="3"
+        :lg="2"
+        :xl="2"
         style="cursor: pointer"
-        v-if="boardKey === 'create' || (boardRole < 2 && boardKey !== 'create')"
+        v-if="boardRole < 2"
       >
         <div class="manage-item" @click="memberVisible = true">
           <img :src="addPersonSvg" alt="" />
@@ -474,9 +412,8 @@ watch(
     <div
       class="manage-text dp-space-center icon-point"
       @click="relativeVisible = true"
-      v-if="boardKey !== 'create'"
     >
-      <span>关联看板 ( {{ relativeKeyArr.length }} )</span>
+      <span>{{ $t(`Relative Board`) }} ( {{ relativeKeyArr.length }} )</span>
       <div class="dp--center">
         <el-icon v-if="boardRole < 2">
           <plus />
@@ -484,31 +421,27 @@ watch(
         <el-icon v-else><arrow-right /></el-icon>
       </div>
     </div>
-  </div>
-  <div class="board-footer dp-center-center" v-if="boardKey !== 'create'">
-    <div style="width: 50%" class="dp-center-center">
-      <tbutton
-        @click="disbandVisible = true"
-        round
-        class="dp-center-center"
-        v-if="boardRole === 0"
-      >
-        Disband
-      </tbutton>
-      <tbutton
-        @click="exitVisible = true"
-        round
-        class="dp-center-center"
-        v-else
-      >
-        Exit
-      </tbutton>
+    <el-divider border-style="dashed" />
+    <div
+      class="manage-text dp-space-center icon-point"
+      @click="cloneVisible = true"
+    >
+      <span style="font-weight: 600">{{ $t(`Clone`) }}</span>
     </div>
-
-    <div style="width: 50%" class="dp-center-center">
-      <tbutton @click="cloneVisible = true" round class="dp-center-center">
-        Clone
-      </tbutton>
+    <el-divider border-style="dashed" />
+    <div
+      class="manage-text dp-space-center icon-point"
+      @click="disbandVisible = true"
+      v-if="boardRole === 0"
+    >
+      <span style="font-weight: 600">{{ $t(`Dismiss`) }}</span>
+    </div>
+    <div
+      class="manage-text dp-space-center icon-point"
+      @click="exitVisible = true"
+      v-else
+    >
+      <span style="font-weight: 600">{{ $t(`Exit`) }}</span>
     </div>
   </div>
   <el-drawer
@@ -516,7 +449,7 @@ watch(
     direction="rtl"
     :size="350"
     custom-class="p0-drawer"
-    title="Execativor"
+    :title="$t(`Executor`)"
   >
     <div class="add-member">
       <div
@@ -540,12 +473,10 @@ watch(
     custom-class="p0-drawer"
     title="Choose Member"
     :before-close="
-      boardKey !== 'create'
-        ? (done) => {
-            updateBoard('member');
-            done();
-          }
-        : null
+      (done) => {
+        updateBoard('member');
+        done();
+      }
     "
   >
     <div class="add-member">
@@ -561,7 +492,7 @@ watch(
         <div class="right">
           <img
             :src="
-              boardKey === 'create'?memberKeyList.indexOf(item._key as string) !== -1 ? chooseSvg : unchooseSvg:addMemberKeyArr.indexOf(item._key as string) !== -1 ? chooseSvg : unchooseSvg
+              addMemberKeyArr.indexOf(item._key as string) !== -1 ? chooseSvg : unchooseSvg
             "
             alt=""
             style="width: 20px; height: 20px; margin-right: 10px"
@@ -634,7 +565,7 @@ watch(
                 </span>
                 <el-icon
                   v-if="
-                    (boardRole > item.role || boardRole === 0) &&
+                    (boardRole < item.role || boardRole === 0) &&
                     item._key !== user?._key
                   "
                 >
@@ -706,7 +637,7 @@ watch(
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="delVisible = false" bgColor="#d1dbe5">
-          Cancel
+          {{ $t(`Cancel`) }}
         </tbutton>
         <tbutton
           @click="delItem ? delMember(delItem.item, delItem.index) : null"
@@ -720,9 +651,9 @@ watch(
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="cloneVisible = false" bgColor="#d1dbe5">
-          Cancel
+          {{ $t(`Cancel`) }}
         </tbutton>
-        <tbutton @click="cloneBoard">OK</tbutton>
+        <tbutton @click="cloneBoard">{{ $t(`Confirm`) }}</tbutton>
       </span>
     </template>
   </el-dialog>
@@ -731,9 +662,9 @@ watch(
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="exitVisible = false" bgColor="#d1dbe5">
-          Cancel
+          {{ $t(`Cancel`) }}
         </tbutton>
-        <tbutton @click="exitBoard">OK</tbutton>
+        <tbutton @click="exitBoard">{{ $t(`Confirm`) }}</tbutton>
       </span>
     </template>
   </el-dialog>
@@ -742,9 +673,9 @@ watch(
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="disbandVisible = false" bgColor="#d1dbe5">
-          Cancel
+          {{ $t(`Cancel`) }}
         </tbutton>
-        <tbutton @click="disbandBoard">OK</tbutton>
+        <tbutton @click="disbandBoard">{{ $t(`Confirm`) }}</tbutton>
       </span>
     </template>
   </el-dialog>

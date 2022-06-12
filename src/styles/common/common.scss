@@ -32,9 +32,14 @@ body,
   padding-right: 10%;
   box-sizing: border-box;
 }
-.p-5 {
+.p-8 {
   padding-left: 8%;
   padding-right: 8%;
+  box-sizing: border-box;
+}
+.p-5 {
+  padding-left: 5%;
+  padding-right: 5%;
   box-sizing: border-box;
 }
 .p-3 {
@@ -71,7 +76,7 @@ body,
 }
 .task {
   .task-title {
-    color: #999;
+    color: var(--talk-font-color);
     font-style: italic;
     padding: 0px 10px;
     box-sizing: border-box;

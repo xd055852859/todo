@@ -5,8 +5,16 @@ import { storeToRefs } from "pinia";
 import appStore from "@/store";
 
 import chooseSvg from "@/assets/svg/choose.svg";
+import api from "@/services/api";
+import { Board } from "@/interface/Board";
+const props = defineProps<{
+  type?: string;
+}>();
 const emits = defineEmits(["close"]);
+const { mateList } = storeToRefs(appStore.authStore);
+
 const { boardList, order, sortIndex } = storeToRefs(appStore.boardStore);
+const { changeMateList } = appStore.authStore;
 const { setBoardKey, setSortIndex, setOrder } = appStore.boardStore;
 
 const searchList = computed(() =>
@@ -16,18 +24,43 @@ const searchList = computed(() =>
 );
 const sortArr = ["Access time", "Aplhabet", "Master"];
 const searchInput = ref<string>("");
+const chooseBoard = (board: Board) => {
+  setBoardKey(board._key);
+  let index = mateList.value.findIndex(
+    (mateItem) => mateItem._key === board.executorInfo._key
+  );
+  if (index !== -1) {
+    api.request.patch("partner/cooperation", {
+      friendKey: board.executorInfo._key,
+    });
+    changeMateList(index, 0);
+  }
+  emits("close");
+};
 watch(boardList, (newVal, oldVal) => {
   if (!oldVal && newVal) {
   }
 });
 </script>
 <template>
-  <div class="contact" v-if="boardList">
-    <div class="contact-top dp-space-center p-5">
+  <div
+    class="contact p-3"
+    v-if="boardList"
+    :style="
+      type
+        ? {
+            height: '100%',
+            width: '100%',
+            backgroundColor: 'var(--talk-bg-color)',
+          }
+        : { width: '300px', backgroundColor: 'var(--talk-item-color)' }
+    "
+  >
+    <div class="contact-top dp-space-center p-3">
       <el-input
         v-model="searchInput"
         placeholder="Search Board"
-        style="width: 200px; height: 35px"
+        :style="{ width: type ? '100%' : '200px', height: '35px' }"
       />
 
       <icon-font
@@ -36,12 +69,14 @@ watch(boardList, (newVal, oldVal) => {
         color="#46a03c"
         class="icon-point"
         @click="setOrder(order === 'asc' ? 'desc' : 'asc')"
+        v-if="!type"
       />
       <el-popover
         placement="bottom"
         :width="200"
         trigger="hover"
         :teleported="false"
+        v-if="!type"
       >
         <template #reference>
           <div class="dp--center icon-point">
@@ -72,13 +107,10 @@ watch(boardList, (newVal, oldVal) => {
     </div>
     <div class="contact-bottom">
       <div
-        class="contact-item container dp-space-center p-5 icon-point"
+        class="contact-item container dp-space-center p-3 icon-point"
         v-for="(item, index) in searchList"
         :key="'add-member' + index"
-        @click="
-          setBoardKey(item._key);
-          emits('close');
-        "
+        @click="chooseBoard(item)"
       >
         <!-- <div class="left dp--center"> -->
         <div>
@@ -101,7 +133,6 @@ watch(boardList, (newVal, oldVal) => {
 </template>
 <style scoped lang="scss">
 .contact {
-  width: 300px;
   background-color: var(--talk-item-color);
   .contact-top {
     height: 45px;

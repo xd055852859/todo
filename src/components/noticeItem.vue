@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Notice, ResultProps } from "@/interface/Common";
+import i18n from "@/language/i18n";
 import api from "@/services/api";
 import { ElMessage } from "element-plus";
 import Avatar from "./avatar.vue";
@@ -12,6 +13,7 @@ const emits = defineEmits(["applyMessage"]);
 const noticeTime = ref<string>("");
 // const noticeTitle = ref<string>("");
 const noticeType = ref<string>("");
+const noticeLog = ref<string>("");
 onMounted(() => {
   noticeTime.value = dayjs(props.item.time).fromNow();
   if (
@@ -33,6 +35,57 @@ onMounted(() => {
   } else {
     noticeType.value = "common";
   }
+  let str = "";
+  switch (props.item.type) {
+    case "create":
+      str = i18n.global.t(`creat todo`);
+      break;
+    case "finish":
+      str = i18n.global.t(`completed a todo`);
+      break;
+    case "cancelFinish":
+      str = i18n.global.t(`set a todo as uncomplete`);
+      break;
+    case "delete":
+      str = i18n.global.t(`Delete a todo`);
+      break;
+    case "update":
+      str = i18n.global.t(`changed a todo`);
+      break;
+    case "invite":
+      str = i18n.global.t(`invite into a board`, {
+        boardname: props.item.boardInfo.title,
+      });
+      break;
+    case "remove":
+      str = i18n.global.t(`remove you from board`, {
+        boardname: props.item.boardInfo.title,
+      });
+      break;
+    case "changeRole":
+      str = i18n.global.t(`set you as authority`, {
+        boardname: props.item.boardInfo.title,
+        authority: props.item.newRole,
+      });
+      break;
+    case "transfer":
+      str = i18n.global.t(`set owner`, {
+        boardname: props.item.boardInfo.title,
+      });
+      break;
+    case "join":
+      str = i18n.global.t(`apply`, {
+        boardname: props.item.boardInfo.title,
+      });
+      break;
+    case "addFriends":
+      str = i18n.global.t(`Add you to mate`);
+      break;
+    case "removeFriends":
+      str = i18n.global.t(`Remove mate`);
+      break;
+  }
+  noticeLog.value = str;
 });
 const changeJoin = async (verifyResult: boolean) => {
   let joinRes = (await api.request.patch("board/apply/verify", {
@@ -68,7 +121,7 @@ const changeJoin = async (verifyResult: boolean) => {
           <span class="notice-title-name">{{
             item.fromUserInfo.userName
           }}</span>
-          {{ item.log }}
+          {{ noticeLog }}
         </div>
         <div v-if="noticeType === 'board'" class="notice-info-name">
           {{ item.boardInfo.title }}
@@ -86,14 +139,14 @@ const changeJoin = async (verifyResult: boolean) => {
     <div class="dp-center-center notice-right" v-if="item.type === 'join'">
       <template v-if="item.status === 1">
         <tbutton @click="changeJoin(true)" style="margin-right: 15px">
-          agree
+          {{ $t(`agree`) }}
         </tbutton>
         <tbutton @click="changeJoin(false)" :bgColor="'#F2494A'">
-          reject
+          {{ $t(`refuse`) }}
         </tbutton>
       </template>
-      <div v-else-if="item.status === 0">reject</div>
-      <div v-else>agree</div>
+      <div v-else-if="item.status === 0">{{ $t(`refuse`) }}</div>
+      <div v-else>{{ $t(`agree`) }}</div>
     </div>
   </div>
 </template>

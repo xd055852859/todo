@@ -23,6 +23,8 @@ export interface Mate extends Person {
   shareBeans: number;
   totalBeans: number;
   viewNum: number;
+  historyShareBeans: number;
+  historyTotalBeans: number;
   yShareBeans: number;
   yTotalBeans: number;
   beans: number;

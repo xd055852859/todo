@@ -29,7 +29,7 @@ export const authStore = defineStore("authStore", () => {
         userAvatar: userInfoRes.data.userAvatar,
         userName: userInfoRes.data.userName,
         beans: userInfoRes.data.beans,
-        unReadNum:userInfoRes.data.unReadNum,
+        unReadNum: userInfoRes.data.unReadNum,
       };
     }
   };
@@ -41,6 +41,11 @@ export const authStore = defineStore("authStore", () => {
   };
   const addMateList = async (mateItem: User) => {
     mateList.value = [...mateList.value, mateItem];
+  };
+  const changeMateList = async (oldIndex: number, newIndex: number) => {
+    let item = { ...mateList.value[oldIndex] };
+    mateList.value.splice(oldIndex, 1);
+    mateList.value.splice(newIndex, 0, item);
   };
   const updateMateList = async (mateItem: User) => {
     mateList.value = mateList.value.map((item: User) => {
@@ -92,6 +97,7 @@ export const authStore = defineStore("authStore", () => {
     getMateList,
     addMateList,
     delMateList,
+    changeMateList,
     updateMateList,
     memberList,
     getMemberList,

@@ -13,11 +13,13 @@ import { Task } from "@/interface/Task";
 
 import bottlePng from "@/assets/img/bottle.png";
 import chooseSvg from "@/assets/svg/choose.svg";
+import i18n from "@/language/i18n";
 const router = useRouter();
 const socket: any = inject("socket");
 
 const { user } = storeToRefs(appStore.authStore);
 const { taskList } = storeToRefs(appStore.taskStore);
+const { deviceType } = storeToRefs(appStore.commonStore);
 const { boardList, boardIndex, boardKey, boardRole } = storeToRefs(
   appStore.boardStore
 );
@@ -38,14 +40,15 @@ const splitVisible = ref<boolean>(false);
 const completeNum = ref<number>(0);
 const completedVisible = ref<boolean>(false);
 const markIndex = ref<number>(0);
-const markArr = [
-  { title: "All Todo", value: "" },
-  { title: "Today", value: "today" },
-  { title: "Next Day", value: "next" },
-  { title: "Future", value: "future" },
-];
+const markArr = ref<any>([]);
 onMounted(() => {
   getBoardList("accessTime", "desc");
+  markArr.value = [
+    { title: i18n.global.t(`All Todo`), value: "" },
+    { title: i18n.global.t(`Today`), value: "today" },
+    { title: i18n.global.t(`Nextday`), value: "next" },
+    { title: i18n.global.t(`Future`), value: "future" },
+  ];
   socket.on("create", (data) => {
     if (
       data.boardInfo._key === boardKey.value &&
@@ -154,7 +157,7 @@ const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
 const addCard = async () => {
   if (!taskTitle.value.trim()) {
     ElMessage({
-      message: "Please Enter Task",
+      message: i18n.global.t(`Please Enter Task`),
       type: "error",
       duration: 1000,
     });
@@ -169,7 +172,7 @@ const addCard = async () => {
   })) as ResultProps;
   if (taskRes.msg === "OK") {
     ElMessage({
-      message: "Add Task Successful",
+      message: i18n.global.t(`Add task successfully`),
       type: "success",
       duration: 1000,
     });
@@ -224,14 +227,19 @@ const toTargetList = () => {
   router.push("/home/list");
 };
 const finishTask = (data) => {
-  if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
-    let index = taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.findIndex(
-      (item: Task) => data._key === item._key
-    );
+  if (taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]) {
+    let index = taskObj.value[
+      data.creatorInfo._key + data.creatorInfo.userName
+    ].cards.findIndex((item: Task) => data._key === item._key);
     if (index !== -1) {
-      taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.splice(index, 1);
-      if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.length === 0) {
-        delete taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName];
+      taskObj.value[
+        data.creatorInfo._key + data.creatorInfo.userName
+      ].cards.splice(index, 1);
+      if (
+        taskObj.value[data.creatorInfo._key + data.creatorInfo.userName].cards
+          .length === 0
+      ) {
+        delete taskObj.value[data.creatorInfo._key + data.creatorInfo.userName];
       }
       completeNum.value++;
     }
@@ -239,23 +247,35 @@ const finishTask = (data) => {
 };
 const delTask = (data, type?: string) => {
   if (data.hasFinished || type === "cancel") {
-    if (taskFinishObj.value && taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
-      let index = taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.findIndex(
-        (item: Task) => data._key === item._key
-      );
+    if (
+      taskFinishObj.value &&
+      taskFinishObj.value[data.creatorInfo._key + data.creatorInfo.userName]
+    ) {
+      let index = taskFinishObj.value[
+        data.creatorInfo._key + data.creatorInfo.userName
+      ].cards.findIndex((item: Task) => data._key === item._key);
       if (index !== -1) {
-        taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.splice(index, 1);
-        if (taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.length === 0) {
-          delete taskFinishObj.value[data.creatorInfo._key+ data.creatorInfo.userName];
+        taskFinishObj.value[
+          data.creatorInfo._key + data.creatorInfo.userName
+        ].cards.splice(index, 1);
+        if (
+          taskFinishObj.value[data.creatorInfo._key + data.creatorInfo.userName]
+            .cards.length === 0
+        ) {
+          delete taskFinishObj.value[
+            data.creatorInfo._key + data.creatorInfo.userName
+          ];
         }
         completeNum.value--;
       }
     }
     if (type === "cancel") {
-      if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
-        taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.unshift(data);
+      if (taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]) {
+        taskObj.value[
+          data.creatorInfo._key + data.creatorInfo.userName
+        ].cards.unshift(data);
       } else {
-        taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName] = {
+        taskObj.value[data.creatorInfo._key + data.creatorInfo.userName] = {
           cards: [data],
           userAvatar: data.creatorInfo.userAvatar,
           userName: data.creatorInfo.userName,
@@ -263,14 +283,21 @@ const delTask = (data, type?: string) => {
       }
     }
   } else {
-    if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName]) {
-      let index = taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.findIndex(
-        (item: Task) => data._key === item._key
-      );
+    if (taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]) {
+      let index = taskObj.value[
+        data.creatorInfo._key + data.creatorInfo.userName
+      ].cards.findIndex((item: Task) => data._key === item._key);
       if (index !== -1) {
-        taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.splice(index, 1);
-        if (taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName].cards.length === 0) {
-          delete taskObj.value[data.creatorInfo._key+ data.creatorInfo.userName];
+        taskObj.value[
+          data.creatorInfo._key + data.creatorInfo.userName
+        ].cards.splice(index, 1);
+        if (
+          taskObj.value[data.creatorInfo._key + data.creatorInfo.userName].cards
+            .length === 0
+        ) {
+          delete taskObj.value[
+            data.creatorInfo._key + data.creatorInfo.userName
+          ];
         }
       }
     }
@@ -336,76 +363,92 @@ watch(mark, (newVal) => {
           name="addBoard"
           class="icon-point"
           style="margin-right: 8px"
-          @click="$router.push(`/manage/create`)"
+          @click="$router.push(`/home/createBoard`)"
         />
       </div>
     </template>
   </theader>
-  <div class="board-header dp-space-center p-5" v-if="boardList.length > 0">
-    <div
-      class="dp--center"
-      @click="
-        $router.push('/home/mate/' + boardList[boardIndex].executorInfo._key)
-      "
-    >
-      <avatar
-        :name="boardList[boardIndex].executorInfo.userName"
-        :avatar="boardList[boardIndex].executorInfo.userAvatar"
-        type="person"
-        :index="0"
-        :size="30"
-        :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
-        :class="{
-          'icon-point': boardList[boardIndex].executorInfo?._key !== user?._key,
-        }"
-        @click="
-          boardList[boardIndex].executorInfo?._key !== user?._key
-            ? $router.push(
-                '/home/mate/' + boardList[boardIndex].executorInfo?._key
-              )
-            : null
-        "
-      />
-      {{ boardList[boardIndex].executorInfo.userName }}
-    </div>
-    <div class="dp--center">
-      <el-dropdown>
-        <span style="font-size: 16px" class="icon-point">{{
-          markArr[markIndex].title
-        }}</span>
-        <template #dropdown>
-          <el-dropdown-menu
-            v-for="(item, index) in markArr"
-            :key="'mark' + index"
-          >
-            <el-dropdown-item
-              @click="
-                markIndex = index;
-                mark = item.value;
-              "
-              ><div
-                class="dp-space-center"
-                style="width: 130px; font-size: 16px"
-              >
-                <div>{{ item.title }}</div>
-                <div class="dp--center">
-                  <img
-                    :src="chooseSvg"
-                    alt=""
-                    style="width: 20px; height: 20px; margin-right: 10px"
-                    v-if="markIndex === index"
-                  />
-                </div>
-              </div>
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-    </div>
-  </div>
-  <div class="board dp-center-center" ref="boardRef">
+  <div
+    class="board dp-center-center"
+    ref="boardRef"
+    :class="{
+      'dp-center-center': deviceType === 'phone',
+      'dp-space-center': deviceType !== 'phone',
+    }"
+  >
     <!-- <div class="board-box dp-center"> -->
-    <div class="board-container p-5">
+    <div class="talk-left" v-if="deviceType !== 'phone'"></div>
+    <div class="talk-menu" v-if="deviceType !== 'phone'">
+      <contact type="menu"/>
+    </div>
+    <div class="board-container p-3" :style="{
+        width: deviceType === 'phone' ? '100%' : 'calc(100% - 300px)',
+      }">
+      <div class="board-header dp-space-center p-3" v-if="boardList.length > 0">
+        <div
+          class="dp--center"
+          @click="
+            $router.push(
+              '/home/mate/' + boardList[boardIndex].executorInfo._key
+            )
+          "
+        >
+          <avatar
+            :name="boardList[boardIndex].executorInfo.userName"
+            :avatar="boardList[boardIndex].executorInfo.userAvatar"
+            type="person"
+            :index="0"
+            :size="30"
+            :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+            :class="{
+              'icon-point':
+                boardList[boardIndex].executorInfo?._key !== user?._key,
+            }"
+            @click="
+              boardList[boardIndex].executorInfo?._key !== user?._key
+                ? $router.push(
+                    '/home/mate/' + boardList[boardIndex].executorInfo?._key
+                  )
+                : null
+            "
+          />
+          {{ boardList[boardIndex].executorInfo.userName }}
+        </div>
+        <div class="dp--center">
+          <el-dropdown>
+            <span style="font-size: 16px" class="icon-point">{{
+              markArr[markIndex]?.title
+            }}</span>
+            <template #dropdown>
+              <el-dropdown-menu
+                v-for="(item, index) in markArr"
+                :key="'mark' + index"
+              >
+                <el-dropdown-item
+                  @click="
+                    markIndex = index;
+                    mark = item.value;
+                  "
+                  ><div
+                    class="dp-space-center"
+                    style="width: 130px; font-size: 16px"
+                  >
+                    <div>{{ item.title }}</div>
+                    <div class="dp--center">
+                      <img
+                        :src="chooseSvg"
+                        alt=""
+                        style="width: 20px; height: 20px; margin-right: 10px"
+                        v-if="markIndex === index"
+                      />
+                    </div>
+                  </div>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
       <template v-if="boardRole < 4">
         <div class="board-edit">
           <div class="editor">
@@ -427,7 +470,7 @@ watch(mark, (newVal) => {
             <div>
               <el-checkbox
                 v-model="multipleCheck"
-                label="Split into multiple"
+                :label="$t(`Split into multiple`)"
                 size="large"
                 v-if="splitVisible"
               />
@@ -469,7 +512,7 @@ watch(mark, (newVal) => {
       </div>
     </div>
     <!-- </div> -->
-    <div class="footer p-5 dp--center">
+    <div class="footer p-3 dp--center">
       <div
         class="icon-point dp--center"
         @click="
@@ -520,32 +563,41 @@ watch(mark, (newVal) => {
   font-weight: 600;
   color: var(--talk-font-color);
 }
-.board-header {
-  width: 100%;
-  height: 40px;
-  box-sizing: border-box;
-  // max-width: 960px;
-}
+
 .board {
   width: 100%;
   background: var(--talk-bg-color);
   position: relative;
   z-index: 1;
   flex-wrap: wrap;
+  box-sizing: border-box;
 
   // .board-box {
   //   width: 100%;
   //   height: calc(100vh - 135px);
   //   overflow-x: hidden;
   //   overflow-y: auto;
-
+  .talk-menu {
+    width: 280px;
+    height: calc(100vh - 105px);
+    top: 55px;
+    left: 0px;
+    position: fixed;
+    z-index: 10;
+  }
   .board-container {
     // width: 100%;
     // max-width: 960px;
     width: 100%;
-    height: calc(100vh - 145px);
+    height: calc(100vh - 105px);
     overflow-x: hidden;
     overflow-y: auto;
+    .board-header {
+      width: 100%;
+      height: 40px;
+      box-sizing: border-box;
+      // max-width: 960px;
+    }
     .board-edit {
       width: 100%;
       min-height: 200px;

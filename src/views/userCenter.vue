@@ -13,9 +13,9 @@ const { proxy } = useCurrentInstance();
 
 const socket: any = inject("socket");
 const router = useRouter();
-const { user, token } = storeToRefs(appStore.authStore);
+const { user, token, uploadToken } = storeToRefs(appStore.authStore);
 const { dark, locale, noticeNum } = storeToRefs(appStore.commonStore);
-const { setUserInfo } = appStore.authStore;
+const { setUserInfo, getUploadToken } = appStore.authStore;
 const { setDeviceType, setCommonDark, setCommonLocale } = appStore.commonStore;
 const emits = defineEmits(["close"]);
 
@@ -38,7 +38,7 @@ const changeLanguage = (value: string) => {
       darkValue.value = dark.value ? "Dark mode" : "Bright mode";
       break;
     case "日本語":
-      value = "jp";
+      value = "ja";
       darkValue.value = dark.value ? "ダークモード" : "ブライトモード";
       break;
     case "繁体":
@@ -51,7 +51,7 @@ const changeLanguage = (value: string) => {
   localStorage.setItem("LANGUAGE", value);
 };
 const changeDark = (value: string | boolean) => {
-  value = value === i18n.global.t(`text['Dark mode']`);
+  value = value === i18n.global.t(`DarkMode`);
   setDark(value);
   setCommonDark(value);
 };
@@ -65,7 +65,7 @@ const changeConfig = async () => {
   })) as ResultProps;
   if (configRes.msg === "OK") {
     ElMessage({
-      message: "Edit Successful",
+      message: i18n.global.t(`Edit Success`),
       type: "success",
       duration: 1000,
     });
@@ -74,12 +74,18 @@ const changeConfig = async () => {
     setUserInfo({ ...user.value, ...config });
   }
 };
+const chooseImg = (e) => {
+  let mimeType = ["image/png", "image/jpeg", "image/svg+xml"];
+  uploadImage(e.target.files[0], uploadToken.value, mimeType, (url: string) => {
+    avatar.value = url;
+  });
+};
 const logout = () => {
   socket.emit("logout", token.value);
   router.push("/");
   localStorage.clear();
   ElMessage({
-    message: "LogOut successfully",
+    message: i18n.global.t(`Log out successfully`),
     type: "success",
     duration: 1000,
   });
@@ -98,7 +104,7 @@ watch(
         case "en":
           localeValue.value = "English";
           break;
-        case "jp":
+        case "ja":
           localeValue.value = "日本語";
           break;
         case "tc":
@@ -106,8 +112,8 @@ watch(
           break;
       }
       darkValue.value = dark.value
-        ? i18n.global.t(`text['Dark mode']`)
-        : i18n.global.t(`text['Bright mode']`);
+        ? i18n.global.t(`DarkMode`)
+        : i18n.global.t(`BrightMode`);
     }
   },
   { immediate: true }
@@ -121,7 +127,10 @@ watch(
           fit="cover"
           :src="user?.userAvatar"
           :size="40"
-          @click="userVisible = true"
+          @click="
+            userVisible = true;
+            getUploadToken();
+          "
           class="icon-point"
         />
         <div class="right">
@@ -130,7 +139,7 @@ watch(
             <div
               class="dp--center common-color icon-point"
               @click="
-                $router.push('/home/history/create');
+                $router.push('/history/create');
                 emits('close');
               "
             >
@@ -142,7 +151,7 @@ watch(
             </div>
           </div>
         </div>
-        <div class="dp-center-center">
+        <div class="dp-center-center notice-icon">
           <icon-font
             name="notice"
             :size="22"
@@ -154,8 +163,12 @@ watch(
           />
           <el-badge
             :value="noticeNum"
-            style="margin-bottom: 10px"
+            style="margin-bottom: 10px; margin-left: -10px"
             v-if="noticeNum"
+            @click="
+              $router.push('/home/notice');
+              emits('close');
+            "
           ></el-badge>
         </div>
       </div>
@@ -167,7 +180,7 @@ watch(
         "
       >
         <icon-font name="list" :size="22" style="margin-right: 18px" />
-        <span> Todo </span>
+        <span> {{ $t(`Todo`) }} </span>
       </div>
       <div
         class="userCenter-item dp--center"
@@ -177,7 +190,7 @@ watch(
         "
       >
         <icon-font name="boards" :size="22" style="margin-right: 18px" />
-        <span> Boards </span>
+        <span> {{ $t(`Boards`) }} </span>
       </div>
       <div
         class="userCenter-item dp--center"
@@ -187,7 +200,7 @@ watch(
         "
       >
         <icon-font name="mates" :size="24" style="margin-right: 15px" />
-        <span> Mates </span>
+        <span> {{ $t(`Mates`) }} </span>
       </div>
       <div
         class="userCenter-item dp--center"
@@ -197,28 +210,28 @@ watch(
         "
       >
         <icon-font name="send" :size="24" style="margin-right: 15px" />
-        <span> Created </span>
+        <span> {{ $t(`Creat`) }} </span>
       </div>
       <div
         class="userCenter-item dp--center"
         @click="
-          $router.push('/home/history/create');
+          $router.push('/history/create');
           emits('close');
         "
       >
         <icon-font name="history" :size="24" style="margin-right: 15px" />
-        <span> History </span>
+        <span> {{ $t(`History`) }} </span>
       </div>
 
       <div
         class="userCenter-item dp--center"
         @click="
-          $router.push('/home/rank');
+          $router.push('/rank');
           emits('close');
         "
       >
         <icon-font name="beans" :size="24" style="margin-right: 15px" />
-        <span> Ranking </span>
+        <span> {{ $t(`Ranking`) }} </span>
       </div>
       <!-- <div
         class="userCenter-item dp--center"
@@ -235,34 +248,39 @@ watch(
       <div class="userCenter-item dp--center" @click="setVisible = true">
         <icon-font name="set" :size="18" style="margin-right: 15px" />
         <span>
-          {{ $t(`text.Setting`) }}
+          {{ $t(`Setting`) }}
         </span>
       </div>
       <div class="userCenter-item dp--center">
         <icon-font name="help" :size="18" style="margin-right: 15px" />
         <span>
-          {{ $t(`text.Help`) }}
+          {{ $t(`Help`) }}
         </span>
       </div>
       <div class="userCenter-item dp--center">
         <icon-font name="community" :size="18" style="margin-right: 15px" />
         <span>
-          {{ $t(`text.Communication`) }}
+          {{ $t(`Communication`) }}
         </span>
       </div>
       <div class="userCenter-item dp--center" @click="logout">
         <icon-font name="quit" :size="18" style="margin-right: 15px" />
         <span>
-          {{ $t(`text['Sign out']`) }}
+          {{ $t(`Sign Out`) }}
         </span>
       </div>
     </div>
   </div>
-  <el-dialog v-model="userVisible" :title="'User'" :width="400">
+  <el-dialog v-model="userVisible" :title="$t('Profile')" :width="400">
     <div class="user-edit dp-center-center">
       <div class="avatar">
         <el-avatar fit="cover" :src="avatar" :size="150" />
-        <input type="file" accept="image/*" class="upload-img" />˝
+        <input
+          type="file"
+          accept="image/*"
+          class="upload-img"
+          @change="chooseImg"
+        />˝
       </div>
 
       <el-input
@@ -279,10 +297,10 @@ watch(
       </span>
     </template>
   </el-dialog>
-  <el-dialog v-model="setVisible" :title="$t(`text.Setting`)" :width="400">
+  <el-dialog v-model="setVisible" :title="$t(`Setting`)" :width="400">
     <div class="user-edit dp-center-center">
       <div class="text dp-space-center">
-        {{ $t(`text.Language`) }} :
+        {{ $t(`Language`) }} :
         <el-select
           v-model="localeValue"
           :placeholder="'choose language'"
@@ -296,18 +314,18 @@ watch(
         </el-select>
       </div>
       <div class="text dp-space-center">
-        {{ $t(`text['Dark mode']`) }} :
+        {{ $t(`DarkMode`) }}
         <el-select
           v-model="darkValue"
           :placeholder="'choose mode'"
           size="large"
           @change="changeDark"
         >
-          <el-option :value="$t(`text['Dark mode']`)">{{
-            $t(`text['Dark mode']`)
+          <el-option :value="$t(`DarkMode`)">{{
+            $t(`DarkMode`)
           }}</el-option>
-          <el-option :value="$t(`text['Bright mode']`)"
-            >{{ $t(`text['Bright mode']`) }}
+          <el-option :value="$t(`BrightMode`)"
+            >{{ $t(`BrightMode`) }}
           </el-option>
         </el-select>
       </div>
@@ -330,21 +348,14 @@ watch(
     span {
       margin-right: 0px;
     }
-    .userCenter-user-edit {
-      position: absolute;
-      top: 25px;
-      left: 25px;
-      z-index: 2;
-    }
     .right {
-      width: calc(100% - 120px);
+      width: calc(100% - 50px);
       text-align: left;
-      margin-left: 15px;
       .center {
         width: 100%;
         height: 20px;
         font-size: 16px;
-        margin: 10px 0px;
+        margin-bottom: 2px;
         line-height: 20px;
       }
       .bottom {
@@ -354,6 +365,12 @@ watch(
         color: #999999;
         line-height: 20px;
       }
+    }
+    .notice-icon {
+      height: 100%;
+      position: absolute;
+      top: 0px;
+      right: 0px;
     }
   }
   .user-set {

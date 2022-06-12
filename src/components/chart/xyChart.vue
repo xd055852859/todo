@@ -2,127 +2,95 @@
 import * as echarts from "echarts";
 import { useThrottleFn } from "@vueuse/core";
 const props = defineProps<{
-  rankData: number[][];
+  rankData: number[];
   XYId: string;
   width?: string;
   height?: string;
   zoom?: number;
   onClick?: Function;
   name: any;
-  day: number;
+  // day: number;
 }>();
 const emits = defineEmits<{
-  (e: "changeMate", key: string): void;
+  (e: "changeMate", index: number): void;
 }>();
-const chart = shallowRef<echarts.EChartsType | null>(null);
-const option = shallowRef<echarts.EChartsOption | null>(null);
+let chart: any = null;
+let option: any = null;
 onMounted(() => {
   createChart();
 });
 const createChart = () => {
   var chartDom = document.getElementById(props.XYId)!;
-  chart.value = echarts.init(chartDom);
-  let data: number[] = props.rankData[0];
-  option.value = {
-    xAxis: {
-      max: "dataMax",
+  chart = echarts.init(chartDom);
+  // let data: number[] = props.rankData[0];
+  option = {
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "shadow",
+      },
     },
+    xAxis: [
+      {
+        type: "value",
+      },
+    ],
     yAxis: {
       type: "category",
       data: props.name,
       inverse: true,
-      animationDuration: 300,
-      animationDurationUpdate: 300,
       triggerEvent: true,
     },
     series: [
       {
-        realtimeSort: true,
-        name: "X",
-        type: "bar",
-        data: data,
+        name: props.name,
         label: {
           show: true,
-          position: "right",
-          valueAnimation: true,
+          formatter: "{@value}",
+          align: "center",
+          verticalAlign: "bottom",
+          lineHeight:0
         },
-        // barWidth: 5,
-        // backgroundStyle: {
-        //   borderWidth: 40,
-        // },
+        type: "bar",
+        barWidth: "60%",
+        data: props.rankData,
       },
     ],
-    legend: {
-      show: false
-    },
-    animationDuration: 0,
-    animationDurationUpdate: 3000,
-    animationEasing: "linear",
-    animationEasingUpdate: "linear",
+    // legend: {
+    //   show: false,
+    // },
   };
-
-  // let timer = setInterval(function () {
-  //   run();
-  //   if (stepDay > props.day) {
-  //     clearInterval(timer);
-  //   }
-  // }, 3000);
-  option.value && chart.value.setOption(option.value);
+  option && chart.setOption(option);
   window.onresize = useThrottleFn(() => {
-    if (chart.value) {
+    if (chart) {
       //@ts-ignore
-      chart.value.resize();
+      chart.resize();
     }
   }, 50);
-  chart.value.on("click", function (params) {
+  chart.on("click", function (params) {
     console.log(params);
     if (params.componentType === "yAxis") {
-      emits("changeMate", props.name[params.dataIndex]._key);
+      emits("changeMate", params.dataIndex);
     }
   });
 };
-watch(chart, (newChart) => {
-  if (newChart) {
-    let data: any = null;
-    for (var i = 0; i < props.day; ++i) {
-      data = props.rankData[i];
-    }
-    console.log(i);
-    //@ts-ignore
-    newChart.setOption<echarts.EChartsOption>({
-      yAxis: {
-        data: props.name,
-      },
-      series: [
-        {
-          data,
-        },
-      ],
-    });
-  }
-});
+
 watch(
   () => props.rankData,
   (newVal) => {
-    let data: any = null;
-    for (var i = 0; i < props.day; ++i) {
-      data = newVal[i];
-    }
-    console.log(props.name);
     //@ts-ignore
-    chart.value.setOption<echarts.EChartsOption>({
+    chart.setOption<echarts.EChartsOption>({
       yAxis: {
         data: props.name,
       },
       series: [
         {
-          type: "bar",
-          data,
+          data: newVal,
         },
       ],
     });
     //@ts-ignore
-    chart.value.resize();
+    chart.resize();
   },
   { deep: true }
 );

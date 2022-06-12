@@ -2,6 +2,8 @@ import { ref } from "vue";
 import { defineStore } from "pinia";
 import { User } from "@/interface/User";
 import api from "@/services/api";
+import { storeToRefs } from "pinia";
+import appStore from "@/store";
 import { ResultProps } from "@/interface/Common";
 import { Task } from "@/interface/Task";
 export const taskStore = defineStore("taskStore", () => {
@@ -10,6 +12,7 @@ export const taskStore = defineStore("taskStore", () => {
   const completedList = ref<any>([]);
   const targetKey = ref<string>("");
   const taskKey = ref<string>("");
+  const { friend } = storeToRefs(appStore.authStore);
   const getTaskList = async (mark: string, hasFinished?: number) => {
     let obj: any = {};
     hasFinished ? (obj.hasFinished = hasFinished) : null;
@@ -27,6 +30,7 @@ export const taskStore = defineStore("taskStore", () => {
           item.cards = item.cards.map((taskItem) => {
             taskItem.boardInfo = item.boardInfo;
             taskItem.creatorInfo = item.creatorInfo;
+            taskItem.executorInfo = friend.value;
             return taskItem;
           });
           return item;
@@ -36,6 +40,7 @@ export const taskStore = defineStore("taskStore", () => {
           item.cards = item.cards.map((taskItem) => {
             taskItem.boardInfo = item.boardInfo;
             taskItem.creatorInfo = item.creatorInfo;
+            taskItem.executorInfo = friend.value;
             return taskItem;
           });
           return item;
@@ -124,6 +129,7 @@ export const taskStore = defineStore("taskStore", () => {
         item.cards = item.cards.map((taskItem) => {
           taskItem.boardInfo = item.boardInfo;
           taskItem.creatorInfo = item.creatorInfo;
+          taskItem.executorInfo = friend.value;
           return taskItem;
         });
         return item;

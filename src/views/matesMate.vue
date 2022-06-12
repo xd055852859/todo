@@ -6,6 +6,7 @@ import { storeToRefs } from "pinia";
 import appStore from "@/store";
 import Avatar from "@/components/avatar.vue";
 import { ElMessage } from "element-plus";
+import i18n from "@/language/i18n";
 
 const { user } = storeToRefs(appStore.authStore);
 const props = defineProps<{
@@ -29,7 +30,7 @@ const saveMate = async (key:string,index: number) => {
   })) as ResultProps;
   if (saveRes.msg === "OK") {
     ElMessage({
-      message: "Add Mate successful",
+       message: i18n.global.t(`Adding friends successful`),
       type: "success",
       duration: 1000,
     });
@@ -42,7 +43,7 @@ const delMate = async (key:string,index: number) => {
   })) as ResultProps;
   if (saveRes.msg === "OK") {
     ElMessage({
-      message: "Delete Mate successful",
+       message: i18n.global.t(`Delete Friend Success`),
       type: "success",
       duration: 1000,
     });
@@ -54,7 +55,7 @@ const delMate = async (key:string,index: number) => {
   <theader>
     <template #left> MatesMate </template>
   </theader>
-  <div class="matesMate p-5">
+  <div class="matesMate p-3">
     <el-row :gutter="20">
       <el-col
         v-for="(item, index) in friendMateList"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useThrottleFn } from "@vueuse/shared";
 import * as echarts from "echarts";
 const props = defineProps<{
   data: (string | number)[];
@@ -8,6 +9,7 @@ const props = defineProps<{
   zoom?: number;
   onClick?: Function;
   name: string[];
+  simpleState?: boolean;
 }>();
 const emits = defineEmits<{
   (e: "changeDate", date: string): void;
@@ -16,10 +18,10 @@ const dayjs: any = inject("dayjs");
 onMounted(() => {
   createChart();
 });
-const chart = ref<any>(null);
+let chart: any = null;
 const createChart = () => {
   var chartDom = document.getElementById(props.riverId)!;
-  chart.value = echarts.init(chartDom);
+  chart = echarts.init(chartDom);
   var option;
 
   option = {
@@ -35,14 +37,24 @@ const createChart = () => {
       },
     },
     legend: {
+      show: !props.simpleState,
       data: props.name,
     },
     singleAxis: {
       top: 50,
       bottom: 50,
       triggerEvent: true,
-      axisTick: {},
-      axisLabel: {},
+      axisLine: {
+        show: !props.simpleState,
+      },
+      axisTick: {
+        show: !props.simpleState,
+      },
+      axisLabel: {
+        show: !props.simpleState,
+        formatter: "{M}-{dd} ",
+        fontWeight: "bolder",
+      },
       type: "time",
       axisPointer: {
         animation: true,
@@ -68,29 +80,41 @@ const createChart = () => {
             shadowColor: "rgba(0, 0, 0, 0.8)",
           },
         },
-        data: props.data,
+        data: [...props.data],
       },
     ],
   };
 
-  option && chart.value.setOption(option);
+  option && chart.setOption(option);
   console.log(props.data);
-  chart.value.on("click", function (params) {
+  window.onresize = useThrottleFn(() => {
+    if (chart) {
+      //@ts-ignore
+      chart.resize();
+    }
+  }, 50);
+  chart.on("click", function (params) {
+    console.log(params);
     if (params.componentType === "singleAxis") {
       emits("changeDate", dayjs(params.value).format("YYYY-MM-DD"));
     }
+    // if (params.componentType === "series") {
+    //   emits("changeDate", dayjs(params.value[0]).format("YYYY-MM-DD"));
+    // }
   });
 };
 watch(
   () => props.data,
   (newVal) => {
-    chart.value.setOption({
+    chart.setOption({
       series: [
         {
           data: newVal,
         },
       ],
     });
+    //@ts-ignore
+    chart.resize();
   }
 );
 </script>

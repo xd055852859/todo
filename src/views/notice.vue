@@ -9,6 +9,7 @@ const noticeType = ref<number>(0);
 const noticeList = ref<Notice[]>([]);
 const total = ref<number>(0);
 const page = ref<number>(1);
+
 const getNotice = async () => {
   const noticeRes: any = (await api.request.get("message/list", {
     page: page.value,
@@ -17,6 +18,9 @@ const getNotice = async () => {
   })) as ResultProps;
   if (noticeRes.msg === "OK") {
     total.value = noticeRes.total;
+//     noticeRes.data=noticeRes.data.map((item)=>{
+// switch
+//     })
     noticeList.value = [...noticeList.value, ...noticeRes.data];
   }
 };
@@ -47,7 +51,7 @@ const clearNotice = async () => {
   }
 };
 const applyMessage = (index: number,userItem) => {
-  noticeList.value.splice(index);
+  noticeList.value.splice(index,1);
 };
 watch(noticeType, () => {
   noticeList.value = [];
@@ -59,13 +63,13 @@ watchEffect(() => {
 </script>
 <template>
   <theader isMenu>
-    <template #title>Notice</template>
+    <template #title>{{$t(`Notice`)}}</template>
     <template #right v-if="noticeType === 0">
-      <tbutton @click="clearNotice"> Set Read </tbutton>
+      <tbutton @click="clearNotice">  {{$t(`Set Read`)}}</tbutton>
     </template>
   </theader>
   <div class="notice">
-    <div class="notice-nav dp-center-center p-5">
+    <div class="notice-nav dp-center-center p-3">
       <div
         :style="
           noticeType === 0
@@ -76,7 +80,7 @@ watchEffect(() => {
         class="icon-point"
         style="padding: 10px 40px"
       >
-        Unread
+      {{$t(`Unread`)}}
       </div>
       <div
         style="padding: 10px 40px"
@@ -88,7 +92,7 @@ watchEffect(() => {
         @click="noticeType = 1"
         class="icon-point"
       >
-        Read
+        {{$t(`Read`)}}
       </div>
     </div>
     <div class="notice-container" @scroll="scrollNotice">

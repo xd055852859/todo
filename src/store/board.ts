@@ -19,13 +19,12 @@ export const boardStore = defineStore("boardStore", () => {
     localStorage.getItem("sortIndex") ? +localStorage.getItem("sortIndex") : 0
   );
   const order = ref<string>(localStorage.getItem("order") ?? "desc");
-  const boardKey = ref<string>(localStorage.getItem("boardKey") ?? "");
+  const boardKey = ref<string>("");
   const boardList = ref<Board[]>([]);
   const boardRole = ref<number>(5);
 
   const setBoardKey = (key: string) => {
     boardKey.value = key;
-    localStorage.setItem("boardKey", boardKey.value);
   };
   const getBoardList = async (sortBy: string, order: string) => {
     const boardRes: any = (await api.request.get("board", {
@@ -56,6 +55,7 @@ export const boardStore = defineStore("boardStore", () => {
   watch([sortIndex, order], ([newSortVal, newOrderVal]) => {
     getBoardList(sortArr[newSortVal], newOrderVal);
   });
+
   return {
     boardKey,
     setBoardKey,

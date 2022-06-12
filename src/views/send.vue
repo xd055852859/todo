@@ -12,10 +12,24 @@ import chooseSvg from "@/assets/svg/choose.svg";
 const { user, mateList } = storeToRefs(appStore.authStore);
 const socket: any = inject("socket");
 
-const createdMateList = computed(() => [user.value, ...mateList.value]);
-const searchList = computed(() =>
+const createdMateList = computed(() => [
+  { _key: "all", userName: "all", userAvatar: "" },
+  user.value,
+  ...mateList.value,
+]);
+const executedMateList = computed(() => [
+  { _key: "all", userName: "all", userAvatar: "" },
+  user.value,
+  ...mateList.value,
+]);
+const searchCreateList = computed(() =>
   createdMateList.value.filter((item) => {
-    return item?.userName.indexOf(searchInput.value) !== -1;
+    return item?.userName.indexOf(searchCreateInput.value) !== -1;
+  })
+);
+const searchExecuteList = computed(() =>
+  createdMateList.value.filter((item) => {
+    return item?.userName.indexOf(searchExecuteInput.value) !== -1;
   })
 );
 const page = ref<number>(1);
@@ -24,21 +38,24 @@ const total = ref<number>(0);
 const sendList = ref<Task[]>([]);
 const overKey = ref<string>("");
 const createdMateIndex = ref<number>(0);
-const searchInput = ref<string>("");
-const friendKey = ref<string>("");
+const executedMateIndex = ref<number>(0);
+const searchCreateInput = ref<string>("");
+const searchExecuteInput = ref<string>("");
+const creatorKey = ref<string>("all");
+const executorKey = ref<string>("all");
 const completedIndex = ref<number>(0);
 const completedArr = ["All", "Completed", "Todo"];
 
 onMounted(() => {});
 const getSendTask = async () => {
-  let obj: any = { page: page.value, limit: 30 };
+  let obj: any = {
+    page: page.value,
+    limit: 30,
+    creator: creatorKey.value,
+    executor: executorKey.value,
+  };
   if (hasFinished.value !== null) {
     obj.hasFinished = hasFinished.value;
-    obj.page = 1;
-    page.value = 1;
-  }
-  if (friendKey.value && friendKey.value !== user.value?._key) {
-    obj.friendKey = friendKey.value;
     obj.page = 1;
     page.value = 1;
   }
@@ -50,11 +67,12 @@ const getSendTask = async () => {
   })) as ResultProps;
   if (sentRes.msg === "OK") {
     total.value = sentRes.total;
-    sentRes.data = sentRes.data.map((item) => {
-      item.creatorInfo = createdMateList.value[createdMateIndex.value];
-      return item;
-    });
+    // sentRes.data = sentRes.data.map((item) => {
+    //   item.creatorInfo = createdMateList.value[createdMateIndex.value];
+    //   return item;
+    // });
     sendList.value = [...sendList.value, ...sentRes.data];
+    console.log(sendList)
   }
 };
 const scrollSend = (e: any) => {
@@ -69,7 +87,7 @@ const scrollSend = (e: any) => {
     sendList.value.length < total.value
   ) {
     page.value++;
-    getSendTask();
+    // getSendTask();
   }
 };
 const chooseCreatedType = (index: number) => {
@@ -87,6 +105,7 @@ const chooseCreatedType = (index: number) => {
   }
 };
 const finishTask = (data) => {
+  console.log(data);
   let index = sendList.value.findIndex((item: Task) => data._key === item._key);
   if (index !== -1) {
     console.log(completedIndex.value);
@@ -97,27 +116,21 @@ const finishTask = (data) => {
     }
   }
 };
-// const delTask = (data) => {
-//   if (completedIndex.value !== 0) {
-//     let index = sendList.value.findIndex(
-//       (item: Task) => data._key === item._key
-//     );
-//     if (index !== -1) {
-//       sendList.value.splice(index, 1);
-//     }
-//   }else{
-
-//   }
-// };
+const delTask = (data) => {
+  let index = sendList.value.findIndex((item: Task) => data._key === item._key);
+  if (index !== -1) {
+    sendList.value.splice(index, 1);
+  }
+};
 watchEffect(() => {
   getSendTask();
 });
 </script>
 <template>
   <theader isMenu>
-    <template #left> Created </template>
+    <template #left>{{$t(`Creat`)}} </template>
     <template #right>
-      <el-dropdown>
+      <el-dropdown style="margin-right: 10px">
         <div
           class="dp--center icon-point"
           style="font-size: 16px; font-weight: 600"
@@ -129,6 +142,7 @@ watchEffect(() => {
             :index="0"
             :size="30"
             :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+            v-if="createdMateIndex !== 0"
           />
           {{ createdMateList[createdMateIndex]?.userName }}
           <el-icon class="el-icon--right">
@@ -136,23 +150,78 @@ watchEffect(() => {
           </el-icon>
         </div>
         <template #dropdown>
-          <div class="header-contact" v-if="searchList">
-            <div class="contact-top dp-space-center p-5">
+          <div class="header-contact" v-if="searchCreateList">
+            <div class="contact-top dp-space-center p-3">
               <el-input
-                v-model="searchInput"
+                v-model="searchCreateInput"
                 placeholder="Search Mate"
                 style="height: 35px"
               />
             </div>
             <div class="contact-bottom">
               <div
-                class="contact-item container dp--center p-5 icon-point"
-                v-for="(item, index) in searchList"
+                class="contact-item container dp--center p-3 icon-point"
+                v-for="(item, index) in searchCreateList"
                 :key="'listItem' + index"
                 @click="
                   //@ts-ignore
-                  friendKey = item?._key;
+                  creatorKey = item?._key;
                   createdMateIndex = index;
+                  page = 1;
+                "
+              >
+                <avatar
+                  :name="item?.userName"
+                  :avatar="item?.userAvatar"
+                  type="person"
+                  :index="0"
+                  :size="30"
+                  :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+                />{{ item?.userName }}
+              </div>
+            </div>
+          </div>
+        </template>
+      </el-dropdown>
+      ⇀
+      <el-dropdown style="margin-left: 10px">
+        <div
+          class="dp--center icon-point"
+          style="font-size: 16px; font-weight: 600"
+        >
+          <avatar
+            :name="executedMateList[executedMateIndex]?.userName"
+            :avatar="executedMateList[executedMateIndex]?.userAvatar"
+            type="person"
+            :index="0"
+            :size="30"
+            :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+            v-if="executedMateIndex !== 0"
+          />
+          {{ executedMateList[executedMateIndex]?.userName }}
+          <el-icon class="el-icon--right">
+            <arrow-down />
+          </el-icon>
+        </div>
+        <template #dropdown>
+          <div class="header-contact" v-if="searchExecuteList">
+            <div class="contact-top dp-space-center p-3">
+              <el-input
+                v-model="searchExecuteInput"
+                placeholder="Search Mate"
+                style="height: 35px"
+              />
+            </div>
+            <div class="contact-bottom">
+              <div
+                class="contact-item container dp--center p-3 icon-point"
+                v-for="(item, index) in searchCreateList"
+                :key="'listItem' + index"
+                @click="
+                  //@ts-ignore
+                  executorKey = item?._key;
+                  executedMateIndex = index;
+                  page = 1;
                 "
               >
                 <avatar
@@ -170,7 +239,7 @@ watchEffect(() => {
       </el-dropdown>
     </template>
   </theader>
-  <div class="send p-5" @scroll="scrollSend">
+  <div class="send p-3" @scroll="scrollSend">
     <div
       v-for="(item, index) in sendList"
       :key="'taskItem' + index"
@@ -182,11 +251,11 @@ watchEffect(() => {
         type="send"
         :role="item.role"
         @finishTask="finishTask"
-        @delTask="finishTask"
+        @delTask="delTask"
       />
     </div>
   </div>
-  <div class="footer p-5 dp--center icon-point">
+  <div class="footer p-3 dp--center icon-point">
     <el-dropdown>
       <div class="dp--center icon-point" style="height: 100%">
         {{ completedArr[completedIndex] }}

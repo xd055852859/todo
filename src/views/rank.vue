@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
+import lineChart from "@/components/chart/lineChart.vue";
 import xyChart from "@/components/chart/xyChart.vue";
 import { ArrowDown } from "@element-plus/icons-vue";
 import api from "@/services/api";
@@ -18,6 +19,7 @@ const { user } = storeToRefs(appStore.authStore);
 const { deviceType } = storeToRefs(appStore.commonStore);
 const rankMark = ref<string>("today");
 const rankList = ref<any>([]);
+const rankArray = ref<any>([]);
 const seeAll = ref<number>(0);
 
 const rankDay = ref<number>(1);
@@ -25,7 +27,6 @@ const rankStr = ref<string>("Today");
 const rankUser = ref<any>({});
 const timeList = ref<string[]>([]);
 const chartUser = ref<any>([]);
-const chartUserObj = ref<any>({});
 onMounted(() => {
   getRankInfo();
 });
@@ -34,7 +35,6 @@ const getRankInfo = async () => {
   timeList.value = [];
   rankList.value = [];
   chartUser.value = [];
-  chartUserObj.value = {};
   rankUser.value = {};
 
   if (rankMark.value === "today") {
@@ -45,60 +45,68 @@ const getRankInfo = async () => {
   } else {
     obj.mark = rankMark.value;
   }
-  seeAll.value ? (obj.seeAll = seeAll.value) : null;
   for (let i = 0; i < rankDay.value; i++) {
-    timeList.value.unshift(dayjs().subtract(i, "day").format("YYYY-MM-DD"));
+    timeList.value.unshift(dayjs().subtract(i, "day").format("MM-DD"));
   }
   const rankRes = (await api.request.get("partner/rank", {
     ...obj,
   })) as ResultProps;
   if (rankRes.msg === "OK") {
+    let arr: any = [];
+    let obj1: any = {};
     if (rankRes.data.length > 0) {
       rankRes.data.forEach((item: Rank) => {
         if (!rankUser.value[item._key]) {
-          rankUser.value[item._key] = {
-            userAvatar: item.userAvatar,
-            userName: item.userName,
-            _key: item._key,
-          };
+          rankUser.value[item._key] = {};
+          chartUser.value.push(item.userName);
         }
-        rankUser.value[item._key][item.createDate] = {
-          totalBean: item.totalBean,
+        rankUser.value[item._key][dayjs(item.createDate).format("MM-DD")] =
+          item.totalBean;
+        // obj1[item._key] = {
+        //   name: item.userName,
+        //   type: "line",
+        //   // data: [],
+        //   data: 0,
+        //   emphasis: {
+        //     focus: "series",
+        //   },
+        //   areaStyle: {},
+        //   smooth: true,
+        // };
+        obj1[item._key] = {
+          name: item.userName,
+          type: "line",
+          // data: [],
+          data: 0,
+          _key: item._key,
         };
       });
+      console.log(rankUser.value);
       // rankList.value = [...rankList.value];
       timeList.value.forEach((item, index) => {
-        rankList.value[index] = [];
         for (let key in rankUser.value) {
           let userItem = rankUser.value[key];
-          if (!chartUserObj.value[userItem._key]) {
-            chartUser.value.push({
-              value: userItem.userName,
-              _key: userItem._key,
-            });
-            chartUserObj.value[userItem._key] = {
-              value: userItem.userName,
-              _key: userItem._key,
-            };
-          }
           if (!userItem[item]) {
-            userItem[item] = { totalBean: 0 };
+            userItem[item] = 0;
           }
-          if (index === 0) {
-            rankList.value[index].push(userItem[item].totalBean);
-          } else {
-            rankList.value[index].push(
-              userItem[item].totalBean +
-                rankList.value[index - 1][rankList.value[index].length]
-            );
-          }
+          // obj1[key].data.push(userItem[item]);
+          obj1[key].data = obj1[key].data + userItem[item];
         }
       });
+      rankArray.value = Object.values(obj1);
+      rankList.value = rankArray.value.map((item: any) => {
+        return item.data;
+      });
     }
+    console.log(chartUser.value);
+    console.log(rankList.value);
+    console.log(timeList.value);
   }
 };
-const changeMate = (key: string) => {
-  console.log(key);
+const changeMate = (index: number) => {
+  console.log(rankArray.value);
+  console.log(index);
+  let key = rankArray.value[index]._key;
   if (key !== user.value?._key) {
     router.push("/home/mate/" + key);
   }
@@ -107,12 +115,12 @@ const changeMate = (key: string) => {
 <template>
   <theader isMenu>
     <template #left>
-      {{ rankMark === "today" ? "Ranking of Beans" : "Ranking of Todo" }}
+      {{ $t(`Ranking of Beans`) }}
     </template>
     <template #right>
       <el-dropdown>
         <div class="icon-point">
-          {{ rankStr }}
+          {{ $t(rankStr) }}
           <el-icon class="el-icon--right">
             <arrow-down />
           </el-icon>
@@ -121,35 +129,36 @@ const changeMate = (key: string) => {
           <el-dropdown-menu>
             <el-dropdown-item
               @click="
-                rankStr = 'Today';
+                rankStr = $t(`Today`);
                 rankDay = 1;
                 getRankInfo();
               "
-              >Today</el-dropdown-item
+            >
+              {{ $t(`Today`) }}</el-dropdown-item
             >
             <el-dropdown-item
               @click="
-                rankStr = 'Yesterday';
+                rankStr = $t(`Yesterday`);
                 rankDay = 2;
                 getRankInfo();
               "
-              >Yesterday</el-dropdown-item
+              >{{ $t(`Yesterday`) }}</el-dropdown-item
             >
             <el-dropdown-item
               @click="
-                rankStr = 'Latest 7 days';
+                rankStr = $t(`Last 7 days`);
                 rankDay = 7;
                 getRankInfo();
               "
-              >Latest 7 days</el-dropdown-item
+              >{{ $t(`Last 7 days`) }}</el-dropdown-item
             >
             <el-dropdown-item
               @click="
-                rankStr = 'Latest 30 days';
+                rankStr = $t(`Last 30 days`);
                 rankDay = 30;
                 getRankInfo();
               "
-              >Latest 30 days</el-dropdown-item
+              >{{ $t(`Last 30 days`) }}</el-dropdown-item
             >
           </el-dropdown-menu>
         </template>
@@ -158,7 +167,10 @@ const changeMate = (key: string) => {
   </theader>
   <div
     class="rank"
-    :style="{ height: deviceType ? '100vh' : 'calc(100vh - 55px)' }"
+    :class="{ 'p-3': deviceType !== 'mobile' }"
+    :style="{
+      height: deviceType === 'mobile' ? '100vh' : 'calc(100vh - 55px)',
+    }"
   >
     <!-- <div class="rank-nav dp-center-center">
       <div
@@ -194,26 +206,34 @@ const changeMate = (key: string) => {
       </div>
     </div> -->
     <div class="rank-chart" v-if="rankList.length > 0">
+      <!-- <lineChart
+        lineId="XYContentId"
+        :width="'100%'"
+        :height="'100%'"
+        :rankData="rankList"
+        :timeList="timeList"
+        :nameList="chartUser"
+        @changeMate="changeMate"
+      /> -->
       <xyChart
         XYId="XYContentId"
         :width="'100%'"
-        :height="rankList.length * 40 + 150 + 'px'"
+        :height="'100%'"
         :rankData="rankList"
         :timeList="timeList"
         :name="chartUser"
-        :day="rankDay"
         @changeMate="changeMate"
       />
     </div>
     <el-empty :description="'No Rank'" v-else />
-    <div class="rank-button p-5">
+    <!-- <div class="rank-button p-3">
       <span class="icon-point" @click="seeAll = 1" v-if="seeAll === 0"
         >See All</span
       >
       <span class="icon-point" @click="seeAll = 0" v-if="seeAll === 1"
         >See Single</span
       >
-    </div>
+    </div> -->
   </div>
 </template>
 <style scoped lang="scss">
@@ -235,7 +255,7 @@ const changeMate = (key: string) => {
   }
   .rank-chart {
     width: 100%;
-    height: calc(100% - 40px);
+    height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
   }

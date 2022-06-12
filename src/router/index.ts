@@ -26,24 +26,19 @@ const routes: Array<RouteRecordRaw> = [
         children: [],
       },
       {
-        path: "history/:id",
-        name: "history",
-        component: () => import("@/views/history.vue"),
-        props: true,
+        path: "createBoard",
+        name: "createBoard",
+        component: () => import("@/views/createBoard.vue"),
         children: [],
       },
+
       {
         path: "send",
         name: "send",
         component: () => import("@/views/send.vue"),
         children: [],
       },
-      {
-        path: "rank",
-        name: "rank",
-        component: () => import("@/views/rank.vue"),
-        children: [],
-      },
+
       {
         path: "mate/:id",
         name: "mate",
@@ -94,6 +89,25 @@ const routes: Array<RouteRecordRaw> = [
     path: "/manage/:id",
     name: "manage",
     component: () => import("@/views/manage.vue"),
+    children: [],
+  },
+  {
+    path: "/test",
+    name: "test",
+    component: () => import("@/views/test.vue"),
+    children: [],
+  },
+  {
+    path: "/history/:id",
+    name: "history",
+    component: () => import("@/views/history.vue"),
+    props: true,
+    children: [],
+  },
+  {
+    path: "/rank",
+    name: "rank",
+    component: () => import("@/views/rank.vue"),
     children: [],
   },
   // {

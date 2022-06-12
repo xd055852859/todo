@@ -14,7 +14,7 @@ const url = computed(
 );
 </script>
 <template>
-  <div class="invite-out p-5">
+  <div class="invite-out p-3">
     <theader @clickBack="router.push('/invite')">
       <template v-slot:title> Invite Partner </template>
       <template v-slot:right><div></div> </template>
@@ -33,7 +33,7 @@ const url = computed(
         @click="
           toClipboard(url);
           ElMessage({
-            message: 'Copy Success',
+            message: $t(`Copy Success`),
             type: 'success',
             duration: 1000,
           });
@@ -55,7 +55,7 @@ const url = computed(
         @click="
           toClipboard(url);
           ElMessage({
-            message: 'Copy Success',
+            message: $t(`Copy Success`),
             type: 'success',
             duration: 1000,
           });

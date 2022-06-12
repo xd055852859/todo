@@ -65,14 +65,14 @@ watchEffect(() => {
 </script>
 <template>
   <theader isMenu>
-    <template #left>Mates</template>
+    <template #left>{{$t(`Mates`)}}</template>
     <template #right>
       <el-input
         v-model="searchInput"
         size="large"
-        placeholder="请输入好友名"
+        :placeholder="$t(`InPut a mate Name`)"
         v-if="searchVisible"
-        style="width: calc(100vw - 280px); margin-right: 15px"
+        style="max-width: 200px; margin-right: 15px"
       />
       <el-icon
         style="margin-right: 15px"
@@ -85,11 +85,11 @@ watchEffect(() => {
         style="height: 40px; padding: 0px 30px"
         @click="router.push('/home/invite')"
       >
-        Invite
+        {{$t(`Invite`)}}
       </tbutton>
     </template>
   </theader>
-  <div class="partner p-5">
+  <div class="partner p-3">
     <el-row :gutter="20">
       <el-col
         v-for="(item, index) in searchList"

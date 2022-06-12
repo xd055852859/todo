@@ -10,6 +10,7 @@ import { ResultProps } from "@/interface/Common";
 
 import inviteOutSvg from "../assets/svg/inviteOut.svg";
 import Theader from "@/components/theader.vue";
+import i18n from "@/language/i18n";
 
 const { addMateList } = appStore.authStore;
 
@@ -32,7 +33,7 @@ const saveMember = async (item: User, index: number) => {
   })) as ResultProps;
   if (saveRes.msg === "OK") {
     ElMessage({
-      message: "add Mate succeeded",
+      message: i18n.global.t(`Adding friends successful`),
       type: "success",
       duration: 1000,
     });
@@ -52,11 +53,11 @@ const saveMember = async (item: User, index: number) => {
     <template v-slot:left>Invite</template>
     <template v-slot:right>
       <div class="right dp--center" @click="router.push('/home/inviteOut')">
-        <img :src="inviteOutSvg" alt="" style="width: 30px; height: 30px" />
+        <icon-font name="addMate" :size="30" class="icon-point" />
       </div>
     </template>
   </theader>
-  <div class="invite p-5">
+  <div class="invite p-3">
     <div class="invite-item">
       <el-input
         v-model="searchName"

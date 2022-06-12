@@ -12,7 +12,7 @@ import Avatar from "@/components/avatar.vue";
 const dayjs: any = inject("dayjs");
 const route = useRoute();
 const { user, mateList } = storeToRefs(appStore.authStore);
-const { deviceType } = storeToRefs(appStore.commonStore);
+const { deviceType, chartType } = storeToRefs(appStore.commonStore);
 const createdMateList = computed(() => [user.value, ...mateList.value]);
 
 const searchList = computed(() =>
@@ -32,14 +32,21 @@ const searchInput = ref<string>("");
 const historyName = ["创建", "完成"];
 const createdMateIndex = ref<number>(0);
 onMounted(() => {
-  console.log(route.params.id)
+  console.log(route.params.id);
+  console.log(route.params.id && route.params.id !== "create");
   if (route.params.id && route.params.id !== "create") {
-    friendKey.value == route.params.id;
+    let index = createdMateList.value.findIndex(
+      (item) => item?._key === route.params.id
+    );
+    if (index !== -1) {
+      friendKey.value = route.params.id as string;
+      createdMateIndex.value = index;
+    }
   }
 });
-const getHistoryChartInfo = async () => {
+const getHistoryChartInfo = async (friendKey) => {
   let obj: any = { date: historyDate.value };
-  friendKey.value ? (obj.friendKey = friendKey.value) : null;
+  friendKey ? (obj.friendKey = friendKey) : null;
   const historyRes = (await api.request.get("card/user/report", {
     ...obj,
   })) as ResultProps;
@@ -47,18 +54,18 @@ const getHistoryChartInfo = async () => {
     let arr1: (string | number)[] = [];
     let arr2: (string | number)[] = [];
     arr1 = historyRes.data.map((item) => {
-      console.log(item);
       return [item.fullDate.replace(/-/g, "/"), item.createScore, "创建"];
     });
     arr2 = historyRes.data.map((item) => {
       return [item.fullDate.replace(/-/g, "/"), item.finishScore, "完成"];
     });
     historyChartList.value = [...arr1, ...arr2];
+    console.log(historyChartList.value);
   }
 };
-const getHistoryInfo = async () => {
+const getHistoryInfo = async (friendKey) => {
   let obj: any = { date: historyDate.value };
-  friendKey.value ? (obj.friendKey = friendKey.value) : null;
+  friendKey ? (obj.friendKey = friendKey) : null;
   const historyRes = (await api.request.get("card/user/history", {
     ...obj,
   })) as ResultProps;
@@ -66,9 +73,9 @@ const getHistoryInfo = async () => {
     historyList.value = historyRes.data;
   }
 };
-const getTimelineInfo = async () => {
+const getTimelineInfo = async (friendKey) => {
   let obj: any = { date: historyDate.value };
-  friendKey.value ? (obj.friendKey = friendKey.value) : null;
+  friendKey ? (obj.friendKey = friendKey) : null;
   const timelineRes = (await api.request.get("card/user/timeline", {
     ...obj,
   })) as ResultProps;
@@ -81,17 +88,19 @@ const changeDate = (date: string) => {
   historyDate.value = date;
 };
 watchEffect(() => {
-  getHistoryChartInfo();
-  if (historyType.value === "report") {
-    getHistoryInfo();
-  } else {
-    getTimelineInfo();
+  if (user.value) {
+    getHistoryChartInfo(friendKey.value);
+    if (historyType.value === "report") {
+      getHistoryInfo(friendKey.value);
+    } else {
+      getTimelineInfo(friendKey.value);
+    }
   }
 });
 </script>
 <template>
-  <theader isMenu>
-    <template #left> History </template>
+  <theader isMenu v-if="!chartType">
+    <template #left> {{ $t(`History`) }} </template>
     <template #right>
       <el-dropdown>
         <div
@@ -113,7 +122,7 @@ watchEffect(() => {
         </div>
         <template #dropdown>
           <div class="header-contact" v-if="searchList">
-            <div class="contact-top dp-space-center p-5">
+            <div class="contact-top dp-space-center p-3">
               <el-input
                 v-model="searchInput"
                 placeholder="Search Mate"
@@ -122,7 +131,7 @@ watchEffect(() => {
             </div>
             <div class="contact-bottom">
               <div
-                class="contact-item container dp--center p-5 icon-point"
+                class="contact-item container dp--center p-3 icon-point"
                 v-for="(item, index) in searchList"
                 :key="'listItem' + index"
                 @click="
@@ -147,25 +156,34 @@ watchEffect(() => {
     </template>
   </theader>
   <div
-    class="history p-5"
-    :style="{ height: deviceType ? '100vh' : 'calc(100vh - 55px)' }"
+    class="history"
+    :class="{ 'p-3': !chartType && deviceType!=='mobile' }"
+    :style="
+      chartType
+        ? {}
+        : {
+            height: deviceType==='mobile' ? '100vh' : 'calc(100vh - 55px)',
+          }
+    "
   >
     <template v-if="historyChartList.length > 0">
       <riverChart
         riverId="riverContentId"
         :width="'100%'"
-        :height="'30vh'"
+        :height="chartType ? '100vh' : '30vh'"
         :data="historyChartList"
         :name="historyName"
         @changeDate="changeDate"
+        :simpleState="!!chartType"
       />
     </template>
 
     <div
       class="history-box"
       :style="{
-        height: deviceType ? 'calc(70vh - 25px)' : 'calc(70vh - 70px)',
+        height: deviceType==='mobile' ? 'calc(70vh - 25px)' : 'calc(70vh - 70px)',
       }"
+      v-if="!chartType"
     >
       <div class="dp-space-center">
         <div class="history-nav dp--center">
@@ -183,7 +201,7 @@ watchEffect(() => {
             @click="historyType = 'report'"
             class="icon-point"
           >
-            Report
+            {{ $t(`Report`) }}
           </div>
           <div
             style="margin: 0px 15px"
@@ -195,7 +213,7 @@ watchEffect(() => {
             @click="historyType = 'timeline'"
             class="icon-point"
           >
-            Timeline
+            {{ $t(`Timeline`) }}
           </div>
         </div>
       </div>
@@ -237,12 +255,12 @@ watchEffect(() => {
 <style scoped lang="scss">
 .history {
   width: 100%;
-
+  max-height: calc(100vh - 55px);
   .history-box {
     width: 100%;
     margin-top: 15px;
     .history-nav {
-      width: 100%;
+      // width: 100%;
       height: 30px;
       margin-bottom: 10px;
       & > div {

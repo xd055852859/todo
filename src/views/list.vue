@@ -9,7 +9,9 @@ import api from "@/services/api";
 import { ResultProps } from "@/interface/Common";
 import bottlePng from "@/assets/img/bottle.png";
 import Avatar from "@/components/avatar.vue";
+import i18n from "@/language/i18n";
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
+const { dark } = storeToRefs(appStore.commonStore);
 const { taskList, inboxList, completedList, targetKey } = storeToRefs(
   appStore.taskStore
 );
@@ -21,7 +23,7 @@ const {
   clearInboxList,
   setTargetKey,
 } = appStore.taskStore;
-const { setFriendInfo } = appStore.authStore;
+const { setFriendInfo, changeMateList } = appStore.authStore;
 const { boardList } = storeToRefs(appStore.boardStore);
 const { setBoardKey } = appStore.boardStore;
 const socket: any = inject("socket");
@@ -149,14 +151,18 @@ const changeNum = (type: string, item, listType: string) => {
       taskNum.future++;
       break;
   }
-  taskNum[navKey.value]--;
+  if (item.mark) {
+    taskNum[navKey.value]--;
+  } else {
+    taskNum.unRead--;
+  }
   delList(item.mark ? taskList.value : inboxList.value, item);
 };
 const clearInbox = async () => {
   const clearRes = (await api.request.patch("message/read")) as ResultProps;
   if (clearRes.msg === "OK") {
     ElMessage({
-      message: "Clear Inbox Successful",
+      message: i18n.global.t(`Empty inbox successfully`),
       type: "success",
       duration: 1000,
     });
@@ -168,8 +174,12 @@ const clearInbox = async () => {
 const finishTask = (data) => {
   delList(data.mark ? taskList.value : inboxList.value, data);
   completeNum.value++;
-  if (data.mark && data.executorInfo._key === user.value?._key) {
-    taskNum[data.mark]--;
+  if (data.executorInfo._key === user.value?._key) {
+    if (data.mark) {
+      taskNum[data.mark]--;
+    } else {
+      taskNum.unRead--;
+    }
   }
 };
 const delTask = (data, type?: string) => {
@@ -186,9 +196,27 @@ const delTask = (data, type?: string) => {
     }
   } else {
     delList(data.mark ? taskList.value : inboxList.value, data);
-    if (data.mark && data.executorInfo._key === user.value?._key) {
-      taskNum[data.mark]--;
+    if (data.executorInfo._key === user.value?._key) {
+      console.log(data);
+      if (data.mark) {
+        taskNum[data.mark]--;
+      } else {
+        taskNum.unRead--;
+      }
     }
+  }
+};
+
+const chooseFriend = (friend) => {
+  setFriendInfo(friend);
+  let index = mateList.value.findIndex(
+    (mateItem) => mateItem._key === friend._key
+  );
+  if (index !== -1) {
+    api.request.patch("partner/cooperation", {
+      friendKey: friend._key,
+    });
+    changeMateList(index, 0);
   }
 };
 watch(targetKey, () => {
@@ -243,7 +271,7 @@ watchEffect(() => {
         </div>
         <template #dropdown>
           <div class="board-header-contact" v-if="listMateList">
-            <div class="board-contact-top dp-space-center p-5">
+            <div class="board-contact-top dp-space-center p-3">
               <el-input
                 v-model="searchInput"
                 placeholder="Search Mate"
@@ -252,10 +280,10 @@ watchEffect(() => {
             </div>
             <div class="board-contact-bottom">
               <div
-                class="board-contact-item container dp--center p-5 icon-point"
+                class="board-contact-item container dp--center p-3 icon-point"
                 v-for="(item, index) in searchList"
                 :key="'listItem' + index"
-                @click="item && setFriendInfo(item)"
+                @click="chooseFriend(item)"
               >
                 <avatar
                   :name="item?.userName"
@@ -279,7 +307,14 @@ watchEffect(() => {
         class="icon-point"
         @click="$router.push('/home/mate/' + friend?._key)"
       />
-      <el-dropdown v-if="friendBoardList && friendBoardList.length > 0">
+      <icon-font
+        name="addTask"
+        style="margin-right: 8px"
+        :size="22"
+        class="icon-point"
+        @click="$router.push('/home/board')"
+      />
+      <!-- <el-dropdown v-if="friendBoardList && friendBoardList.length > 0">
         <icon-font
           name="addTask"
           style="margin-right: 8px"
@@ -300,11 +335,11 @@ watchEffect(() => {
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
-      </el-dropdown>
+      </el-dropdown> -->
     </template>
   </theader>
   <div class="board">
-    <div class="board-nav dp-space-center p-5">
+    <div class="board-nav dp-space-center p-3">
       <div
         class="board-nav-item dp--center"
         :class="{ 'board-choose': navKey === 'today' }"
@@ -319,9 +354,17 @@ watchEffect(() => {
             name="sun"
             style="margin-right: 10px"
             :size="16"
-            :color="navKey === 'today' ? '#fff' : '#333'"
+            :color="
+              navKey === 'today'
+                ? dark
+                  ? '#333'
+                  : '#fff'
+                : dark
+                ? '#fff'
+                : '#333'
+            "
           />
-          Today
+          {{ $t(`Today`) }}
         </div>
       </div>
       <div
@@ -338,9 +381,17 @@ watchEffect(() => {
             name="moon"
             style="margin-right: 10px"
             :size="16"
-            :color="navKey === 'next' ? '#fff' : '#333'"
+            :color="
+              navKey === 'next'
+                ? dark
+                  ? '#333'
+                  : '#fff'
+                : dark
+                ? '#fff'
+                : '#333'
+            "
           />
-          Nextday
+          {{ $t(`Nextday`) }}
         </div>
       </div>
       <div
@@ -357,26 +408,34 @@ watchEffect(() => {
             name="future"
             style="margin-right: 10px"
             :size="16"
-            :color="navKey === 'future' ? '#fff' : '#333'"
+            :color="
+              navKey === 'future'
+                ? dark
+                  ? '#333'
+                  : '#fff'
+                : dark
+                ? '#fff'
+                : '#333'
+            "
           />
-          Future
+          {{ $t(`Future`) }}
         </div>
       </div>
     </div>
     <div
-      class="board-box p-5"
+      class="board-box p-3"
       v-if="inboxList.length > 0 || taskList.length > 0"
     >
       <div class="inbox" v-if="navKey === 'today' && inboxList.length > 0">
         <div class="inbox-title dp-space-center">
-          Inbox
+          {{ $t(`InBox`) }}
           <tbutton
             style="height: 40px; padding: 0px 30px"
             @click="clearInbox"
             round
             v-if="targetType === 'self'"
           >
-            Set Read ( {{ taskNum.unRead }} )
+            {{ $t(`Set Read`) }} ( {{ taskNum.unRead }} )
           </tbutton>
         </div>
         <div
@@ -446,20 +505,28 @@ watchEffect(() => {
         inboxList.length === 0 &&
         taskList.length === 0 &&
         completeNum > 0 &&
-        targetType === 'self'
+        targetType === 'self' &&
+        navKey === 'today'
       "
     >
       <div class="board-img dp-center-center">
         <div class="board-title">恭喜，今天任务全部完成！</div>
       </div>
     </div>
-    <div class="board-empty dp-center-center" v-else-if="targetType === 'self'">
+    <div
+      class="board-empty dp-center-center"
+      v-else-if="
+        (navKey === 'today' && targetType === 'self') ||
+        (navKey === 'next' && taskList.length === 0) ||
+        (navKey === 'future' && taskList.length === 0)
+      "
+    >
       <div class="board-img dp-center-center">
         <div class="board-title">您还没有任务哦~</div>
       </div>
     </div>
   </div>
-  <div class="footer p-5 dp--center">
+  <div class="footer p-3 dp--center">
     <div
       class="icon-point dp--center"
       @click="
@@ -467,7 +534,8 @@ watchEffect(() => {
         completedVisible = true;
       "
     >
-      <img :src="bottlePng" alt="" /> Completed ({{ completeNum }})
+      <img :src="bottlePng" alt="" /> {{ $t(`Today`) }}
+      {{ $t(`Completed`) }} ({{ completeNum }})
     </div>
   </div>
   <el-drawer
@@ -544,8 +612,8 @@ watchEffect(() => {
       }
     }
     .board-choose {
-      background: #3a3a3a;
-      color: #fff;
+      background: var(--talk-font-color);
+      color: var(--talk-opposite-color);
     }
   }
   .inbox {

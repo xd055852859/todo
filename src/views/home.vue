@@ -1,4 +1,5 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+</script>
 <template>
   <div class="home dp-center-center">
     <router-view></router-view>

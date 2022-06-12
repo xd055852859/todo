@@ -4,11 +4,13 @@ import api from "@/services/api";
 import { Mate } from "@/interface/User";
 import { ElMessage } from "element-plus";
 import { storeToRefs } from "pinia";
+import { MoreFilled, Delete } from "@element-plus/icons-vue";
 
 import appStore from "@/store";
 import logoSvg from "../assets/svg/logo.svg";
 import Avatar from "@/components/avatar.vue";
 import RiverChart from "@/components/chart/riverChart.vue";
+import i18n from "@/language/i18n";
 const socket: any = inject("socket");
 const dayjs: any = inject("dayjs");
 const { user } = storeToRefs(appStore.authStore);
@@ -111,7 +113,7 @@ const saveMate = async () => {
   })) as ResultProps;
   if (saveRes.msg === "OK") {
     ElMessage({
-      message: "Add Mate successful",
+      message: i18n.global.t(`Adding friends successful`),
       type: "success",
       duration: 1000,
     });
@@ -127,7 +129,7 @@ const delMate = async () => {
   })) as ResultProps;
   if (saveRes.msg === "OK") {
     ElMessage({
-      message: "Delete Mate successful",
+      message: i18n.global.t(`Delete Friend Success`),
       type: "success",
       duration: 1000,
     });
@@ -141,31 +143,33 @@ const delMate = async () => {
   <theader>
     <template #left>Mate</template>
     <template #right>
-      <template v-if="mateKey !== user?._key">
-        <icon-font
-          name="delMate"
-          :size="22"
-          class="icon-point"
-          @click="delVisible = true"
-          v-if="mateInfo?.added"
-        />
-        <icon-font
-          name="addMate"
-          :size="22"
-          class="icon-point"
-          @click="saveMate"
-          v-else
-        />
-      </template>
-      <icon-font
+      <el-dropdown>
+        <el-icon>
+          <MoreFilled />
+        </el-icon>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item v-if="mateInfo?.added" @click="delVisible = true">
+              <icon-font name="delMate" :size="22" class="icon-point" />
+              Delete Mate
+            </el-dropdown-item>
+            <el-dropdown-item v-else @click="saveMate">
+              <icon-font name="addMate" :size="22" class="icon-point" />
+              Add Mate
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
+      <!-- <icon-font
         name="eye"
         :size="14"
         style="margin-left: 8px; margin-right: 8px"
       />
-      <span style="font-size: 14px">{{ mateInfo?.viewNum }}</span>
+      <span style="font-size: 14px">{{ mateInfo?.viewNum }}</span> -->
     </template>
   </theader>
-  <div class="mate p-5" v-if="mateInfo">
+  <div class="mate p-3" v-if="mateInfo">
     <div class="mate-top dp-center-center">
       <div class="mate-avatar dp-center-center">
         <!-- <img :src="mateInfo.userAvatar" alt="" /> -->
@@ -180,9 +184,6 @@ const delMate = async () => {
         />
       </div>
       <div class="mate-name">{{ mateInfo.userName }}</div>
-      <div class="mate-bean common-color dp-center-center">
-        <img :src="logoSvg" alt="" class="logo" />{{ mateInfo.beans }}
-      </div>
       <div class="mate-info dp-space-center">
         <div
           class="dp-center-center"
@@ -198,7 +199,7 @@ const delMate = async () => {
               $router.push('/home/list')
             }"
         >
-          <icon-font name="list" :size="24" style="margin-right: 8px" />Todo (
+          <icon-font name="list" :size="24" style="margin-right: 8px" />{{$t(`Todo`)}} (
           {{ mateInfo.todoNum }} )
         </div>
         <div
@@ -206,10 +207,15 @@ const delMate = async () => {
           :class="{ 'icon-point': mateInfo?.added }"
           style="width: 33%"
           @click="
-            mateInfo?.added ? $router.push('/home/matesBoard/' + mateKey) : null
+            mateInfo?.added
+              ? $router.push({
+                  name: 'matesBoard',
+                  params: { id: mateKey, name: mateInfo.userName },
+                })
+              : null
           "
         >
-          <icon-font name="boards" :size="24" style="margin-right: 8px" />Boards
+          <icon-font name="boards" :size="24" style="margin-right: 8px" />{{$t(`Boards`)}}
           ( {{ mateInfo.boardNum }} )
         </div>
         <div
@@ -220,56 +226,75 @@ const delMate = async () => {
             mateInfo?.added ? $router.push('/home/matesMate/' + mateKey) : null
           "
         >
-          <icon-font name="mates" :size="24" style="margin-right: 8px" />Parnter
-          ( {{ mateInfo.partnerNum }} )
+          <icon-font name="mates" :size="24" style="margin-right: 8px" />{{$t(`Mates`)}} (
+          {{ mateInfo.partnerNum }} )
         </div>
       </div>
     </div>
-
     <div
-      class="mate-box p-5 dp-center-center"
-      :style="{ background: mateInfo.added ? '#fff' : '' }"
+      v-if="historyChartList.length > 0"
+      @click="$router.push('/history/' + mateKey)"
     >
-      <div class="mate-bottle dp-center-center">
-        <div class="mate-bottle-img dp-center-center">
-          <div class="mate-bottle-title common-color">Beans Today</div>
-        </div>
-      </div>
-      <div class="mate-data dp-space-center">
-        <div class="mate-data-item dp-center-center common-color">
-          <div>{{ mateInfo.shareBeans }}</div>
-          <div>Share</div>
-          <div>
-            较昨日 <span>{{ shareTitle }}</span>
-          </div>
-        </div>
-        <div class="mate-data-item dp-center-center common-color">
-          <div>{{ mateInfo.totalBeans }}</div>
-          <div>All</div>
-          <div>
-            较昨日 <span>{{ allTitle }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <template v-if="historyChartList.length > 0">
       <river-chart
         riverId="riverContentId"
         :width="'100%'"
         :height="'30vh'"
         :data="historyChartList"
         :name="historyName"
+        simpleState
       />
-    </template>
+    </div>
+    <div
+      class="mate-box p-3"
+      :style="{ background: mateInfo.added ? '#fff' : '' }"
+    >
+      <div class="mate-bottle dp-center-center">
+        <div class="mate-bottle-title common-color">{{$t(`Beans History`)}}</div>
+      </div>
+      <div class="mate-data dp-space-center">
+        <div class="mate-data-item dp-center-center common-color">
+          <div>{{ mateInfo.historyShareBeans }}</div>
+          <div>{{$t(`share`)}}</div>
+        </div>
+        <div class="mate-data-item dp-center-center common-color">
+          <div>{{ mateInfo.historyTotalBeans }}</div>
+          <div>{{$t(`all`)}}</div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="mate-box p-3"
+      :style="{ background: mateInfo.added ? '#fff' : '' }"
+    >
+      <div class="mate-bottle dp-center-center">
+        <div class="mate-bottle-title common-color">{{$t(`Beans Today`)}}</div>
+      </div>
+      <div class="mate-data dp-space-center">
+        <div class="mate-data-item dp-center-center common-color">
+          <div>{{ mateInfo.shareBeans }}</div>
+          <div>{{$t(`share`)}}</div>
+          <div>
+            {{$t(`Compare yesterday`)}} <span>{{ shareTitle }}</span>
+          </div>
+        </div>
+        <div class="mate-data-item dp-center-center common-color">
+          <div>{{ mateInfo.totalBeans }}</div>
+          <div>{{$t(`all`)}}</div>
+          <div>
+           {{$t(`Compare yesterday`)}} <span>{{ allTitle }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <el-dialog v-model="delVisible" title="Delete prompt" width="350px">
     <span>Delete Mate</span>
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="delVisible = false" bgColor="#d1dbe5">
-          Cancel
+          {{$t(`Cancel`)}}
         </tbutton>
-        <tbutton @click="delMate">OK</tbutton>
+        <tbutton @click="delMate">{{$t(`Confirm`)}}</tbutton>
       </span>
     </template>
   </el-dialog>
@@ -282,10 +307,11 @@ const delMate = async () => {
   overflow-y: auto;
   .mate-top {
     width: 100%;
-    min-height: 300px;
-    height: 40%;
+    // min-height: 300px;
+    // height: 40%;
     flex-wrap: wrap;
     align-content: center;
+    margin-bottom: 10px;
     .mate-avatar {
       width: 100%;
       height: 150px;
@@ -329,37 +355,25 @@ const delMate = async () => {
 
   .mate-box {
     border-radius: 12px;
-    min-height: 390px;
-    height: 50%;
-    flex-wrap: wrap;
     margin-bottom: 15px;
+    padding: 20px 0px;
     .mate-bottle {
       width: 100%;
-      height: 280px;
-      .mate-bottle-img {
-        width: 200px;
-        height: 250px;
-        background-size: 60%;
-        background-image: url("@/assets/img/fullBean.png");
-        background-repeat: no-repeat;
-        background-position: center center;
-        align-content: flex-end;
-        flex-wrap: wrap;
-        padding-bottom: 40px;
-        .mate-bottle-title {
-          width: 100%;
-          height: 30px;
-          font-size: 18px;
-          text-align: center;
-          color: var(--talk-font-color-1);
-          line-height: 37px;
-          font-weight: 600;
-        }
+      // height: 30px;
+      .mate-bottle-title {
+        width: 100%;
+        height: 30px;
+        font-size: 18px;
+        text-align: center;
+        color: var(--talk-font-color-1);
+        line-height: 37px;
+        font-weight: 600;
+        margin-bottom: 30px;
       }
     }
     .mate-data {
       width: 100%;
-      height: 100px;
+      // height: 100px;
       .mate-data-item {
         width: 50%;
         flex-wrap: wrap;

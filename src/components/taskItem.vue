@@ -11,6 +11,7 @@ import finishBeanSvg from "@/assets/svg/finishBean.svg";
 import { storeToRefs } from "pinia";
 import appStore from "@/store";
 import Avatar from "./avatar.vue";
+import i18n from "@/language/i18n";
 const dayjs: any = inject("dayjs");
 const { uploadToken, user } = storeToRefs(appStore.authStore);
 const { taskKey } = storeToRefs(appStore.taskStore);
@@ -35,6 +36,8 @@ const emits = defineEmits<{
 
 const title = ref<string>("");
 const detail = ref<string>("");
+const originTitle = ref<string>("");
+const originDetail = ref<string>("");
 const imageList = ref<any>([]);
 const imageVisible = ref<boolean>(false);
 const imageSrc = ref<string>();
@@ -42,6 +45,7 @@ const hasFinished = ref<number>(0);
 const taskTime = ref<string>("");
 onMounted(() => {
   title.value = props.item.title;
+  originTitle.value = props.item.title;
   hasFinished.value = props.item.hasFinished ? props.item.hasFinished : 0;
   let todayStartTime = dayjs().startOf("day").valueOf();
   let todayEndTime = dayjs().endOf("day").valueOf();
@@ -61,12 +65,12 @@ onMounted(() => {
       yesterStartTime <= props.item.createTime &&
       yesterEndTime >= props.item.createTime
     ) {
-      taskTime.value = "yesterday";
+      taskTime.value = i18n.global.t(`yesterday`);
     } else if (
       beYesterStartTime <= props.item.createTime &&
       beYesterEndTime >= props.item.createTime
     ) {
-      taskTime.value = "the day before yesterday";
+      taskTime.value = i18n.global.t(`The day before`);
     } else if (beYesterStartTime > props.item.createTime) {
       if (
         props.item.createTime >= yearStartTime &&
@@ -88,6 +92,7 @@ const getTaskInfo = async () => {
     setTaskKey(props.item._key);
     if (infoRes.data.detail) {
       detail.value = infoRes.data.detail;
+      originDetail.value = infoRes.data.detail;
     }
     if (infoRes.data.imageList && infoRes.data.imageList.length > 0) {
       imageList.value = infoRes.data.imageList;
@@ -101,7 +106,7 @@ const changeMark = async (type: string) => {
   })) as ResultProps;
   if (markRes.msg === "OK") {
     ElMessage({
-      message: "Change Mark Successful",
+      message: i18n.global.t(`Change Mark Successful`),
       type: "success",
       duration: 1000,
     });
@@ -112,6 +117,13 @@ const changeMark = async (type: string) => {
 };
 const upDateTask = async () => {
   if (props.item._key === taskKey.value && props.role < 3) {
+    if (
+      title.value === originTitle.value &&
+      detail.value === originDetail.value
+    ) {
+      setTaskKey("");
+      return;
+    }
     const taskRes: any = (await api.request.patch("card", {
       cardKey: props.item._key,
       title: title.value,
@@ -147,7 +159,7 @@ const delCard = async (e) => {
   })) as ResultProps;
   if (taskRes.msg === "OK") {
     ElMessage({
-      message: "Deleted Task Successful",
+      message:i18n.global.t(`Delete task successfully`),
       type: "success",
       duration: 1000,
     });
@@ -279,6 +291,7 @@ watch(
   (newVal) => {
     if (newVal) {
       title.value = newVal.title;
+      originTitle.value = newVal.title;
       hasFinished.value = newVal.hasFinished ? 1 : 0;
     }
   },
@@ -324,7 +337,7 @@ watch(
             :placeholder="
               role > 2 && item.creatorInfo?._key !== user?._key
                 ? ''
-                : 'Please Enter Title'
+                : i18n.global.t('Please Enter Task')
             "
             :disabled="role > 2 && item.creatorInfo?._key !== user?._key"
           />
@@ -339,7 +352,7 @@ watch(
               :placeholder="
                 role > 2 && item.creatorInfo?._key !== user?._key
                   ? ''
-                  : 'Please Enter Detail'
+                  : i18n.global.t('Please Enter Detial')
               "
               :disabled="role > 2 && item.creatorInfo?._key !== user?._key"
             />
@@ -370,7 +383,6 @@ watch(
                 />
               </div>
             </div>
-            <!--    @paste="pasteImg" -->
             <div
               class="task-upload-button dp-center-center icon-point"
               v-if="
@@ -394,6 +406,15 @@ watch(
           <div v-if="type === 'send'" class="dp--center">
             # {{ item.boardInfo?.title }}
             <avatar
+              :name="item.creatorInfo?.userName"
+              :avatar="item.creatorInfo?.userAvatar"
+              type="person"
+              :index="0"
+              :size="20"
+              style="margin-left: 8px; margin-right: 8px"
+            />
+            ⇀
+            <avatar
               :name="item.executorInfo.userName"
               :avatar="item.executorInfo.userAvatar"
               type="person"
@@ -404,9 +425,6 @@ watch(
           </div>
         </div>
         <div class="dp--center">
-          <!-- item.executorInfo._key === user?._key && -->
-          <!--  ((item.executorInfo._key === user?._key && type !== 'inbox') ||
-                type === 'inbox') && -->
           <div
             v-if="
               type !== 'other' &&
@@ -421,21 +439,21 @@ watch(
               class="icon-point"
               :class="{ 'common-color': item.mark === 'today' }"
               @click.stop="changeMark('today')"
-              >Today
+              >{{ $t(`Today`) }}
             </span>
             <el-divider direction="vertical" />
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'next' }"
               @click.stop="changeMark('next')"
-              >Next</span
+              >{{ $t(`Nextday`) }}</span
             >
             <el-divider direction="vertical" />
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'future' }"
               @click.stop="changeMark('future')"
-              >Future</span
+              >{{ $t(`Future`) }}</span
             >
           </div>
           <span
@@ -451,8 +469,12 @@ watch(
               item.hasRead ||
               (item.executorInfo?._key === user?._key &&
                 item.creatorInfo?._key === user?._key)
-                ? item.mark
-                : "Unread"
+                ? item.mark === "today"
+                  ? $t("Today")
+                  : item.mark === "next"
+                  ? $t("Nextday")
+                  : $t("Future")
+                : $t("Unread")
             }}
           </span>
           <icon-font
@@ -467,10 +489,7 @@ watch(
             style="margin-right: 10px"
             v-if="item.hasImage"
           />
-          <!--  item.executorInfo?._key === user?._key ||
-              item.creatorInfo?._key === user?._key ||
-              role < 3 -->
-          <div style="margin:0px 8px">{{ taskTime }}</div>
+          <div style="margin: 0px 8px">{{ taskTime }}</div>
           <el-dropdown v-if="overKey === item._key">
             <el-icon>
               <MoreFilled />
@@ -486,7 +505,7 @@ watch(
                   "
                 >
                   <el-icon style="margin-right: 8px"><Delete /></el-icon>
-                  delete
+                  {{ $t(`delete`) }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -501,7 +520,6 @@ watch(
           >
         </div>
         <div class="dp--center">
-          <!-- scoreIcon: 1 创建任务 2 完成任务 3 创建和完成-->
           <img
             :src="addBeanSvg"
             alt=""

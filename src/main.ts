@@ -3,6 +3,7 @@ import App from "./App.vue";
 import router from "./router";
 import SocketIO from "./plugins/io";
 import i18n from "./language/i18n";
+import "./toJson.js";
 import { createPinia } from "pinia";
 import { registerStore } from "@/store";
 import dayjs from "dayjs";

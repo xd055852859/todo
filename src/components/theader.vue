@@ -6,8 +6,9 @@ import appStore from "@/store";
 const router = useRouter();
 const props = defineProps<{
   isMenu?: boolean;
+  clickState?: boolean;
 }>();
-const emits = defineEmits(["iconClick"]);
+const emits = defineEmits(["iconClick", "clickBack"]);
 const { deviceType } = storeToRefs(appStore.commonStore);
 const themeVisible = ref<boolean>(false);
 const menuVisible = ref<boolean>(true);
@@ -19,8 +20,8 @@ const back = () => {
 };
 </script>
 <template>
-  <div class="common-header p-5" :class="'dp-center-center'">
-    <template v-if="!deviceType">
+  <div class="common-header p-8" :class="'dp-center-center'">
+    <template v-if="deviceType !== 'mobile'">
       <div class="left dp-space-center">
         <icon-font
           name="menu"
@@ -33,7 +34,7 @@ const back = () => {
         <el-icon
           style="margin-right: 10px; cursor: pointer"
           size="20px"
-          @click="back()"
+          @click="clickState ? emits('clickBack') : back()"
           v-else
         >
           <arrow-left />

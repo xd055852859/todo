@@ -1,32 +1,47 @@
 <script setup lang="ts">
-import api from "@/services/api";
+import { is_mobile } from "@/services/util";
 import { getSearchParamValue } from "@/services/util";
 import request from "@/services/api";
 import { storeToRefs } from "pinia";
-
+import useCurrentInstance from "@/hooks/useCurrentInstance";
 import appStore from "@/store";
 import setTheme from "@/hooks/theme";
 import setDark from "@/hooks/dark";
-
+import "dayjs/locale/zh-cn";
+import "dayjs/locale/en";
+import "dayjs/locale/zh-hk";
+import "dayjs/locale/ja";
+import { useDebounceFn } from "@vueuse/shared";
 const socket: any = inject("socket");
+const dayjs: any = inject("dayjs");
 const router = useRouter();
+const { proxy } = useCurrentInstance();
 const { token, user } = storeToRefs(appStore.authStore);
 const { dark, locale, noticeNum } = storeToRefs(appStore.commonStore);
 const { setToken, getUserInfo, getMateList } = appStore.authStore;
 const { getBoardList } = appStore.boardStore;
-const { setDeviceType, setCommonDark, setCommonLocale, setNoticeNum } =
-  appStore.commonStore;
+const {
+  setDeviceType,
+  setCommonDark,
+  setCommonLocale,
+  setNoticeNum,
+  setChartType,
+} = appStore.commonStore;
 
 // onBeforeMount(() => {
 
 // });
-onMounted(() => {
+onBeforeMount(() => {
   window.addEventListener("message", handle, false);
   let url = window.location.href;
   //自动切换为https
   if (url.indexOf("http://localhost") === -1 && url.indexOf("https") < 0) {
     url = url.replace("http:", "https:");
     window.location.replace(url);
+  }
+  const deviceWidth = document.documentElement.offsetWidth;
+  if (is_mobile() || deviceWidth < 700) {
+    setDeviceType("phone");
   }
   const search = window.location.search
     ? window.location.search.split("?")[1]
@@ -37,10 +52,10 @@ onMounted(() => {
   const deviceType = getSearchParamValue(search, "deviceType") as string;
   setDark(dark.value);
   const lang = getSearchParamValue(search, "lang") as string;
+  const chartType = getSearchParamValue(search, "chartType") as string;
   const darkTheme = getSearchParamValue(search, "dark") as string;
   if (lang) {
     localStorage.setItem("LANGUAGE", lang);
-    setCommonLocale(lang);
   }
   if (darkTheme === "1") {
     localStorage.setItem("DARK", darkTheme);
@@ -56,9 +71,36 @@ onMounted(() => {
     setToken(token);
   }
   if (deviceType) {
-    setDeviceType(deviceType);
+    setDeviceType("mobile");
   }
+  if (chartType) {
+    setChartType(chartType);
+  }
+  proxy.$i18n.locale = localStorage.getItem("LANGUAGE")
+    ? (localStorage.getItem("LANGUAGE") as string)
+    : navigator.language === "zh-TW"
+    ? "tc"
+    : navigator.language === "zh-CN"
+    ? "zh"
+    : navigator.language;
+  setCommonLocale(proxy.$i18n.locale);
   setTheme("#46a03c");
+});
+onMounted(() => {
+  window.onresize = useDebounceFn(() => {
+    const search = window.location.search
+      ? window.location.search.split("?")[1]
+      : window.location.hash.split("?")[1];
+    const deviceType = getSearchParamValue(search, "deviceType") as string;
+    const deviceWidth = document.documentElement.offsetWidth;
+    if (deviceType) {
+      setDeviceType("mobile");
+    } else if (deviceWidth < 700) {
+      setDeviceType("phone");
+    } else if (deviceWidth >= 700) {
+      setDeviceType("");
+    }
+  }, 500);
 });
 onUnmounted(() => {
   window.removeEventListener("message", handle, false);
@@ -85,8 +127,6 @@ watch(
       getUserInfo();
       getMateList();
       getBoardList("accessTime", "desc");
-    } else {
-      router.push("/");
     }
   },
   { immediate: true }
@@ -103,6 +143,27 @@ watch(user, (newVal, oldVal) => {
     });
   }
 });
+watch(
+  locale,
+  (newVal) => {
+    console.log(newVal);
+    switch (newVal) {
+      case "zh":
+        dayjs.locale("zh-cn");
+        break;
+      case "en":
+        dayjs.locale("en");
+        break;
+      case "ja":
+        dayjs.locale("ja");
+        break;
+      case "tc":
+        dayjs.locale("zh-hk");
+        break;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
