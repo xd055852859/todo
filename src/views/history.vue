@@ -157,7 +157,6 @@ watchEffect(() => {
   </theader>
   <div
     class="history"
-    :class="{ 'p-3': !chartType && deviceType!=='mobile' }"
     :style="
       chartType
         ? {}
@@ -179,7 +178,7 @@ watchEffect(() => {
     </template>
 
     <div
-      class="history-box"
+      class="history-box p-3"
       :style="{
         height: deviceType==='mobile' ? 'calc(70vh - 25px)' : 'calc(70vh - 70px)',
       }"

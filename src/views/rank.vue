@@ -138,11 +138,11 @@ const changeMate = (index: number) => {
             >
             <el-dropdown-item
               @click="
-                rankStr = $t(`Yesterday`);
+                rankStr = $t(`yesterday`);
                 rankDay = 2;
                 getRankInfo();
               "
-              >{{ $t(`Yesterday`) }}</el-dropdown-item
+              >{{ $t(`yesterday`) }}</el-dropdown-item
             >
             <el-dropdown-item
               @click="

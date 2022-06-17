@@ -1,6 +1,6 @@
 {
-  "Todo": "Todo",
-  "Boards": "Boards",
+  "Todo": "任务",
+  "Boards": "看板",
   "Mates": "好友",
   "Creat": "创建",
   "History": "历史记录",
@@ -111,5 +111,8 @@
   "Your friend invited you to join Todo.": "你的好友{userName}邀请您加入Todo：",
   "Copy Invite Code": "复制邀请码",
   "Way 2: Invite by QR-Code": "方法二：使用二维码邀请",
-  "Way 1: Invite by link.": "方法一：使用链接邀请"
+  "Way 1: Invite by link.": "方法一：使用链接邀请",
+  "Sort by access time": "最近更新时间排序",
+  "Sort by aplhabet": "首字母排序",
+  "Sort by master": "执行人排序"
 }

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useThrottleFn } from "@vueuse/shared";
 import * as echarts from "echarts";
+import { storeToRefs } from "pinia";
+import appStore from "@/store";
 const props = defineProps<{
   data: (string | number)[];
   riverId: string;
@@ -14,6 +16,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: "changeDate", date: string): void;
 }>();
+const { dark } = storeToRefs(appStore.commonStore);
 const dayjs: any = inject("dayjs");
 onMounted(() => {
   createChart();
@@ -54,6 +57,7 @@ const createChart = () => {
         show: !props.simpleState,
         formatter: "{M}-{dd} ",
         fontWeight: "bolder",
+        color: dark.value ? "#fff" : "#333",
       },
       type: "time",
       axisPointer: {
@@ -103,6 +107,17 @@ const createChart = () => {
     // }
   });
 };
+watch(dark, (newVal) => {
+  console.log(newVal);
+  //@ts-ignore
+  chart.setOption<echarts.EChartsOption>({
+    singleAxis: {
+      axisLabel: {
+        color: newVal ? "#fff" : "#333",
+      },
+    },
+  });
+});
 watch(
   () => props.data,
   (newVal) => {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import * as echarts from "echarts";
 import { useThrottleFn } from "@vueuse/core";
+import { storeToRefs } from "pinia";
+import appStore from "@/store";
 const props = defineProps<{
   rankData: number[];
   XYId: string;
@@ -11,6 +13,7 @@ const props = defineProps<{
   name: any;
   // day: number;
 }>();
+const { dark } = storeToRefs(appStore.commonStore);
 const emits = defineEmits<{
   (e: "changeMate", index: number): void;
 }>();
@@ -40,6 +43,9 @@ const createChart = () => {
       data: props.name,
       inverse: true,
       triggerEvent: true,
+      axisLabel: {
+        color: dark.value ? "#fff" : "#333",
+      },
     },
     series: [
       {
@@ -49,7 +55,7 @@ const createChart = () => {
           formatter: "{@value}",
           align: "center",
           verticalAlign: "bottom",
-          lineHeight:0
+          lineHeight: 0,
         },
         type: "bar",
         barWidth: "60%",
@@ -75,6 +81,17 @@ const createChart = () => {
   });
 };
 
+watch(dark, (newVal) => {
+  console.log(newVal);
+  //@ts-ignore
+  chart.setOption<echarts.EChartsOption>({
+    yAxis: {
+      axisLabel: {
+        color: newVal ? "#fff" : "#333",
+      },
+    },
+  });
+});
 watch(
   () => props.rankData,
   (newVal) => {

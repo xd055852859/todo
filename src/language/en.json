@@ -2,7 +2,7 @@
   "Todo": "Todo",
   "Boards": "Boards",
   "Mates": "Mates",
-  "Creat": "Creat",
+  "Creat": "Created",
   "History": "History",
   "Ranking": "Ranking",
   "Setting": "Setting",
@@ -111,5 +111,8 @@
   "Your friend invited you to join Todo.": "Your friend {userName} invited you to join Todo.",
   "Copy Invite Code": "Copy Invite Code",
   "Way 2: Invite by QR-Code": "Way 2: Invite by QR-Code",
-  "Way 1: Invite by link.": "Way 1: Invite by link."
+  "Way 1: Invite by link.": "Way 1: Invite by link.",
+  "Sort by access time": "access time",
+  "Sort by aplhabet": "alphabet",
+  "Sort by master": "master"
 }

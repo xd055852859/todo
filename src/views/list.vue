@@ -11,7 +11,7 @@ import bottlePng from "@/assets/img/bottle.png";
 import Avatar from "@/components/avatar.vue";
 import i18n from "@/language/i18n";
 const { user, mateList, friend } = storeToRefs(appStore.authStore);
-const { dark } = storeToRefs(appStore.commonStore);
+const { dark, noticeNum } = storeToRefs(appStore.commonStore);
 const { taskList, inboxList, completedList, targetKey } = storeToRefs(
   appStore.taskStore
 );
@@ -25,7 +25,7 @@ const {
 } = appStore.taskStore;
 const { setFriendInfo, changeMateList } = appStore.authStore;
 const { boardList } = storeToRefs(appStore.boardStore);
-const { setBoardKey } = appStore.boardStore;
+const { setNoticeNum } = appStore.commonStore;
 const socket: any = inject("socket");
 
 const listMateList = computed(() => [user.value, ...mateList.value]);
@@ -169,6 +169,7 @@ const clearInbox = async () => {
     taskNum.today = taskNum.today + inboxList.value.length;
     clearInboxList();
     getTaskList("today");
+    setNoticeNum(noticeNum.value - inboxList.value.length);
   }
 };
 const finishTask = (data) => {

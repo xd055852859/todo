@@ -46,9 +46,9 @@ onBeforeMount(() => {
   const search = window.location.search
     ? window.location.search.split("?")[1]
     : window.location.hash.split("?")[1];
-  const token =
-    (getSearchParamValue(search, "token") as string) ||
-    localStorage.getItem("token");
+  const token = getSearchParamValue(search, "token")
+    ? (getSearchParamValue(search, "token") as string)
+    : localStorage.getItem("token");
   const deviceType = getSearchParamValue(search, "deviceType") as string;
   setDark(dark.value);
   const lang = getSearchParamValue(search, "lang") as string;

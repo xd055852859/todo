@@ -6,7 +6,7 @@ import { ResultProps } from "@/interface/Common";
 
 // 使用setup模式定义
 export const authStore = defineStore("authStore", () => {
-  const token = ref<string>(localStorage.getItem("token") ?? "");
+  const token = ref<string>("");
   const uploadToken = ref<string>("");
   const user = ref<User | null>(null);
   const friend = ref<User | null>(null);

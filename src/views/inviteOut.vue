@@ -20,11 +20,13 @@ const url = computed(
       <template v-slot:right><div></div> </template>
     </theader>
     <div class="invite-item dp-center-center">
-      <div class="title">Way2</div>
+      <div class="title">{{ $t(`Way 1: Invite by link.`) }}</div>
       <div class="title">
-        你的好友
-        <span class="common-color">{{ user?.userName }}</span>
-        邀请您加入Todo
+        {{
+          $t(`Your friend invited you to join Todo.`, {
+            userName: user?.userName,
+          })
+        }}
       </div>
       <div class="title">
         {{ url }}
@@ -44,7 +46,7 @@ const url = computed(
     </div>
     <el-divider />
     <div class="invite-item dp-center-center" v-if="url">
-      <div class="title">Way3</div>
+      <div class="title">{{ $t(`Way 2: Invite by QR-Code`) }}</div>
       <div
         class="invite-item dp-center-center"
         style="width: 100%; height: 200px"

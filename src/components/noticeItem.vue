@@ -14,8 +14,16 @@ const noticeTime = ref<string>("");
 // const noticeTitle = ref<string>("");
 const noticeType = ref<string>("");
 const noticeLog = ref<string>("");
+const roleArray = ref<string[]>([]);
 onMounted(() => {
   noticeTime.value = dayjs(props.item.time).fromNow();
+  roleArray.value = [
+    i18n.global.t(`Owner`),
+    i18n.global.t(`Admin`),
+    i18n.global.t(`Editer`),
+    i18n.global.t(`Author`),
+    i18n.global.t(`Follower`),
+  ];
   if (
     props.item.type === "invite" ||
     props.item.type === "remove" ||
@@ -65,7 +73,14 @@ onMounted(() => {
     case "changeRole":
       str = i18n.global.t(`set you as authority`, {
         boardname: props.item.boardInfo.title,
-        authority: props.item.newRole,
+        authority: props.item.newRole
+          ? roleArray.value[props.item.newRole]
+          : "",
+      });
+      break;
+    case "setExecutor":
+      str = i18n.global.t(`set Executor`, {
+        boardname: props.item.boardInfo.title,
       });
       break;
     case "transfer":

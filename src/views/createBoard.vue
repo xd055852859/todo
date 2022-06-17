@@ -74,16 +74,24 @@ const createBoard = async () => {
 </script>
 <template>
   <theader>
-    <template v-slot:title>{{ $t(`Creat Board`) }}</template>
+    <template #title>{{ $t(`Creat Board`) }}</template>
+    <template #right>
+      <tbutton
+        style="height: 40px; padding: 0px 30px;margin-right:calc(3vw - 10px)"
+        @click="router.push('/home/invite')"
+      >
+        {{ $t(`Invite`) }}
+      </tbutton>
+    </template>
   </theader>
   <div class="create p-3">
     <div class="input dp-space-center">
-     {{ $t(`Board Name`) }}
+      {{ $t(`Board Name`) }}
       <el-input
         v-model="boardName"
         size="large"
         :placeholder="$t(`InPut Board Name`)"
-        style="width: calc(100% - 185px)"
+        style="width: calc(100% - 230px)"
       />
       <tbutton style="height: 40px; padding: 0px 30px" @click="createBoard">
         {{ $t(`Save`) }}
@@ -95,7 +103,7 @@ const createBoard = async () => {
         v-model="memberName"
         size="large"
         :placeholder="$t(`InPut a mate Name`)"
-        style="width: calc(100% - 80px)"
+        style="width: calc(100% - 115px)"
         clearable
       >
         <template #append> <el-button :icon="Search" /> </template>
@@ -138,7 +146,6 @@ const createBoard = async () => {
   .title {
     width: 100%;
     height: 45px;
-    font-size: 18px;
     font-weight: 400;
     line-height: 45px;
     margin: 10px 0px;

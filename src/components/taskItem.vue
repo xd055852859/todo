@@ -159,7 +159,7 @@ const delCard = async (e) => {
   })) as ResultProps;
   if (taskRes.msg === "OK") {
     ElMessage({
-      message:i18n.global.t(`Delete task successfully`),
+      message: i18n.global.t(`Delete task successfully`),
       type: "success",
       duration: 1000,
     });
@@ -200,89 +200,59 @@ const addBall = (e) => {
   };
 };
 
-const updateImg = (e) => {
+const updateImg = (file) => {
   let mimeType = ["image/png", "image/jpeg", "image/svg+xml"];
-  uploadImage(e.target.files[0], uploadToken.value, mimeType, (url: string) => {
-    imageList.value.push(url);
-    // editorInfo.value?.chain().focus().deleteRange(range).setImage({ src: url });
-  });
+  if (file) {
+    uploadImage(file, uploadToken.value, mimeType, (url: string) => {
+      imageList.value.push(url);
+      // editorInfo.value?.chain().focus().deleteRange(range).setImage({ src: url });
+    });
+  }
 };
-// const pasteImg = (event) => {
-//   console.log(event);
-//   var isChrome = false;
-//   if (event.clipboardData || event.originalEvent) {
-//     //not for ie11  某些chrome版本使用的是event.originalEvent
-//     var clipboardData =
-//       event.clipboardData || event.originalEvent.clipboardData;
-//     if (clipboardData.items) {
-//       // for chrome
-//       var items = clipboardData.items,
-//         len = items.length,
-//         blob = null;
-//       isChrome = true;
-//       //阻止默认行为即不让剪贴板内容在div中显示出来
-//       event.preventDefault();
+const pasteImg = (event) => {
+  console.log(event);
+  var isChrome = false;
+  if (event.clipboardData || event.originalEvent) {
+    //not for ie11  某些chrome版本使用的是event.originalEvent
+    var clipboardData =
+      event.clipboardData || event.originalEvent.clipboardData;
+    console.log(clipboardData);
+    if (clipboardData.items) {
+      // for chrome
+      var items = clipboardData.items,
+        len = items.length,
+        blob = null;
+      isChrome = true;
+      //items.length比较有意思，初步判断是根据mime类型来的，即有几种mime类型，长度就是几（待验证）
+      //如果粘贴纯文本，那么len=1，如果粘贴网页图片，len=2, items[0].type = 'text/plain', items[1].type = 'image/*'
+      //如果使用截图工具粘贴图片，len=1, items[0].type = 'image/png'
+      //如果粘贴纯文本+HTML，len=2, items[0].type = 'text/plain', items[1].type = 'text/html'
+      // console.log('len:' + len);
+      // console.log(items[0]);
+      // console.log(items[1]);
+      // console.log( 'items[0] kind:', items[0].kind );
+      // console.log( 'items[0] MIME type:', items[0].type );
+      // console.log( 'items[1] kind:', items[1].kind );
+      // console.log( 'items[1] MIME type:', items[1].type );
 
-//       //在items里找粘贴的image,据上面分析,需要循环
-//       for (var i = 0; i < len; i++) {
-//         if (items[i].type.indexOf("image") !== -1) {
-//           //getAsFile() 此方法只是living standard firefox ie11 并不支持
-//           blob = items[i].getAsFile();
-//         }
-//       }
-//       if (blob !== null) {
-//         var reader = new FileReader();
-//         reader.onload = function (event) {
-//           // event.target.result 即为图片的Base64编码字符串
-//           //@ts-ignore
-//           var base64_str = event.target.result;
-//           //可以在这里写上传逻辑 直接将base64编码的字符串上传（可以尝试传入blob对象，看看后台程序能否解析）
-//           // uploadImgFromPaste(base64_str, 'paste', isChrome);
-//           console.log(base64_str);
-//         };
-//         reader.readAsDataURL(blob);
-//       }
-//     } else {
-//       //for firefox
-//       setTimeout(function () {
-//         //设置setTimeout的原因是为了保证图片先插入到div里，然后去获取值
-//         var imgList: any = document.querySelectorAll("#tar_box img"),
-//           len = imgList.length,
-//           src_str = "",
-//           i;
-//         for (i = 0; i < len; i++) {
-//           if (imgList[i].className !== "my_img") {
-//             //如果是截图那么src_str就是base64 如果是复制的其他网页图片那么src_str就是此图片在别人服务器的地址
-//             src_str = imgList[i].src;
-//           }
-//         }
-//         console.log(src_str);
-//         // uploadImgFromPaste(src_str, 'paste', isChrome);
-//       }, 1);
-//     }
-//   } else {
-//     //for ie11
-//     setTimeout(function () {
-//       var imgList: any = document.querySelectorAll("#tar_box img"),
-//         len = imgList.length,
-//         src_str = "",
-//         i;
-//       for (i = 0; i < len; i++) {
-//         if (imgList[i].className !== "my_img") {
-//           src_str = imgList[i].src;
-//         }
-//       }
-//       console.log(src_str);
-//       // uploadImgFromPaste(src_str, 'paste', isChrome);
-//     }, 1);
-//   }
+      //阻止默认行为即不让剪贴板内容在div中显示出来
+      event.preventDefault();
+      console.log(items);
+      //在items里找粘贴的image,据上面分析,需要循环
+      for (var i = 0; i < len; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          // console.log(items[i]);
+          // console.log( typeof (items[i]));
 
-//   // let mimeType = ["image/png", "image/jpeg", "image/svg+xml"];
-//   // uploadImage(e.target.files[0], uploadToken.value, mimeType, (url: string) => {
-//   //   imageList.value.push(url);
-//   //   // editorInfo.value?.chain().focus().deleteRange(range).setImage({ src: url });
-//   // });
-// };
+          //getAsFile() 此方法只是living standard firefox ie11 并不支持
+          // blob = items[i].getAsFile();
+          // console.log(items[i].getAsFile());
+          updateImg(items[i].getAsFile());
+        }
+      }
+    }
+  }
+};
 const delImg = (index) => {
   imageList.value.splice(index, 1);
 };
@@ -311,6 +281,7 @@ watch(
             }
           : {}
       "
+      @paste="pasteImg"
     >
       <div class="task-top">
         <div class="task-left dp-center-center">
@@ -370,6 +341,7 @@ watch(
                 :initial-index="index"
                 fit="cover"
                 :hide-on-click-modal="true"
+                :preview-teleported="true"
               />
               <div
                 class="task-upload-delete"
@@ -394,7 +366,10 @@ watch(
               <input
                 type="file"
                 accept="image/*"
-                @change="updateImg($event)"
+                @change="
+                  //@ts-ignore
+                  updateImg($event.target.files[0])
+                "
                 class="upload-img"
               />
             </div>
@@ -537,9 +512,11 @@ watch(
       </div>
     </div>
   </OnClickOutside>
-  <el-dialog v-model="imageVisible">
-    <img w-full :src="imageSrc" alt="Preview Image" />
-  </el-dialog>
+  <!-- <teleport to="#todoBody">
+    <el-dialog v-model="imageVisible">
+      <img w-full :src="imageSrc" alt="Preview Image" />
+    </el-dialog>
+  </teleport> -->
 </template>
 <style scoped lang="scss">
 .task {

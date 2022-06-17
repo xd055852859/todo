@@ -20,7 +20,7 @@ const back = () => {
 };
 </script>
 <template>
-  <div class="common-header p-8" :class="'dp-center-center'">
+  <div class="common-header" :class="'dp-center-center'">
     <template v-if="deviceType !== 'mobile'">
       <div class="left dp-space-center">
         <icon-font
@@ -70,6 +70,8 @@ const back = () => {
   box-sizing: border-box;
   position: relative;
   z-index: 1;
+  padding:0px 40px;
+  box-sizing: border-box;
   .title {
     width: 100%;
     font-size: 18px;

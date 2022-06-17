@@ -336,6 +336,14 @@ const applyMessage = (index: number, item) => {
     clickState
   >
     <template #left> {{ $t(`Board Config`) }} </template>
+    <template #right>
+      <tbutton
+        style="height: 40px; padding: 0px 30px; margin-right: calc(3vw - 10px)"
+        @click="router.push('/home/invite')"
+      >
+        {{ $t(`Invite`) }}
+      </tbutton>
+    </template>
   </theader>
   <div class="board-container config p-3">
     <div v-if="boardRole < 2 && applyList.length > 0">

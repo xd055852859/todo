@@ -90,7 +90,9 @@ const logout = () => {
     duration: 1000,
   });
 };
-
+const toUrl = (url) => {
+  window.open(url);
+};
 watch(
   user,
   (newVal) => {
@@ -251,18 +253,21 @@ watch(
           {{ $t(`Setting`) }}
         </span>
       </div>
-      <div class="userCenter-item dp--center">
+      <div
+        class="userCenter-item dp--center"
+        @click="toUrl('https://www.wolai.com/gfmxjSHvhX9yzvhEaCp4MS')"
+      >
         <icon-font name="help" :size="18" style="margin-right: 15px" />
         <span>
           {{ $t(`Help`) }}
         </span>
       </div>
-      <div class="userCenter-item dp--center">
+      <!-- <div class="userCenter-item dp--center">
         <icon-font name="community" :size="18" style="margin-right: 15px" />
         <span>
           {{ $t(`Communication`) }}
         </span>
-      </div>
+      </div> -->
       <div class="userCenter-item dp--center" @click="logout">
         <icon-font name="quit" :size="18" style="margin-right: 15px" />
         <span>
@@ -271,7 +276,7 @@ watch(
       </div>
     </div>
   </div>
-  <el-dialog v-model="userVisible" :title="$t('Profile')" :width="400">
+  <el-dialog v-model="userVisible" :title="$t('profile')" :width="400">
     <div class="user-edit dp-center-center">
       <div class="avatar">
         <el-avatar fit="cover" :src="avatar" :size="150" />
@@ -321,9 +326,7 @@ watch(
           size="large"
           @change="changeDark"
         >
-          <el-option :value="$t(`DarkMode`)">{{
-            $t(`DarkMode`)
-          }}</el-option>
+          <el-option :value="$t(`DarkMode`)">{{ $t(`DarkMode`) }}</el-option>
           <el-option :value="$t(`BrightMode`)"
             >{{ $t(`BrightMode`) }}
           </el-option>

@@ -7,6 +7,7 @@ import appStore from "@/store";
 import chooseSvg from "@/assets/svg/choose.svg";
 import api from "@/services/api";
 import { Board } from "@/interface/Board";
+import i18n from "@/language/i18n";
 const props = defineProps<{
   type?: string;
 }>();
@@ -22,7 +23,14 @@ const searchList = computed(() =>
     return item.title.indexOf(searchInput.value) !== -1;
   })
 );
-const sortArr = ["Access time", "Aplhabet", "Master"];
+const sortArr = ref<string[]>([]);
+onMounted(() => {
+  sortArr.value = [
+    i18n.global.t(`Sort by access time`),
+    i18n.global.t(`Sort by aplhabet`),
+    i18n.global.t(`Sort by master`),
+  ];
+});
 const searchInput = ref<string>("");
 const chooseBoard = (board: Board) => {
   setBoardKey(board._key);
