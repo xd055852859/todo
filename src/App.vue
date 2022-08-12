@@ -84,7 +84,7 @@ onBeforeMount(() => {
     ? "zh"
     : navigator.language;
   setCommonLocale(proxy.$i18n.locale);
-  setTheme("#46a03c");
+  setTheme("#07BE51");
 });
 onMounted(() => {
   window.onresize = useDebounceFn(() => {
@@ -222,5 +222,8 @@ watch(
 .board-container {
   width: 100%;
   height: calc(100vh - 55px);
+}
+.el-textarea__inner {
+  color: var(--talk-font-color) !important;
 }
 </style>

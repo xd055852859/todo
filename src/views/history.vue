@@ -32,8 +32,6 @@ const searchInput = ref<string>("");
 const historyName = ["创建", "完成"];
 const createdMateIndex = ref<number>(0);
 onMounted(() => {
-  console.log(route.params.id);
-  console.log(route.params.id && route.params.id !== "create");
   if (route.params.id && route.params.id !== "create") {
     let index = createdMateList.value.findIndex(
       (item) => item?._key === route.params.id
@@ -105,7 +103,11 @@ watchEffect(() => {
       <el-dropdown>
         <div
           class="dp--center icon-point"
-          style="font-size: 16px; font-weight: 600"
+          style="
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--talk-font-color);
+          "
         >
           <avatar
             :name="createdMateList[createdMateIndex]?.userName"
@@ -161,7 +163,7 @@ watchEffect(() => {
       chartType
         ? {}
         : {
-            height: deviceType==='mobile' ? '100vh' : 'calc(100vh - 55px)',
+            height: deviceType === 'mobile' ? '100vh' : 'calc(100vh - 55px)',
           }
     "
   >
@@ -180,7 +182,8 @@ watchEffect(() => {
     <div
       class="history-box p-3"
       :style="{
-        height: deviceType==='mobile' ? 'calc(70vh - 25px)' : 'calc(70vh - 70px)',
+        height:
+          deviceType === 'mobile' ? 'calc(70vh - 25px)' : 'calc(70vh - 70px)',
       }"
       v-if="!chartType"
     >
@@ -194,7 +197,7 @@ watchEffect(() => {
           <div
             :style="
               historyType === 'report'
-                ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+                ? { color: '#07BE51', borderBottom: '3px solid #07BE51' }
                 : {}
             "
             @click="historyType = 'report'"
@@ -206,7 +209,7 @@ watchEffect(() => {
             style="margin: 0px 15px"
             :style="
               historyType === 'timeline'
-                ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+                ? { color: '#07BE51', borderBottom: '3px solid #07BE51' }
                 : {}
             "
             @click="historyType = 'timeline'"
@@ -216,7 +219,13 @@ watchEffect(() => {
           </div>
         </div>
       </div>
-      <div class="history-container">
+      <div
+        class="history-container"
+        :style="{
+          height:
+            deviceType === 'mobile' ? 'calc(100% - 40px)' : 'calc(100% - 40px)',
+        }"
+      >
         <template v-if="historyType === 'report'">
           <div
             v-for="(item, index) in historyList"
@@ -270,7 +279,6 @@ watchEffect(() => {
     }
     .history-container {
       width: 100%;
-      height: calc(100% - 40px);
       overflow-x: hidden;
       overflow-y: auto;
     }

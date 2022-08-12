@@ -28,7 +28,7 @@
   "set owner": "set you the owner of {boardname}",
   "apply": "want to join {boardname}",
   "Today": "Today",
-  "Nextday": "Nextday",
+  "Nextday": "Next day",
   "Future": "Future",
   "Completed": "Completed",
   "InBox": "InBox",
@@ -76,7 +76,7 @@
   "choose board members": "choose board members",
   "Owner": "Owner",
   "Admin": "Admin",
-  "Editer": "Editer",
+  "Editer": "Editor",
   "Author": "Author",
   "Follower": "Follower",
   "Delete Mate": "Delete Mate",
@@ -114,5 +114,6 @@
   "Way 1: Invite by link.": "Way 1: Invite by link.",
   "Sort by access time": "access time",
   "Sort by aplhabet": "alphabet",
+  "Confirm deletion?": "Confirm deletion?",
   "Sort by master": "master"
 }

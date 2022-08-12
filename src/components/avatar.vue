@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import appStore from "@/store";
 import { ElMessage } from "element-plus";
-
+import { storeToRefs } from "pinia";
+const { user } = storeToRefs(appStore.authStore);
 const props = defineProps<{
+  avatarKey?: string;
   avatar?: string;
   name?: string;
   type: string;
@@ -10,6 +13,7 @@ const props = defineProps<{
   avatarStyle?: any;
   onlineState?: boolean;
   showOnline?: boolean;
+  chooseOnline?: boolean;
 }>();
 const bgColor = computed(() => BgColorArray[props.index % 5]);
 
@@ -27,6 +31,12 @@ const BgColorArray = [
       :style="{
         width: size + 'px',
         height: size + 'px',
+        border: showOnline
+          ? onlineState || avatarKey === user?._key
+            ? '3px solid var(--el-color-success)'
+            : '3px solid #fff'
+          : '',
+        boxShadow: chooseOnline ? '0px 4px 9px 0px rgba(0,0,0,0.05);' : '',
         ...avatarStyle,
       }"
       class="avatar-content"
@@ -53,15 +63,6 @@ const BgColorArray = [
         {{ name ? name.substring(0, 1) : "无" }}
       </div>
     </div>
-    <div
-      class="online"
-      v-if="showOnline"
-      :style="{
-        backgroundColor: onlineState
-          ? 'var(--el-color-success)'
-          : 'var(--talk-font-color-3)',
-      }"
-    ></div>
   </div>
 </template>
 <style scoped lang="scss">
@@ -76,7 +77,7 @@ const BgColorArray = [
     align-items: center;
     justify-content: center;
     border-radius: 30%;
-
+    box-sizing: border-box;
     .avatar-img {
       width: 100%;
       height: 100%;
@@ -95,7 +96,7 @@ const BgColorArray = [
     bottom: 1%;
     right: 1%;
     z-index: 2;
-    box-shadow: 0px 2px 4px 0px rgba(122,122,122,0.50); 
+    box-shadow: 0px 2px 4px 0px rgba(122, 122, 122, 0.5);
   }
 }
 </style>

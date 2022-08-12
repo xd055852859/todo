@@ -7,7 +7,7 @@ import { storeToRefs } from "pinia";
 import { MoreFilled, Delete } from "@element-plus/icons-vue";
 
 import appStore from "@/store";
-import logoSvg from "../assets/svg/logo.svg";
+import finishBeanSvg from "@/assets/svg/finishBean.svg";
 import Avatar from "@/components/avatar.vue";
 import RiverChart from "@/components/chart/riverChart.vue";
 import i18n from "@/language/i18n";
@@ -184,6 +184,13 @@ const delMate = async () => {
         />
       </div>
       <div class="mate-name">{{ mateInfo.userName }}</div>
+      <div class="dp--center common-color icon-point">
+        <img
+          :src="finishBeanSvg"
+          alt=""
+          style="width: 20px; height: 20px; margin-right: 5px"
+        />{{ user?.beans }}
+      </div>
       <div class="mate-info dp-space-center">
         <div
           class="dp-center-center"
@@ -199,8 +206,10 @@ const delMate = async () => {
               $router.push('/home/list')
             }"
         >
-          <icon-font name="list" :size="24" style="margin-right: 8px" />{{$t(`Todo`)}} (
-          {{ mateInfo.todoNum }} )
+          <icon-font name="list" :size="24" style="margin-right: 8px" />{{
+            $t(`Todo`)
+          }}
+          ( {{ mateInfo.todoNum }} )
         </div>
         <div
           class="dp-center-center"
@@ -215,7 +224,9 @@ const delMate = async () => {
               : null
           "
         >
-          <icon-font name="boards" :size="24" style="margin-right: 8px" />{{$t(`Boards`)}}
+          <icon-font name="boards" :size="24" style="margin-right: 8px" />{{
+            $t(`Boards`)
+          }}
           ( {{ mateInfo.boardNum }} )
         </div>
         <div
@@ -226,8 +237,10 @@ const delMate = async () => {
             mateInfo?.added ? $router.push('/home/matesMate/' + mateKey) : null
           "
         >
-          <icon-font name="mates" :size="24" style="margin-right: 8px" />{{$t(`Mates`)}} (
-          {{ mateInfo.partnerNum }} )
+          <icon-font name="mates" :size="24" style="margin-right: 8px" />{{
+            $t(`Mates`)
+          }}
+          ( {{ mateInfo.partnerNum }} )
         </div>
       </div>
     </div>
@@ -244,7 +257,8 @@ const delMate = async () => {
         simpleState
       />
     </div>
-    <div
+
+    <!-- <div
       class="mate-box p-3"
       :style="{ background: mateInfo.added ? '#fff' : '' }"
     >
@@ -285,6 +299,28 @@ const delMate = async () => {
           </div>
         </div>
       </div>
+    </div> -->
+    <div
+      class="mate-box p-5 dp-center-center"
+      :style="{ background: mateInfo.added ? '#fff' : '' }"
+    >
+      <template v-if="mateInfo.added">
+        <div class="mate-bottle dp-center-center">
+          <div class="mate-bottle-img dp-center-center">
+            <div class="mate-bottle-title common-color">Beans Today</div>
+          </div>
+        </div>
+        <div class="mate-data dp-space-center">
+          <div class="mate-data-item dp-center-center common-color">
+            <div>{{ mateInfo.todayCreate }}</div>
+            <div>Create</div>
+          </div>
+          <div class="mate-data-item dp-center-center common-color">
+            <div>{{ mateInfo.todayClose }}</div>
+            <div>Close</div>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
   <el-dialog v-model="delVisible" title="Delete prompt" width="350px">
@@ -292,9 +328,9 @@ const delMate = async () => {
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="delVisible = false" bgColor="#d1dbe5">
-          {{$t(`Cancel`)}}
+          {{ $t(`Cancel`) }}
         </tbutton>
-        <tbutton @click="delMate">{{$t(`Confirm`)}}</tbutton>
+        <tbutton @click="delMate">{{ $t(`Confirm`) }}</tbutton>
       </span>
     </template>
   </el-dialog>
@@ -305,6 +341,8 @@ const delMate = async () => {
   height: calc(100vh - 55px);
   overflow-x: hidden;
   overflow-y: auto;
+  padding-bottom: 20px;
+  box-sizing: border-box;
   .mate-top {
     width: 100%;
     // min-height: 300px;
@@ -336,6 +374,7 @@ const delMate = async () => {
       font-size: 16px;
       font-weight: 600;
       margin-top: 8px;
+      margin-bottom: 8px;
     }
     .mate-bean {
       width: 100%;
@@ -353,27 +392,80 @@ const delMate = async () => {
     }
   }
 
+  // .mate-box {
+  //   border-radius: 12px;
+  //   margin-bottom: 15px;
+  //   padding: 20px 0px;
+  //   .mate-bottle {
+  //     width: 100%;
+  //     // height: 30px;
+  //     .mate-bottle-title {
+  //       width: 100%;
+  //       height: 30px;
+  //       font-size: 18px;
+  //       text-align: center;
+  //       color: var(--talk-font-color-1);
+  //       line-height: 37px;
+  //       font-weight: 600;
+  //       margin-bottom: 30px;
+  //     }
+  //   }
+  //   .mate-data {
+  //     width: 100%;
+  //     // height: 100px;
+  //     .mate-data-item {
+  //       width: 50%;
+  //       flex-wrap: wrap;
+  //       & > div {
+  //         width: 100%;
+  //         text-align: center;
+  //         &:nth-child(1) {
+  //           font-size: 26px;
+  //         }
+  //         &:nth-child(2) {
+  //           font-size: 12px;
+  //           margin-bottom: 10px;
+  //         }
+  //         &:nth-child(3) {
+  //           font-size: 12px;
+  //           color: #333;
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
   .mate-box {
     border-radius: 12px;
-    margin-bottom: 15px;
-    padding: 20px 0px;
+    min-height: 390px;
+    height: 50%;
+    flex-wrap: wrap;
     .mate-bottle {
       width: 100%;
-      // height: 30px;
-      .mate-bottle-title {
-        width: 100%;
-        height: 30px;
-        font-size: 18px;
-        text-align: center;
-        color: var(--talk-font-color-1);
-        line-height: 37px;
-        font-weight: 600;
-        margin-bottom: 30px;
+      height: 280px;
+      .mate-bottle-img {
+        width: 200px;
+        height: 250px;
+        background-size: 60%;
+        background-image: url("@/assets/img/fullBean.png");
+        background-repeat: no-repeat;
+        background-position: center center;
+        align-content: flex-end;
+        flex-wrap: wrap;
+        padding-bottom: 40px;
+        .mate-bottle-title {
+          width: 100%;
+          height: 30px;
+          font-size: 18px;
+          text-align: center;
+          color: var(--talk-font-color-1);
+          line-height: 37px;
+          font-weight: 600;
+        }
       }
     }
     .mate-data {
       width: 100%;
-      // height: 100px;
+      height: 100px;
       .mate-data-item {
         width: 50%;
         flex-wrap: wrap;

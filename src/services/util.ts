@@ -1,4 +1,5 @@
 import * as qiniu from "qiniu-js";
+import api from "./api";
 
 export const getSearchParamValue = (search: string, paramName: string) => {
   const QUERY_PARAMS: string = new URLSearchParams(search).get(
@@ -81,6 +82,11 @@ export const uploadImage = (
     next(res) {},
     error(err) {
       alert(err.message);
+      api.request.get("upTokenQiniu/getQiNiuUpToken", {
+        token: localStorage.getItem("token"),
+        type: 2,
+        bucketType: 6,
+      });
     },
     complete(res) {
       // content = content.replace(/(data:image\/){1}(jpeg|gif|png){1}(;){1}.*?\"/, "http://cdn-icare.qingtime.cn/" + res.key + "\"");
@@ -105,7 +111,8 @@ export const uploadImage = (
   observable.subscribe(observer);
 };
 export const is_mobile = () => {
-  let regex_match = /(nokia|iphone|android|motorola|^mot-|softbank|foma|docomo|kddi|up.browser|up.link|htc|dopod|blazer|netfront|helio|hosin|huawei|novarra|CoolPad|webos|techfaith|palmsource|blackberry|alcatel|amoi|ktouch|nexian|samsung|^sam-|s[cg]h|^lge|ericsson|philips|sagem|wellcom|bunjalloo|maui|symbian|smartphone|midp|wap|phone|windows ce|iemobile|^spice|^bird|^zte-|longcos|pantech|gionee|^sie-|portalmmm|jigs browser|hiptop|^benq|haier|^lct|operas*mobi|opera*mini|320x320|240x320|176x220|Mobile|iPad)/i;
+  let regex_match =
+    /(nokia|iphone|android|motorola|^mot-|softbank|foma|docomo|kddi|up.browser|up.link|htc|dopod|blazer|netfront|helio|hosin|huawei|novarra|CoolPad|webos|techfaith|palmsource|blackberry|alcatel|amoi|ktouch|nexian|samsung|^sam-|s[cg]h|^lge|ericsson|philips|sagem|wellcom|bunjalloo|maui|symbian|smartphone|midp|wap|phone|windows ce|iemobile|^spice|^bird|^zte-|longcos|pantech|gionee|^sie-|portalmmm|jigs browser|hiptop|^benq|haier|^lct|operas*mobi|opera*mini|320x320|240x320|176x220|Mobile|iPad)/i;
   let u = navigator.userAgent;
   if (null == u) {
     return true;

@@ -30,6 +30,9 @@ export const authStore = defineStore("authStore", () => {
         userName: userInfoRes.data.userName,
         beans: userInfoRes.data.beans,
         unReadNum: userInfoRes.data.unReadNum,
+        createScore:userInfoRes.data.createScore,
+        finishScore:userInfoRes.data.finishScore,
+        defaultBoard:userInfoRes.data.defaultBoard
       };
     }
   };

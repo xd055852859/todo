@@ -138,6 +138,7 @@ const updateBoard = async (type: string) => {
         ...memberList.value,
         ...(addMemberArr.value as Member[]),
       ];
+      addMemberArr.value = [];
     }
   }
 };
@@ -417,7 +418,7 @@ const applyMessage = (index: number, item) => {
         </div>
       </el-col>
     </el-row>
-    <div
+    <!-- <div
       class="manage-text dp-space-center icon-point"
       @click="relativeVisible = true"
     >
@@ -429,7 +430,7 @@ const applyMessage = (index: number, item) => {
         <el-icon v-else><arrow-right /></el-icon>
       </div>
     </div>
-    <el-divider border-style="dashed" />
+    <el-divider border-style="dashed" /> -->
     <div
       class="manage-text dp-space-center icon-point"
       @click="cloneVisible = true"
@@ -587,7 +588,9 @@ const applyMessage = (index: number, item) => {
                 @confirm="TransferOwner(item._key, index)"
               >
                 <template #reference>
-                  <div class="role-item" v-if="boardRole === 0">Owner</div>
+                  <div class="role-item" v-if="boardRole === 0">
+                    {{ $t(`Owner`) }}
+                  </div>
                 </template>
               </el-popconfirm>
 
@@ -596,16 +599,16 @@ const applyMessage = (index: number, item) => {
                 v-if="boardRole === 0"
                 @click="changeRole(item, index, 1)"
               >
-                Admin
+                {{ $t(`Admin`) }}
               </div>
               <div class="role-item" @click="changeRole(item, index, 2)">
-                Editor
+                {{ $t(`Editer`) }}
               </div>
               <div class="role-item" @click="changeRole(item, index, 3)">
-                Author
+                {{ $t(`Author`) }}
               </div>
               <div class="role-item" @click="changeRole(item, index, 4)">
-                Follower
+                {{ $t(`Follower`) }}
               </div>
               <el-divider />
               <div
@@ -618,7 +621,7 @@ const applyMessage = (index: number, item) => {
                   delVisible = true;
                 "
               >
-                Delete
+                {{ $t("Delete") }}
               </div>
             </div>
           </el-popover>
@@ -641,7 +644,7 @@ const applyMessage = (index: number, item) => {
     </div>
   </el-drawer>
   <el-dialog v-model="delVisible" title="Delete Prompt" width="350px">
-    <span>Delete Board Member</span>
+    <span>{{ $t(`Confirm deletion?`) }}</span>
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="delVisible = false" bgColor="#d1dbe5">
@@ -655,7 +658,7 @@ const applyMessage = (index: number, item) => {
     </template>
   </el-dialog>
   <el-dialog v-model="cloneVisible" title="Clone Prompt" width="350px">
-    <span>Clone Board</span>
+    <span>{{ $t("Clone") }} {{ $t("Boards") }}</span>
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="cloneVisible = false" bgColor="#d1dbe5">
@@ -666,7 +669,7 @@ const applyMessage = (index: number, item) => {
     </template>
   </el-dialog>
   <el-dialog v-model="exitVisible" title="Exit Prompt" width="350px">
-    <span>Exit Board</span>
+    <span>{{ $t("Exit") }} {{ $t("Boards") }}</span>
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="exitVisible = false" bgColor="#d1dbe5">
@@ -677,7 +680,7 @@ const applyMessage = (index: number, item) => {
     </template>
   </el-dialog>
   <el-dialog v-model="disbandVisible" title="Disband Prompt" width="350px">
-    <span>Disband Board</span>
+    <span>{{ $t("Dismiss") }} {{ $t("Boards") }}</span>
     <template #footer>
       <span class="dialog-footer dp-space-center">
         <tbutton @click="disbandVisible = false" bgColor="#d1dbe5">

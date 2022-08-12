@@ -60,6 +60,26 @@ const createChart = () => {
         type: "bar",
         barWidth: "60%",
         data: props.rankData,
+        itemStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 1,
+            y2: 0,
+            colorStops: [
+              {
+                offset: 0,
+                color: "#d1edc4", // 0% 处的颜色
+              },
+              {
+                offset: 1,
+                color: "#07BE51", // 100% 处的颜色
+              },
+            ],
+            global: false, // 缺省为 false
+          },
+        },
       },
     ],
     // legend: {

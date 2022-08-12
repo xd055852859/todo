@@ -40,7 +40,7 @@ const props = defineProps<{
           :name="item.hasFinished ? 'finish' : 'unfinish'"
           :size="22"
           style="margin-right: 8px"
-          color="#46a03c"
+          color="#07BE51"
         />
         <div
           class="single-to-long"

@@ -119,7 +119,7 @@ const changeMate = (index: number) => {
     </template>
     <template #right>
       <el-dropdown>
-        <div class="icon-point">
+        <div class="icon-point" style="color: var(--talk-font-color);">
           {{ $t(rankStr) }}
           <el-icon class="el-icon--right">
             <arrow-down />
@@ -176,7 +176,7 @@ const changeMate = (index: number) => {
       <div
         :style="
           rankMark === 'today'
-            ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+            ? { color: '#07BE51', borderBottom: '3px solid #07BE51' }
             : {}
         "
         @click="rankMark = 'today'"
@@ -187,7 +187,7 @@ const changeMate = (index: number) => {
         style="margin: 0px 35px"
         :style="
           rankMark === 'next'
-            ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+            ? { color: '#07BE51', borderBottom: '3px solid #07BE51' }
             : {}
         "
         @click="rankMark = 'next'"
@@ -197,7 +197,7 @@ const changeMate = (index: number) => {
       <div
         :style="
           rankMark === 'future'
-            ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+            ? { color: '#07BE51', borderBottom: '3px solid #07BE51' }
             : {}
         "
         @click="rankMark = 'future'"

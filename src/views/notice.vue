@@ -73,7 +73,7 @@ watchEffect(() => {
       <div
         :style="
           noticeType === 0
-            ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+            ? { color: '#07BE51', borderBottom: '3px solid #07BE51' }
             : {}
         "
         @click="noticeType = 0"
@@ -86,7 +86,7 @@ watchEffect(() => {
         style="padding: 10px 40px"
         :style="
           noticeType === 1
-            ? { color: '#46a03c', borderBottom: '3px solid #46a03c' }
+            ? { color: '#07BE51', borderBottom: '3px solid #07BE51' }
             : {}
         "
         @click="noticeType = 1"

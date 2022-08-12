@@ -14,6 +14,7 @@ import { Task } from "@/interface/Task";
 import bottlePng from "@/assets/img/bottle.png";
 import chooseSvg from "@/assets/svg/choose.svg";
 import i18n from "@/language/i18n";
+import { Member } from "@/interface/User";
 const router = useRouter();
 const socket: any = inject("socket");
 
@@ -41,6 +42,9 @@ const completeNum = ref<number>(0);
 const completedVisible = ref<boolean>(false);
 const markIndex = ref<number>(0);
 const markArr = ref<any>([]);
+const executorKey = ref<string>("");
+const memberList = ref<Member[]>([]);
+const avatarRef = ref(null);
 onMounted(() => {
   getBoardList("accessTime", "desc");
   markArr.value = [
@@ -55,9 +59,22 @@ onMounted(() => {
       data.creatorInfo._key !== user.value?._key
     ) {
       if (taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]) {
-        taskObj.value[
+        let index = taskObj.value[
           data.creatorInfo._key + data.creatorInfo.userName
-        ].cards.unshift(data);
+        ].cards.findIndex(
+          taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]
+            .cards,
+          { _key: data._key }
+        );
+        if (index === -1) {
+          taskObj.value[
+            data.creatorInfo._key + data.creatorInfo.userName
+          ].cards.unshift(data);
+        } else {
+          taskObj.value[
+            data.creatorInfo._key + data.creatorInfo.userName
+          ].cards[index] = [...data];
+        }
       } else {
         taskObj.value[data.creatorInfo._key + data.creatorInfo.userName] = {
           cards: [data],
@@ -101,15 +118,77 @@ onMounted(() => {
 
     // }
   });
+  socket.on("changeExecutor", (data) => {
+    console.log("changeExecutor", data);
+    if (
+      data.operator !== user.value?._key &&
+      data.boardInfo._key === boardKey.value
+    ) {
+      if (executorKey.value) {
+        if (data.oldExecutor === executorKey.value) {
+          delTask(data);
+        } else if (data.executorInfo._key === executorKey.value) {
+          if (
+            taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]
+          ) {
+            let index = taskObj.value[
+              data.creatorInfo._key + data.creatorInfo.userName
+            ].cards.findIndex(
+              taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]
+                .cards,
+              { _key: data._key }
+            );
+            if (index === -1) {
+              taskObj.value[
+                data.creatorInfo._key + data.creatorInfo.userName
+              ].cards.unshift(data);
+            } else {
+              taskObj.value[
+                data.creatorInfo._key + data.creatorInfo.userName
+              ].cards[index] = [...data];
+            }
+          } else {
+            taskObj.value[data.creatorInfo._key + data.creatorInfo.userName] = {
+              cards: [data],
+              userAvatar: data.creatorInfo.userAvatar,
+              userName: data.creatorInfo.userName,
+            };
+          }
+        }
+      } else {
+        updateCard(data);
+      }
+    }
+    //创建者是自己直接在已读列表里 taskList
+  });
+  socket.on("onlineStatus", (data) => {
+    console.log(data, "onlineStatus");
+    let index = memberList.value.findIndex(
+      (item: Member) => data._key === item._key
+    );
+    if (index !== -1) {
+      memberList.value[index] = { ...memberList.value[index], ...data };
+    }
+  });
 });
-const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
-  let obj: any = { boardKey: boardKey };
+const getMember = async () => {
+  let infoRes = (await api.request.get("board/member", {
+    boardKey: boardKey.value,
+    orderByTask: 1,
+  })) as ResultProps;
+  if (infoRes.msg === "OK") {
+    memberList.value = infoRes.data.memberList;
+  }
+};
+const getBoardTask = async (type?: string) => {
+  let obj: any = { boardKey: boardKey.value };
   let obj1: any = {};
   let obj2: any = {};
   let finishobj1: any = {};
   let finishobj2: any = {};
   type ? (obj.hasFinished = 1) : null;
-  mark ? (obj.mark = mark) : null;
+  mark.value ? (obj.mark = mark.value) : null;
+  executorKey.value ? (obj.executor = executorKey.value) : null;
   const taskRes: any = (await api.request.get("card/board", {
     ...obj,
   })) as ResultProps;
@@ -147,8 +226,6 @@ const getBoardTask = async (boardKey: string, type?: string, mark?: string) => {
       taskFinishObj.value = { ...finishobj1, ...finishobj2 };
     } else if (!type) {
       taskObj.value = { ...obj1, ...obj2 };
-      console.log(obj1, obj2);
-      console.log(taskObj.value);
       completeNum.value = taskRes.data.completeNum;
       setBoardRole(taskRes.data.role);
     }
@@ -164,11 +241,13 @@ const addCard = async () => {
     taskTitle.value = "";
     return;
   }
+
   const taskRes: any = (await api.request.post("card", {
     boardKey: boardKey.value,
     title: taskTitle.value,
     detail: "",
     splitIntoMultiple: multipleCheck.value,
+    executor: executorKey.value,
   })) as ResultProps;
   if (taskRes.msg === "OK") {
     ElMessage({
@@ -220,11 +299,6 @@ const toTop = () => {
       clearInterval(timer); // 关闭定时器
     }
   }, 30);
-};
-const toTargetList = () => {
-  //@ts-ignore
-  setFriendInfo(boardList.value[boardIndex.value].executorInfo);
-  router.push("/home/list");
 };
 const finishTask = (data) => {
   if (taskObj.value[data.creatorInfo._key + data.creatorInfo.userName]) {
@@ -303,7 +377,10 @@ const delTask = (data, type?: string) => {
     }
   }
 };
-
+const moveAvatar = (e) => {
+  //@ts-ignore
+  avatarRef.value.scrollLeft += e.deltaY;
+};
 // const cancelTask = (data) => {
 //   if (taskFinishObj.value[data.creatorInfo._key]) {
 //     let index = taskFinishObj.value[data.creatorInfo._key].cards.findIndex(
@@ -327,13 +404,18 @@ watch(
   boardKey,
   (newVal) => {
     if (newVal) {
-      getBoardTask(newVal);
+      getMember();
     }
   },
   { immediate: true }
 );
-watch(mark, (newVal) => {
-  getBoardTask(boardKey.value, "", newVal);
+// watch(mark, (newVal) => {
+//   getBoardTask(boardKey.value, "", newVal);
+// });
+watchEffect(() => {
+  if (boardKey.value) {
+    getBoardTask();
+  }
 });
 </script>
 <template>
@@ -358,6 +440,7 @@ watch(mark, (newVal) => {
           name="set"
           class="icon-point"
           @click="$router.push(`/manage/` + boardKey)"
+          v-if="boardKey !== user?.defaultBoard"
         />
         <icon-font
           name="addBoard"
@@ -379,40 +462,59 @@ watch(mark, (newVal) => {
     <!-- <div class="board-box dp-center"> -->
     <div class="talk-left" v-if="deviceType !== 'phone'"></div>
     <div class="talk-menu" v-if="deviceType !== 'phone'">
-      <contact type="menu"/>
+      <contact type="menu" />
     </div>
-    <div class="board-container p-3" :style="{
+    <div
+      class="board-container p-3"
+      :style="{
         width: deviceType === 'phone' ? '100%' : 'calc(100% - 300px)',
-      }">
-      <div class="board-header dp-space-center p-3" v-if="boardList.length > 0">
+      }"
+    >
+      <div class="board-header dp-space-center p-3">
         <div
-          class="dp--center"
-          @click="
-            $router.push(
-              '/home/mate/' + boardList[boardIndex].executorInfo._key
-            )
-          "
+          class="board-left dp--center"
+          @wheel.prevent.stop="moveAvatar"
+          ref="avatarRef"
         >
-          <avatar
-            :name="boardList[boardIndex].executorInfo.userName"
-            :avatar="boardList[boardIndex].executorInfo.userAvatar"
-            type="person"
-            :index="0"
-            :size="30"
-            :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
-            :class="{
-              'icon-point':
-                boardList[boardIndex].executorInfo?._key !== user?._key,
-            }"
-            @click="
-              boardList[boardIndex].executorInfo?._key !== user?._key
-                ? $router.push(
-                    '/home/mate/' + boardList[boardIndex].executorInfo?._key
-                  )
-                : null
-            "
-          />
-          {{ boardList[boardIndex].executorInfo.userName }}
+          <div class="board-left-item" @click="executorKey = ''">
+            <div
+              class="board-left-all dp-center-center"
+              :style="{
+                boxShadow: !executorKey
+                  ? '0px 4px 9px 0px rgba(0,0,0,0.05)'
+                  : '',
+              }"
+            >
+              All
+            </div>
+          </div>
+          <div
+            class="board-left-item"
+            v-for="(item, index) in memberList"
+            :key="'member' + index"
+            @click="executorKey = item._key"
+          >
+            <avatar
+              :avatarKey="item._key"
+              :name="item.userName"
+              :avatar="item.userAvatar"
+              type="person"
+              :index="0"
+              :size="executorKey === item._key ? 45 : 40"
+              :avatarStyle="{
+                fontSize: '16px',
+              }"
+              showOnline
+              :online-state="item.online"
+              :chooseOnline="executorKey === item._key"
+            />
+            <div
+              v-if="executorKey === item._key"
+              class="board-item-userName single-to-long"
+            >
+              {{ item.userName }}
+            </div>
+          </div>
         </div>
         <div class="dp--center">
           <el-dropdown>
@@ -502,7 +604,9 @@ watch(mark, (newVal) => {
             @finishTask="finishTask"
             @delTask="delTask"
             @updateCard="updateCard"
+            :executorKey="executorKey"
             :role="boardRole"
+            :memberList="memberList"
           />
         </div>
       </div>
@@ -517,7 +621,7 @@ watch(mark, (newVal) => {
         class="icon-point dp--center"
         @click="
           completedVisible = true;
-          getBoardTask(boardKey, 'completed');
+          getBoardTask('completed');
         "
       >
         <img :src="bottlePng" alt="" /> Completed ({{ completeNum }})
@@ -594,8 +698,41 @@ watch(mark, (newVal) => {
     overflow-y: auto;
     .board-header {
       width: 100%;
-      height: 40px;
+      height: 75px;
       box-sizing: border-box;
+      .board-left {
+        width: calc(100% - 70px);
+        height: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        .board-left-item {
+          width: 55px;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap;
+          flex-shrink: 0;
+          .board-left-all {
+            width: 40px;
+            height: 40px;
+            overflow: hidden;
+            border-radius: 30%;
+            background-color: #07BE51;
+            color: #fff;
+            border: 3px solid transparent;
+            box-sizing: border-box;
+          }
+          .board-item-userName {
+            width: 100%;
+            font-size: 14px;
+            text-align: center;
+          }
+        }
+        &::-webkit-scrollbar {
+          width: 0px;
+          height: 0px;
+        }
+      }
       // max-width: 960px;
     }
     .board-edit {

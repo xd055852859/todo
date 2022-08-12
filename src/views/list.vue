@@ -52,14 +52,15 @@ const taskNum = reactive({
   today: 0,
   next: 0,
   future: 0,
-  unRead: 0,
 });
+const unreadNum = ref<number>(0);
+const readNum = ref<number>(0);
+
 onMounted(() => {
   getTaskList("today");
   getTaskNum();
 
   socket.on("create", (data) => {
-    console.log("create", data);
     if (
       data.creatorInfo._key !== user.value?._key &&
       !data.mark &&
@@ -67,12 +68,10 @@ onMounted(() => {
     ) {
       //新建 创建者不是自己则在inbox inboxList
       addList(inboxList.value, data);
-      taskNum.unRead++;
     }
     //创建者是自己直接在已读列表里 taskList
   });
   socket.on("finish", (data) => {
-    console.log("finish", data);
     if (
       data.operator !== user.value?._key &&
       data.creatorInfo._key !== user.value?._key &&
@@ -108,11 +107,29 @@ onMounted(() => {
     }
   });
   socket.on("update", (data) => {
-    console.log("update", data);
     if (data.creatorInfo._key !== user.value?._key) {
       //新建 创建者不是自己则在inbox inboxList
       //创建者是自己直接在已读列表里 taskList
       updateList(data.mark ? taskList.value : inboxList.value, data);
+    }
+    // if (data.executorInfo._key !== user.value?._key) {
+    //   delTask(data);
+    // }
+  });
+  socket.on("changeExecutor", (data) => {
+    console.log("changeExecutor", data);
+    if (
+      data.operator !== user.value?._key &&
+      data.creatorInfo._key !== user.value?._key
+    ) {
+      if (data.oldExecutor === user.value?._key) {
+        delList(data.oldMark ? taskList.value : inboxList.value, data);
+        if (data.oldMark) {
+          taskNum[data.oldMark]--;
+        }
+      } else if (data.executorInfo._key === user.value?._key) {
+        addList(inboxList.value, data);
+      }
     }
   });
 });
@@ -127,7 +144,6 @@ const getTaskNum = async () => {
     taskNum.today = numRes.data.todayNum;
     taskNum.next = numRes.data.nextDayNum;
     taskNum.future = numRes.data.futureNum;
-    taskNum.unRead = numRes.data.unreadNum;
   }
 };
 const getTargetTask = async (item, index) => {
@@ -153,8 +169,6 @@ const changeNum = (type: string, item, listType: string) => {
   }
   if (item.mark) {
     taskNum[navKey.value]--;
-  } else {
-    taskNum.unRead--;
   }
   delList(item.mark ? taskList.value : inboxList.value, item);
 };
@@ -178,8 +192,6 @@ const finishTask = (data) => {
   if (data.executorInfo._key === user.value?._key) {
     if (data.mark) {
       taskNum[data.mark]--;
-    } else {
-      taskNum.unRead--;
     }
   }
 };
@@ -201,8 +213,6 @@ const delTask = (data, type?: string) => {
       console.log(data);
       if (data.mark) {
         taskNum[data.mark]--;
-      } else {
-        taskNum.unRead--;
       }
     }
   }
@@ -233,6 +243,30 @@ watch(
   },
   { immediate: true }
 );
+watch(
+  inboxList,
+  (newVal) => {
+    if (newVal.length > 0) {
+      unreadNum.value = 0;
+      newVal.forEach((item) => {
+        unreadNum.value = unreadNum.value + item.cards.length;
+      });
+    }
+  },
+  { deep: true, immediate: true }
+);
+watch(
+  taskList,
+  (newVal) => {
+    if (newVal.length > 0 && navKey.value === "today") {
+      readNum.value = 0;
+      newVal.forEach((item) => {
+        readNum.value = readNum.value + item.cards.length;
+      });
+    }
+  },
+  { deep: true, immediate: true }
+);
 watchEffect(() => {
   if (friend.value) {
     if (user.value && friend.value._key !== user.value._key) {
@@ -255,7 +289,11 @@ watchEffect(() => {
       ><el-dropdown>
         <div
           class="dp-space-center icon-point"
-          style="font-size: 16px; font-weight: 600"
+          style="
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--talk-font-color);
+          "
         >
           <avatar
             :name="friend?.userName"
@@ -349,7 +387,7 @@ watchEffect(() => {
           getTaskList('today');
         "
       >
-        <div>{{ taskNum.today }}</div>
+        <div>{{ readNum }}</div>
         <div class="dp-center-center">
           <icon-font
             name="sun"
@@ -436,7 +474,7 @@ watchEffect(() => {
             round
             v-if="targetType === 'self'"
           >
-            {{ $t(`Set Read`) }} ( {{ taskNum.unRead }} )
+            {{ $t(`Set Read`) }} ( {{ unreadNum }} )
           </tbutton>
         </div>
         <div
@@ -444,7 +482,7 @@ watchEffect(() => {
           :key="'taskItem' + index"
           class="task"
         >
-          <div class="task-title">
+          <div class="task-title" style="color: #333">
             # {{ item.boardInfo.title }} From
             {{ item.creatorInfo.userName }}
           </div>
@@ -468,6 +506,7 @@ watchEffect(() => {
                   ? item.boardInfo.role
                   : 0
               "
+              oppositeColor
             />
           </div>
         </div>
@@ -629,6 +668,7 @@ watchEffect(() => {
       margin-bottom: 15px;
       font-size: 18px;
       font-weight: 600;
+      color: #333;
     }
   }
   .board-box,
@@ -677,4 +717,8 @@ watchEffect(() => {
   overflow-y: auto;
 }
 </style>
-<style></style>
+<style>
+.inbox .el-textarea__inner {
+  color: #333 !important;
+}
+</style>

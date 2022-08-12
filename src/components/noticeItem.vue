@@ -37,7 +37,8 @@ onMounted(() => {
     props.item.type === "finish" ||
     props.item.type === "cancelFinish" ||
     props.item.type === "delete" ||
-    props.item.type === "update"
+    props.item.type === "update" ||
+    props.item.type === "changeExecutor"
   ) {
     noticeType.value = "task";
   } else {
@@ -99,6 +100,9 @@ onMounted(() => {
     case "removeFriends":
       str = i18n.global.t(`Remove mate`);
       break;
+    case "changeExecutor":
+      str = "changeExecutor";
+      break;
   }
   noticeLog.value = str;
 });
@@ -138,17 +142,16 @@ const changeJoin = async (verifyResult: boolean) => {
           }}</span>
           {{ noticeLog }}
         </div>
-        <div v-if="noticeType === 'board'" class="notice-info-name">
+        <!-- <div v-if="noticeType === 'board'" class="notice-info-name">
           {{ item.boardInfo.title }}
-        </div>
-        <div
-          v-else-if="noticeType === 'task'"
-          class="notice-info-name"
-          style=""
-        >
+        </div> -->
+        <div v-if="noticeType === 'task'" class="notice-info-name" style="">
           {{ item.cardInfo?.title }}
         </div>
-        <div class="notice-time">{{ noticeTime }}</div>
+        <div class="notice-time dp-space-center">
+          <div>{{ item.boardInfo.title ? item.boardInfo.title : "" }}</div>
+          <div>{{ noticeTime }}</div>
+        </div>
       </div>
     </div>
     <div class="dp-center-center notice-right" v-if="item.type === 'join'">

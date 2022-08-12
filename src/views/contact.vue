@@ -74,7 +74,7 @@ watch(boardList, (newVal, oldVal) => {
       <icon-font
         :name="order === 'asc' ? 'asc' : 'desc'"
         :size="22"
-        color="#46a03c"
+        color="#07BE51"
         class="icon-point"
         @click="setOrder(order === 'asc' ? 'desc' : 'asc')"
         v-if="!type"
@@ -125,7 +125,7 @@ watch(boardList, (newVal, oldVal) => {
           <span style="margin-right: 5px; font-weight: 600">{{
             item.title
           }}</span>
-          <span>( {{ item.executorInfo?.userName }} )</span>
+          <!-- <span>( {{ item.executorInfo?.userName }} )</span> -->
         </div>
         <!-- </div> -->
         <!-- <div class="right">

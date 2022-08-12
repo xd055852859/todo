@@ -17,6 +17,13 @@ export default defineConfig({
       "@": resolve(__dirname, "src"), // 设置 `@` 指向 `src` 目录
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: "@import 'src/styles/mixin/mixin.scss';",
+      },
+    },
+  },
   base: "./", // 设置打包路径
   server: {
     host: "0.0.0.0",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Avatar from "@/components/avatar.vue";
-import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
+import { ArrowDown } from "@element-plus/icons-vue";
 import { ResultProps } from "@/interface/Common";
 import api from "@/services/api";
 import { Task } from "@/interface/Task";
@@ -44,7 +44,7 @@ const searchExecuteInput = ref<string>("");
 const creatorKey = ref<string>("all");
 const executorKey = ref<string>("all");
 const completedIndex = ref<number>(0);
-const completedArr = ["All", "Completed", "Todo"];
+const completedArr = ["All tasks", "Completed", "Todo"];
 
 onMounted(() => {});
 const getSendTask = async () => {
@@ -72,7 +72,7 @@ const getSendTask = async () => {
     //   return item;
     // });
     sendList.value = [...sendList.value, ...sentRes.data];
-    console.log(sendList)
+    console.log(sendList);
   }
 };
 const scrollSend = (e: any) => {
@@ -128,117 +128,146 @@ watchEffect(() => {
 </script>
 <template>
   <theader isMenu>
-    <template #left>{{$t(`Creat`)}} </template>
-    <template #right>
-      <el-dropdown style="margin-right: 10px">
-        <div
-          class="dp--center icon-point"
-          style="font-size: 16px; font-weight: 600"
-        >
-          <avatar
-            :name="createdMateList[createdMateIndex]?.userName"
-            :avatar="createdMateList[createdMateIndex]?.userAvatar"
-            type="person"
-            :index="0"
-            :size="30"
-            :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
-            v-if="createdMateIndex !== 0"
-          />
-          {{ createdMateList[createdMateIndex]?.userName }}
+    <template #left>
+      <el-dropdown>
+        <div class="dp--center icon-point" style="height: 100%;color: var(--talk-font-color);">
+          {{ completedArr[completedIndex] }}
           <el-icon class="el-icon--right">
             <arrow-down />
           </el-icon>
         </div>
         <template #dropdown>
-          <div class="header-contact" v-if="searchCreateList">
-            <div class="contact-top dp-space-center p-3">
-              <el-input
-                v-model="searchCreateInput"
-                placeholder="Search Mate"
-                style="height: 35px"
-              />
-            </div>
-            <div class="contact-bottom">
-              <div
-                class="contact-item container dp--center p-3 icon-point"
-                v-for="(item, index) in searchCreateList"
-                :key="'listItem' + index"
-                @click="
-                  //@ts-ignore
-                  creatorKey = item?._key;
-                  createdMateIndex = index;
-                  page = 1;
-                "
-              >
-                <avatar
-                  :name="item?.userName"
-                  :avatar="item?.userAvatar"
-                  type="person"
-                  :index="0"
-                  :size="30"
-                  :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
-                />{{ item?.userName }}
+          <el-dropdown-menu>
+            <el-dropdown-item
+              class="icon-point container dp-space-center"
+              v-for="(item, index) in completedArr"
+              :key="'completed' + index"
+              @click="chooseCreatedType(index)"
+              style="width: 150px"
+            >
+              <div>{{ item }}</div>
+              <div class="right">
+                <img
+                  :src="chooseSvg"
+                  alt=""
+                  style="width: 20px; height: 20px"
+                  v-if="index === completedIndex"
+                />
               </div>
-            </div>
-          </div>
-        </template>
-      </el-dropdown>
-      ⇀
-      <el-dropdown style="margin-left: 10px">
-        <div
-          class="dp--center icon-point"
-          style="font-size: 16px; font-weight: 600"
-        >
-          <avatar
-            :name="executedMateList[executedMateIndex]?.userName"
-            :avatar="executedMateList[executedMateIndex]?.userAvatar"
-            type="person"
-            :index="0"
-            :size="30"
-            :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
-            v-if="executedMateIndex !== 0"
-          />
-          {{ executedMateList[executedMateIndex]?.userName }}
-          <el-icon class="el-icon--right">
-            <arrow-down />
-          </el-icon>
-        </div>
-        <template #dropdown>
-          <div class="header-contact" v-if="searchExecuteList">
-            <div class="contact-top dp-space-center p-3">
-              <el-input
-                v-model="searchExecuteInput"
-                placeholder="Search Mate"
-                style="height: 35px"
-              />
-            </div>
-            <div class="contact-bottom">
-              <div
-                class="contact-item container dp--center p-3 icon-point"
-                v-for="(item, index) in searchCreateList"
-                :key="'listItem' + index"
-                @click="
-                  //@ts-ignore
-                  executorKey = item?._key;
-                  executedMateIndex = index;
-                  page = 1;
-                "
-              >
-                <avatar
-                  :name="item?.userName"
-                  :avatar="item?.userAvatar"
-                  type="person"
-                  :index="0"
-                  :size="30"
-                  :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
-                />{{ item?.userName }}
-              </div>
-            </div>
-          </div>
-        </template>
-      </el-dropdown>
-    </template>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template> </el-dropdown
+    ></template>
   </theader>
+  <div class="send-nav dp-center-center">
+    <el-dropdown style="margin-right: 10px">
+      <div
+        class="dp--center icon-point"
+        style="font-size: 16px; font-weight: 600;color: var(--talk-font-color);"
+      >
+        <avatar
+          :name="createdMateList[createdMateIndex]?.userName"
+          :avatar="createdMateList[createdMateIndex]?.userAvatar"
+          type="person"
+          :index="0"
+          :size="30"
+          :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+          v-if="createdMateIndex !== 0"
+        />
+        {{ createdMateList[createdMateIndex]?.userName }}
+        <el-icon class="el-icon--right">
+          <arrow-down />
+        </el-icon>
+      </div>
+      <template #dropdown>
+        <div class="header-contact" v-if="searchCreateList">
+          <div class="contact-top dp-space-center p-3">
+            <el-input
+              v-model="searchCreateInput"
+              placeholder="Search Mate"
+              style="height: 35px"
+            />
+          </div>
+          <div class="contact-bottom">
+            <div
+              class="contact-item container dp--center p-3 icon-point"
+              v-for="(item, index) in searchCreateList"
+              :key="'listItem' + index"
+              @click="
+                //@ts-ignore
+                creatorKey = item?._key;
+                createdMateIndex = index;
+                page = 1;
+              "
+            >
+              <avatar
+                :name="item?.userName"
+                :avatar="item?.userAvatar"
+                type="person"
+                :index="0"
+                :size="30"
+                :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+              />{{ item?.userName }}
+            </div>
+          </div>
+        </div>
+      </template>
+    </el-dropdown>
+    ⇀
+    <el-dropdown style="margin-left: 10px">
+      <div
+        class="dp--center icon-point"
+        style="font-size: 16px; font-weight: 600;color: var(--talk-font-color);"
+      >
+        <avatar
+          :name="executedMateList[executedMateIndex]?.userName"
+          :avatar="executedMateList[executedMateIndex]?.userAvatar"
+          type="person"
+          :index="0"
+          :size="30"
+          :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+          v-if="executedMateIndex !== 0"
+        />
+        {{ executedMateList[executedMateIndex]?.userName }}
+        <el-icon class="el-icon--right">
+          <arrow-down />
+        </el-icon>
+      </div>
+      <template #dropdown>
+        <div class="header-contact" v-if="searchExecuteList">
+          <div class="contact-top dp-space-center p-3">
+            <el-input
+              v-model="searchExecuteInput"
+              placeholder="Search Mate"
+              style="height: 35px"
+            />
+          </div>
+          <div class="contact-bottom">
+            <div
+              class="contact-item container dp--center p-3 icon-point"
+              v-for="(item, index) in searchCreateList"
+              :key="'listItem' + index"
+              @click="
+                //@ts-ignore
+                executorKey = item?._key;
+                executedMateIndex = index;
+                page = 1;
+              "
+            >
+              <avatar
+                :name="item?.userName"
+                :avatar="item?.userAvatar"
+                type="person"
+                :index="0"
+                :size="30"
+                :avatarStyle="{ fontSize: '16px', marginRight: '8px' }"
+              />{{ item?.userName }}
+            </div>
+          </div>
+        </div>
+      </template>
+    </el-dropdown>
+  </div>
   <div class="send p-3" @scroll="scrollSend">
     <div
       v-for="(item, index) in sendList"
@@ -255,42 +284,18 @@ watchEffect(() => {
       />
     </div>
   </div>
-  <div class="footer p-3 dp--center icon-point">
-    <el-dropdown>
-      <div class="dp--center icon-point" style="height: 100%">
-        {{ completedArr[completedIndex] }}
-        <el-icon class="el-icon--right">
-          <arrow-up />
-        </el-icon>
-      </div>
-      <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item
-            class="icon-point container dp-space-center"
-            v-for="(item, index) in completedArr"
-            :key="'completed' + index"
-            @click="chooseCreatedType(index)"
-            style="width: 150px"
-          >
-            <div>{{ item }}</div>
-            <div class="right">
-              <img
-                :src="chooseSvg"
-                alt=""
-                style="width: 20px; height: 20px"
-                v-if="index === completedIndex"
-              />
-            </div>
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      </template>
-    </el-dropdown>
-  </div>
+  <!-- <div class="footer p-3 dp--center icon-point">
+  
+  </div> -->
 </template>
 <style scoped lang="scss">
+.send-nav {
+  width: 100%;
+  height: 30px;
+}
 .send {
   width: 100%;
-  height: calc(100vh - 105px);
+  height: calc(100vh - 90px);
   overflow-x: hidden;
   overflow-y: auto;
 }

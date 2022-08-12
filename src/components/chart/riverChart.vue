@@ -33,7 +33,7 @@ const createChart = () => {
       axisPointer: {
         type: "line",
         lineStyle: {
-          color: "rgba(0,0,0,0.2)",
+          color: dark.value ? "#fff" : "#333",
           width: 1,
           type: "solid",
         },
@@ -42,6 +42,7 @@ const createChart = () => {
     legend: {
       show: !props.simpleState,
       data: props.name,
+      textStyle: { color: dark.value ? "#fff" : "#333" },
     },
     singleAxis: {
       top: 50,

@@ -1,54 +1,121 @@
 <script setup lang="ts">
 import lineChart from "@/components/chart/lineChart.vue";
 import { ElMessage } from "element-plus";
-onMounted(() => {
-  document.addEventListener("paste", function (event: any) {
-    console.log(event);
-    var isChrome = false;
-    if (event.clipboardData || event.originalEvent) {
-      //not for ie11  某些chrome版本使用的是event.originalEvent
-      var clipboardData =
-        event.clipboardData || event.originalEvent.clipboardData;
-      console.log(clipboardData);
-      if (clipboardData.items) {
-        // for chrome
-        var items = clipboardData.items,
-          len = items.length,
-          blob = null;
-        isChrome = true;
-        //items.length比较有意思，初步判断是根据mime类型来的，即有几种mime类型，长度就是几（待验证）
-        //如果粘贴纯文本，那么len=1，如果粘贴网页图片，len=2, items[0].type = 'text/plain', items[1].type = 'image/*'
-        //如果使用截图工具粘贴图片，len=1, items[0].type = 'image/png'
-        //如果粘贴纯文本+HTML，len=2, items[0].type = 'text/plain', items[1].type = 'text/html'
-        // console.log('len:' + len);
-        // console.log(items[0]);
-        // console.log(items[1]);
-        // console.log( 'items[0] kind:', items[0].kind );
-        // console.log( 'items[0] MIME type:', items[0].type );
-        // console.log( 'items[1] kind:', items[1].kind );
-        // console.log( 'items[1] MIME type:', items[1].type );
+import beanSvg from "@/assets/svg/bean.svg";
+import addBeanSvg from "@/assets/svg/addBean.svg";
 
-        //阻止默认行为即不让剪贴板内容在div中显示出来
-        event.preventDefault();
-        console.log(items);
-        //在items里找粘贴的image,据上面分析,需要循环
-        for (var i = 0; i < len; i++) {
-          if (items[i].type.indexOf("image") !== -1) {
-            // console.log(items[i]);
-            // console.log( typeof (items[i]));
+import { storeToRefs } from "pinia";
+import appStore from "@/store";
 
-            //getAsFile() 此方法只是living standard firefox ie11 并不支持
-            // blob = items[i].getAsFile();
-            console.log(items[i].getAsFile());
-          }
-        }
-      }
+const { user } = storeToRefs(appStore.authStore);
+const imgArray = ref<any>([]);
+const imgNum = ref<number>(20);
+let createArr = ref<number[]>([]);
+onMounted(() => {});
+const init = () => {
+  let right = 0;
+  let bottom = 20;
+  console.log(user.value);
+  let createScore = user.value?.createScore ? user.value?.createScore : 0;
+  let finishScore = user.value?.finishScore ? user.value?.finishScore : 0;
+  imgNum.value = createScore + finishScore;
+  console.log(imgNum.value);
+  createArr.value = [...new Array(user.value?.createScore)].map(() => {
+    let num = Math.floor(Math.random() * imgNum.value);
+    if (createArr.value.indexOf(num) === -1) {
+      return num;
+    } else {
+      return Math.floor(Math.random() * imgNum.value);
     }
   });
-});
+  imgArray.value = [...new Array(imgNum.value)].map((item, index) => {
+    if (index < 6) {
+      right = right + 30;
+    } else {
+      if (index % 6 === 0) {
+        bottom = bottom + 25;
+        right = 25;
+      } else {
+        right = right + 30;
+      }
+    }
+    addBean(right, bottom, index);
+  });
+  console.log(imgArray.value);
+};
+const addBean = (right, bottom, index) => {
+  let randomNum = Math.floor(Math.random() * 361);
+  let randomIndex = Math.floor(Math.random() * 10);
+  let bottle: any = document.getElementById("bottle");
+  let img = document.createElement("img");
+  img.src = createArr.value.indexOf(index) !== -1 ? addBeanSvg : beanSvg;
+  img.className = "board-img-item";
+  img.style.opacity = "0";
+  img.style.right = "125px";
+  img.style.bottom = "350px";
+  img.style.transform = `rotate(${randomNum}deg)`;
+  img.style.zIndex = randomIndex + "";
+  img.style.transition =
+    "opacity 1s linear, right 1s linear, bottom 1s cubic-bezier(0.5, -0.5, 1, 1)";
+  bottle.appendChild(img);
+  // 添加动画属性
+  let timer = setTimeout(() => {
+    img.style.right = right + "px";
+    img.style.bottom = bottom + "px";
+    img.style.opacity = "1";
+  }, index * 300);
+
+  // /**
+  //  * 动画结束后，删除自己
+  //  */
+  img.ontransitionend = function () {
+    clearTimeout(timer);
+  };
+};
+watch(
+  user,
+  (newVal) => {
+    if (newVal) {
+      init();
+    }
+  },
+  { immediate: true }
+);
 </script>
 <template>
-  <!-- <line-chart lineId="LineContentId" :width="'700px'" :height="'500px'"/> -->
+  <div>Beans of Today</div>
+  <div>Beans of Today</div>
+  <div class="board-empty dp-center-center">
+    <div class="board-img" id="bottle"></div>
+  </div>
 </template>
-<style scoped lang="scss"></style>
-<style></style>
+<style scoped lang="scss">
+.board-empty {
+  width: 100%;
+  height: calc(100% - 80px);
+
+  .board-img {
+    width: 250px;
+    height: 350px;
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    align-content: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row-reverse;
+    padding: 25px 20px 30px 25px;
+    box-sizing: border-box;
+    background-image: url("@/assets/img/bottlenew.png");
+    position: relative;
+    z-index: 1;
+  }
+}
+</style>
+<style>
+.board-img-item {
+  width: 40px;
+  height: 40px;
+  position: absolute;
+}
+</style>

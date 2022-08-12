@@ -16,7 +16,7 @@ const login = () => {
   console.log(redirect);
   localStorage.clear();
   // `https://account.qingtime.cn?apphigh=50&redirect=&logo=https://workfly.qingtime.cn/1650849409262_workingVip.png`;
-  let href: string = `https://account.qingtime.cn/?app=10&apphigh=54&logo=https://workfly.qingtime.cn/1652428088606_workingVip.png&redirect=${redirect}`;
+  let href: string = `https://account.qingtime.cn/?app=10&apphigh=54&logo=https://workfly.qingtime.cn/1660206182979_workingVip.png&redirect=${redirect}`;
   if (is_mobile()) {
     window.open(href);
   } else {
@@ -45,6 +45,7 @@ const login = () => {
   align-content: space-between;
   flex-wrap: wrap;
   background: var(--talk-bg-color);
+  color: var(--talk-font-color);
   .logo-img {
     width: 100%;
     height: 70vh;

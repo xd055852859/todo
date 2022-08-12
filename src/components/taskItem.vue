@@ -12,6 +12,7 @@ import { storeToRefs } from "pinia";
 import appStore from "@/store";
 import Avatar from "./avatar.vue";
 import i18n from "@/language/i18n";
+import { Member } from "@/interface/User";
 const dayjs: any = inject("dayjs");
 const { uploadToken, user } = storeToRefs(appStore.authStore);
 const { taskKey } = storeToRefs(appStore.taskStore);
@@ -24,7 +25,10 @@ const props = defineProps<{
   type?: string;
   overKey?: string;
   amimateType?: boolean;
+  executorKey?: string;
   role: number;
+  memberList?: Member[];
+  oppositeColor?: boolean;
 }>();
 const emits = defineEmits<{
   (e: "changeNum", type: string, item: Task, listType: string): void;
@@ -43,6 +47,7 @@ const imageVisible = ref<boolean>(false);
 const imageSrc = ref<string>();
 const hasFinished = ref<number>(0);
 const taskTime = ref<string>("");
+const changeState = ref<boolean>(false);
 onMounted(() => {
   title.value = props.item.title;
   originTitle.value = props.item.title;
@@ -116,22 +121,40 @@ const changeMark = async (type: string) => {
   }
 };
 const upDateTask = async () => {
-  if (props.item._key === taskKey.value && props.role < 3) {
-    if (
-      title.value === originTitle.value &&
-      detail.value === originDetail.value
-    ) {
-      setTaskKey("");
-      return;
+  if (props.role < 3 || props.item.creatorInfo?._key === user.value?._key) {
+    if (changeState.value) {
+      const taskRes: any = (await api.request.patch("card", {
+        cardKey: props.item._key,
+        title: title.value,
+        detail: detail.value,
+        imageList: imageList.value,
+      })) as ResultProps;
+      if (taskRes.msg === "OK") {
+        changeState.value = false;
+      }
     }
-    const taskRes: any = (await api.request.patch("card", {
+  }
+  setTaskKey("");
+};
+const upDateExecutor = async (executorKey: string) => {
+  if (
+    props.role < 3 ||
+    props.item.creatorInfo?._key === user.value?._key ||
+    props.item.executorInfo?._key === user.value?._key
+  ) {
+    const taskRes: any = (await api.request.patch("card/executor", {
       cardKey: props.item._key,
-      title: title.value,
-      detail: detail.value,
-      imageList: imageList.value,
+      executor: executorKey,
     })) as ResultProps;
     if (taskRes.msg === "OK") {
-      setTaskKey("");
+      if (!props.executorKey) {
+        emits("updateCard", {
+          ...props.item,
+          executorInfo: { ...taskRes.data.executorInfo },
+        });
+      } else {
+        emits("delTask", { ...props.item });
+      }
     }
   }
 };
@@ -205,6 +228,7 @@ const updateImg = (file) => {
   if (file) {
     uploadImage(file, uploadToken.value, mimeType, (url: string) => {
       imageList.value.push(url);
+      changeState.value = true;
       // editorInfo.value?.chain().focus().deleteRange(range).setImage({ src: url });
     });
   }
@@ -255,6 +279,7 @@ const pasteImg = (event) => {
 };
 const delImg = (index) => {
   imageList.value.splice(index, 1);
+  changeState.value = true;
 };
 watch(
   () => props.item,
@@ -269,7 +294,21 @@ watch(
 );
 </script>
 <template>
-  <OnClickOutside @trigger="upDateTask" style="width: 100%">
+  <OnClickOutside
+    @trigger="
+      () => {
+        if (item._key === taskKey) {
+          upDateTask();
+        }
+      }
+    "
+    style="width: 100%"
+    :style="
+      oppositeColor
+        ? { color: 'var(--talk-opposite-color)' }
+        : { color: 'var(--talk-font-color)' }
+    "
+  >
     <div
       class="task"
       @click="item._key !== taskKey ? getTaskInfo() : null"
@@ -277,7 +316,9 @@ watch(
         item._key === taskKey
           ? {
               boxShadow: '0px 4px 9px 0px var(--talk-hover-shadow)',
-              backgroundColor: 'var(--talk-item-color)',
+              backgroundColor: oppositeColor
+                ? 'var(--talk-font-color)'
+                : 'var(--talk-item-color)',
             }
           : {}
       "
@@ -289,7 +330,7 @@ watch(
             :name="hasFinished ? 'finish' : 'unfinish'"
             :size="22"
             style="margin-right: 18px"
-            color="#46a03c"
+            color="#07BE51"
             class="icon-point"
             @click.stop="
               item.executorInfo?._key === user?._key ||
@@ -306,27 +347,35 @@ watch(
             :autosize="{ minRows: 1 }"
             type="textarea"
             :placeholder="
-              role > 2 && item.creatorInfo?._key !== user?._key
+              role > 3 && item.creatorInfo?._key !== user?._key
                 ? ''
                 : i18n.global.t('Please Enter Task')
             "
-            :disabled="role > 2 && item.creatorInfo?._key !== user?._key"
+            :disabled="role > 3 && item.creatorInfo?._key !== user?._key"
+            @change="changeState = true"
           />
           <div
             class="task-detail"
-            v-if="taskKey === item._key && (role < 3 || (detail && role > 2))"
+            v-if="taskKey === item._key && (role < 4 || (detail && role > 3))"
           >
             <el-input
               v-model="detail"
               :autosize="{ minRows: 1 }"
               type="textarea"
               :placeholder="
-                role > 2 && item.creatorInfo?._key !== user?._key
+                role > 3 && item.creatorInfo?._key !== user?._key
                   ? ''
                   : i18n.global.t('Please Enter Detial')
               "
-              :disabled="role > 2 && item.creatorInfo?._key !== user?._key"
+              :disabled="role > 3 && item.creatorInfo?._key !== user?._key"
+              @change="changeState = true"
             />
+          </div>
+          <div
+            class="task-detail-show"
+            v-if="taskKey !== item._key && item.detail"
+          >
+            {{ item.detail }}
           </div>
           <div class="task-upload dp--center" v-if="taskKey === item._key">
             <div
@@ -345,7 +394,7 @@ watch(
               />
               <div
                 class="task-upload-delete"
-                v-if="role < 3 || item.creatorInfo?._key === user?._key"
+                v-if="role < 4 || item.creatorInfo?._key === user?._key"
               >
                 <icon-font
                   name="close"
@@ -358,11 +407,11 @@ watch(
             <div
               class="task-upload-button dp-center-center icon-point"
               v-if="
-                (role < 3 || item.creatorInfo?._key === user?._key) &&
+                (role < 4 || item.creatorInfo?._key === user?._key) &&
                 imageList.length < 10
               "
             >
-              <el-icon><Plus /></el-icon>
+              <el-icon :color="'#333'" :size="22"><Plus /></el-icon>
               <input
                 type="file"
                 accept="image/*"
@@ -379,15 +428,17 @@ watch(
       <div class="task-bottom dp-space-center" v-if="type !== 'report'">
         <div style="padding-left: 35px; box-sizing: border-box">
           <div v-if="type === 'send'" class="dp--center">
-            # {{ item.boardInfo?.title }}
-            <avatar
+            <!--  <avatar
               :name="item.creatorInfo?.userName"
               :avatar="item.creatorInfo?.userAvatar"
               type="person"
               :index="0"
               :size="20"
-              style="margin-left: 8px; margin-right: 8px"
-            />
+              style="margin-right: 8px"
+            /> -->
+            <span style="margin-right: 8px; font-size: 14px">{{
+              item.creatorInfo?.userName
+            }}</span>
             ⇀
             <avatar
               :name="item.executorInfo.userName"
@@ -397,9 +448,47 @@ watch(
               :size="20"
               style="margin-left: 8px"
             />
+            <span style="margin-left: 8px; font-size: 14px"
+              ># {{ item.boardInfo?.title }}</span
+            >
           </div>
         </div>
         <div class="dp--center">
+          <div v-if="type === 'board'" @click.stop="">
+            <el-popover placement="top" trigger="hover">
+              <template #reference>
+                <avatar
+                  :name="item.executorInfo.userName"
+                  :avatar="item.executorInfo.userAvatar"
+                  type="person"
+                  :index="0"
+                  :size="32"
+                  style="margin-right: 8px"
+                />
+              </template>
+              <div
+                class="dp-space-center task-member-item"
+                v-for="(memberItem, memberIndex) in memberList"
+                :key="'member' + memberIndex"
+                @click="upDateExecutor(memberItem._key)"
+              >
+                <avatar
+                  :name="memberItem.userName"
+                  :avatar="memberItem.userAvatar"
+                  type="person"
+                  :index="0"
+                  :size="32"
+                  :avatarStyle="{
+                    fontSize: '16px',
+                    marginRight: '8px',
+                  }"
+                />
+                <span class="board-item-userName">
+                  {{ memberItem.userName }}
+                </span>
+              </div>
+            </el-popover>
+          </div>
           <div
             v-if="
               type !== 'other' &&
@@ -413,32 +502,39 @@ watch(
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'today' }"
+              :style="{
+                backgroundColor: item.mark === 'today' ? '#d8e9d6' : '#ebebeb',
+                padding: '3px 8px',
+                marginRight: '5px',
+              }"
               @click.stop="changeMark('today')"
               >{{ $t(`Today`) }}
             </span>
-            <el-divider direction="vertical" />
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'next' }"
+              :style="{
+                backgroundColor: item.mark === 'next' ? '#d8e9d6' : '#ebebeb',
+                padding: '3px 8px',
+                marginRight: '5px',
+              }"
               @click.stop="changeMark('next')"
               >{{ $t(`Nextday`) }}</span
             >
-            <el-divider direction="vertical" />
             <span
               class="icon-point"
               :class="{ 'common-color': item.mark === 'future' }"
+              :style="{
+                backgroundColor: item.mark === 'future' ? '#d8e9d6' : '#ebebeb',
+                padding: '3px 8px',
+              }"
               @click.stop="changeMark('future')"
               >{{ $t(`Future`) }}</span
             >
           </div>
           <span
             style="margin-right: 10px"
-            v-if="
-              type !== 'inbox' &&
-              type !== 'task' &&
-              type !== 'completed' &&
-              overKey !== item._key
-            "
+            v-if="type !== 'inbox' && type !== 'task' && type !== 'completed'"
           >
             {{
               item.hasRead ||
@@ -452,12 +548,12 @@ watch(
                 : $t("Unread")
             }}
           </span>
-          <icon-font
+          <!-- <icon-font
             name="detail"
             :size="10"
             style="margin-right: 10px"
             v-if="item.hasDetail"
-          />
+          /> -->
           <icon-font
             name="image"
             :size="10"
@@ -522,7 +618,7 @@ watch(
 .task {
   width: 100%;
   margin-top: 10px;
-  padding: 10px 10px 0px 10px;
+  padding: 10px 10px 8px 10px;
   box-sizing: border-box;
   border-radius: 12px;
   &:hover {
@@ -546,8 +642,12 @@ watch(
       white-space: normal;
       word-break: break-all;
       word-wrap: break-word;
-      .task-detail {
+      .task-detail,
+      .task-detail-show {
         margin: 15px 0px;
+      }
+      .task-detail-show {
+        @include more-toLong(2);
       }
       .task-upload {
         flex-wrap: wrap;
@@ -558,6 +658,7 @@ watch(
           margin-bottom: 10px;
           position: relative;
           z-index: 1;
+
           .task-upload-delete {
             width: 20px;
             height: 20px;
@@ -578,7 +679,7 @@ watch(
           height: 60px;
           position: relative;
           z-index: 1;
-          background-color: #fafafa;
+          background: #fff;
           border: 1px dashed #cdd0d6;
           border-radius: 6px;
           box-sizing: border-box;
@@ -609,12 +710,17 @@ watch(
     height: 30px;
   }
 }
+.task-member-item {
+  height: 45px;
+  &:hover {
+    background-color: var(--talk-hover-color);
+  }
+}
 </style>
 <style>
 .task .task-right .el-textarea__inner {
   font-size: 17px;
   font-weight: 600;
-  color: var(--talk-font-color);
   padding: 0px;
   background-color: transparent;
 }

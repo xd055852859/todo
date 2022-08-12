@@ -10,10 +10,14 @@ export interface User extends Person {
   online?: boolean;
   added?: boolean;
   unReadNum?: number;
+  createScore?: number;
+  finishScore?: number;
+  defaultBoard?: string;
 }
 export interface Member extends Person {
   role: number;
   added?: boolean;
+  online?: boolean;
 }
 export interface Mate extends Person {
   added: true;
@@ -29,4 +33,6 @@ export interface Mate extends Person {
   yTotalBeans: number;
   beans: number;
   online?: boolean;
+  todayCreate:number;
+  todayClose:number;
 }

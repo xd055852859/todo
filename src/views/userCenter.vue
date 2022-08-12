@@ -6,7 +6,7 @@ import useCurrentInstance from "@/hooks/useCurrentInstance";
 import { storeToRefs } from "pinia";
 import setDark from "@/hooks/dark";
 import appStore from "@/store";
-import logoSvg from "../assets/svg/logo.svg";
+import finishBeanSvg from "@/assets/svg/finishBean.svg";
 import i18n from "@/language/i18n";
 import { ResultProps } from "@/interface/Common";
 const { proxy } = useCurrentInstance();
@@ -146,7 +146,7 @@ watch(
               "
             >
               <img
-                :src="logoSvg"
+                :src="finishBeanSvg"
                 alt=""
                 style="width: 20px; height: 20px; margin-right: 5px"
               />{{ user?.beans }}
@@ -255,7 +255,7 @@ watch(
       </div>
       <div
         class="userCenter-item dp--center"
-        @click="toUrl('https://www.wolai.com/gfmxjSHvhX9yzvhEaCp4MS')"
+        @click="toUrl('https://working.cn/home/base/knowledgebase?baseid=2165255963&tag')"
       >
         <icon-font name="help" :size="18" style="margin-right: 15px" />
         <span>

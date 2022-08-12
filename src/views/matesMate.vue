@@ -142,7 +142,7 @@ const delMate = async (key:string,index: number) => {
         width: 70px;
         height: 100%;
         background: rgba(255, 255, 255, 0.9);
-        border: 1px solid #46a03c;
+        border: 1px solid #07BE51;
         border-radius: 17px;
       }
       .unfollow {
